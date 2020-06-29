@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  modelstore:
+    container_name: modelstore_api
+    restart: always
+    build: ./modelstore
+    networks:
+      - apinetwork
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+
+
+  scoring:
+    container_name: scoring_api
+    restart: always
+    build: ./scoring
+    networks:
+      - apinetwork
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    environment:
+      - MODELSTORE=http://modelstore:3000
+    deploy:
+      resources:
+        limits:
+          memory: 20G
+
+
+  nginx:
+    container_name: nginx
+    restart: always
+    build: ./nginx
+    networks:
+      - apinetwork
+    expose:
+      - "8080"
+    ports:
+      - "80:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+networks:
+  apinetwork:

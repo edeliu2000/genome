@@ -1,0 +1,95 @@
+<html>
+    <head>
+        <title>ModelStore Admin</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <style>
+
+          div[aria-label="Search"] > input{
+            padding-left: 0.5em;
+            margin-bottom: 0.5em;
+          }
+
+          div[aria-label="Search"]::before{
+            border-bottom: 0em;
+            transform:none;
+          }
+
+          div[aria-label="Search"]::after{
+            border-bottom: 0em;
+            transform:none;
+          }
+
+          div.addedInpt label{
+            padding-left: 0.5em;
+          }
+
+          div.mainSearch{
+            border-bottom: 1px solid #888;
+          }
+
+        	.picker{
+        		float:left;
+        		margin-left:1em;
+        	}
+
+            .cellSmall{
+                width: 7em;
+                word-wrap: break-word;
+            }
+
+            h2{
+                padding-left:6em;
+                text-align:center;
+            }
+
+            .sub-list-text > span{
+                font-size: 0.75rem !important;
+            }
+
+            .sub-list-schema-text > span{
+                font-size: 0.65rem !important;
+                font-style:italic;
+            }
+
+
+            .sub-list-bdg > span{
+                font-size: 0.35em !important;
+            }
+
+        	#datepicker-ctn, #chart-ctn, #chart-ctn-state, #datepicker-chart-ctn{
+        	    float:left;
+        		width:100%;
+        	}
+
+            #chart-ctn, #chart-ctn-state{
+                float:left;
+                width:900px;
+            }
+
+            #chart-ctn-state{
+                float:left;
+                width:400px;
+            }
+
+            #graph-datalineage{
+                width:85%;
+                margin:2em auto;
+            }
+
+            #very-top-messages-lineage{
+                float:left;
+            }
+
+            #data-lineage-link-canonical > a > span{text-transform: none}
+        </style>
+    </head>
+    <body>
+        <div id="datepicker-chart-ctn">
+
+        <div id="datepicker-ctn">
+          <div id="datepicker-feature-dialog"></div>
+        </div>
+        </div>
+        <script src="bundle.js"></script>
+    </body>
+</html>

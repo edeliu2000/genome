@@ -1,0 +1,15 @@
+{
+  "name": "modelstore",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.16.4",
+    "@elastic/elasticsearch": "^7.x",
+    "@okta/jwt-verifier":"^1.x",
+    "uuid": "^7.x",
+    "aws-sdk":"latest"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
