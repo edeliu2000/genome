@@ -12,4 +12,5 @@ RUN pip3 install -r requirements.txt
 COPY . /api
 WORKDIR /
 
+EXPOSE 5000
 CMD ["gunicorn", "-w", "1", "-b", ":5000", "-t", "360", "--reload", "api.wsgi:app"]

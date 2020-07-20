@@ -3,8 +3,10 @@ from typing import Any, List, Tuple, Union, Optional
 import six
 import numpy as np
 
+from .base_utils import attrs
+from .formatters.features import FormattedFeatureName
 
-
+@attrs
 class Explanation(object):
     """ An explanation for classifier or regressor,
     it can either explain weights or a single prediction.
@@ -38,11 +40,12 @@ class Explanation(object):
     def _repr_html_(self):
         """ HTML formatting for the notebook.
         """
-        from eli5.formatters import fields
-        from eli5.formatters.html import format_as_html
+        from .formatters import fields
+        from .formatters.html import format_as_html
         return format_as_html(self, force_weights=False, show=fields.WEIGHTS)
 
 
+@attrs
 class FeatureImportances(object):
     """ Feature importances with number of remaining non-zero features.
     """
@@ -58,6 +61,7 @@ class FeatureImportances(object):
         return cls(importances, **kwargs)
 
 
+@attrs
 class TargetExplanation(object):
     """ Explanation for a single target or class.
     Feature weights are stored in the :feature_weights: attribute,
@@ -82,34 +86,11 @@ class TargetExplanation(object):
 
 
 
-class FormattedFeatureName(object):
-    """ Feature name that does not need any additional escaping.
-    """
-    def __init__(self, value):
-        if not isinstance(value, six.string_types):
-            raise TypeError('"value" must be a string, got {} instead'
-                            .format(type(value)))
-        self.value = value
-
-    def format(self):
-        return self.value
-
-    def __eq__(self, other):
-        return (isinstance(other, FormattedFeatureName) and
-                self.value == other.value)
-
-    def __hash__(self):
-        return hash(self.value)
-
-    def __repr__(self):
-        return '<{} {!r}>'.format(self.__class__.__name__, self.value)
-
-
-
 # List is currently used for unhashed features
 Feature = Union[str, List, FormattedFeatureName]
 
 
+@attrs
 class FeatureWeights(object):
     """ Weights for top features, :pos: for positive and :neg: for negative,
     sorted by descending absolute value.
@@ -129,6 +110,7 @@ class FeatureWeights(object):
         self.neg_remaining = neg_remaining
 
 
+@attrs
 class FeatureWeight(object):
     def __init__(self,
                  feature,  # type: Feature
@@ -143,6 +125,7 @@ class FeatureWeight(object):
         self.value = value
 
 
+@attrs
 class WeightedSpans(object):
     """ Holds highlighted spans for parts of document - a DocWeightedSpans
     object for each vectorizer, and other features not highlighted anywhere.
@@ -163,6 +146,7 @@ WeightedSpan = Tuple[
 ]
 
 
+@attrs
 class DocWeightedSpans(object):
     """ Features highlighted in text. :document: is a pre-processed document
     before applying the analyzer. :weighted_spans: holds a list of spans
@@ -184,6 +168,7 @@ class DocWeightedSpans(object):
         self.vec_name = vec_name
 
 
+@attrs
 class TransitionFeatureWeights(object):
     """ Weights matrix for transition features. """
     def __init__(self,
@@ -195,6 +180,7 @@ class TransitionFeatureWeights(object):
         self.coef = coef
 
 
+@attrs
 class TreeInfo(object):
     """ Information about the decision tree. :criterion: is the name of
     the function to measure the quality of a split, :tree: holds all nodes
@@ -213,6 +199,7 @@ class TreeInfo(object):
         self.is_classification = is_classification
 
 
+@attrs
 class NodeInfo(object):
     """ A node in a binary tree.
     Pointers to left and right children are in :left: and :right: attributes.

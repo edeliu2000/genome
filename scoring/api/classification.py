@@ -44,18 +44,34 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC
+from sklearn.decomposition import TruncatedSVD
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.svm import SVC
+from sklearn.decomposition import TruncatedSVD
+from sklearn.pipeline import Pipeline, make_pipeline
+
+
+
 import xgboost
 import shap
 from .eli5.keras import explain_prediction
 from .eli5.image import format_as_image
+from .eli5.lime import TextExplainer
+from .eli5.formatters.as_dict import format_as_dict
+from .eli5.sklearn.explain_prediction import explain_prediction_linear_classifier
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 # routes
 classification_api = Blueprint('classification_api', __name__)
-
 explanation_api = Blueprint('explanation_api', __name__)
+health_api = Blueprint('health_api', __name__)
 
 modelstore_api = os.environ['MODELSTORE']
 
@@ -82,34 +98,39 @@ def loadModel(meta):
     # first check with model store yada-yada
     model = None
 
+    if "framework" not in meta or "artifactBlob" not in meta:
 
-    # post model metadata
-    modelMeta = {
-        "canonicalName": meta["canonicalName"] if "canonicalName" in meta else "modelPipeline",
-        "application": meta["application"] if "application" in meta else "modelPipeline"
-    }
+        # post model metadata
+        modelMeta = {
+            "canonicalName": meta["canonicalName"] if "canonicalName" in meta else "modelPipeline",
+            "application": meta["application"] if "application" in meta else "modelPipeline"
+        }
 
-    reqMeta = urllib.request.Request(modelstore_api + "/v1.0/genome/search")
-    reqMeta.add_header(
-        'Content-Type',
-        'application/json',
-    )
+        reqMeta = urllib.request.Request(modelstore_api + "/v1.0/genome/search")
+        reqMeta.add_header(
+            'Content-Type',
+            'application/json',
+        )
 
-    responseMeta = urllib.request.urlopen(reqMeta, json.dumps(modelMeta).encode('utf-8'))
-    data = responseMeta.read()
-    modelMetaResp = json.loads(data)
+        responseMeta = urllib.request.urlopen(reqMeta, json.dumps(modelMeta).encode('utf-8'))
+        data = responseMeta.read()
+        modelMetaResp = json.loads(data)
 
-    if not modelMetaResp or len(modelMetaResp) == 0:
-        logging.info('No Model Found in ModelStore: ' + json.dumps(modelMeta))
-        return model
+        if not modelMetaResp or len(modelMetaResp) == 0:
+            logging.info('No Model Found in ModelStore: ' + json.dumps(modelMeta))
+            return model
 
 
 
-    logging.info('Models Found in ModelStore: ' + json.dumps(modelMetaResp) + " len: " + str(len(modelMetaResp)))
+        logging.info('Models Found in ModelStore: ' + json.dumps(modelMetaResp) + " len: " + str(len(modelMetaResp)))
 
-    modelMetaArtifact =  modelMetaResp[0]
-    model_id = modelMetaArtifact["artifactBlob"]["ref"]
-    logging.info('Model Found in ModelStore: ' + json.dumps(modelMetaArtifact["artifactBlob"]))
+        modelMetaArtifact =  modelMetaResp[0]
+        model_id = modelMetaArtifact["artifactBlob"]["ref"]
+        logging.info('Model Found in ModelStore: ' + json.dumps(modelMetaArtifact["artifactBlob"]))
+    else:
+        modelMetaArtifact = meta
+        model_id = modelMetaArtifact["artifactBlob"]["ref"]
+
 
 
     logging.info("fetching model from url: " + modelstore_api + "/v1.0/genome/blob/" + model_id)
@@ -209,6 +230,7 @@ def saveModel(model, meta):
         "framework": meta["framework"] if "framework" in meta else "tensorflow",
         "versionName": "1.2.3",
         "artifactBlob": {"ref": modelResp["id"], "refType": "modelstore"},
+        "inputModality": meta["inputModality"] if "inputModality" in meta else "tabular",
         "dataRefs": [{
           "ref": "s3:/dataset/uuid-123",
           "refType": "mllake"
@@ -229,16 +251,15 @@ def saveModel(model, meta):
 
 
 
-def getTrainedModel(canonicalName):
+def getTrainedModel(modelMeta):
+    canonicalName = modelMeta["canonicalName"]
+
     if canonicalName in cachedModels and cachedModels[canonicalName]:
         logging.info("using cached model for: " + canonicalName)
         return cachedModels[canonicalName]
 
 
-    explainer = loadModel({
-      "canonicalName": canonicalName,
-      "application": "search"
-    })
+    explainer = loadModel(modelMeta)
 
     if not explainer:
         global trainingModel
@@ -270,106 +291,13 @@ def getTrainedModel(canonicalName):
           "pipelineRunId": "run-id-1",
           "pipelineStage": "model",
           "framework": "xgboost",
+          "inputModality": "tabular",
           "versionName": "xgboost.1.2.1"
         })
 
         logging.info("trained XGBoost Model")
 
     return explainer
-
-
-'''Trains a simple convnet on the MNIST dataset.
-Gets to 99.25% test accuracy after 12 epochs
-(there is still a lot of margin for parameter tuning).
-16 seconds per epoch on a GRID K520 GPU.
-'''
-
-
-batch_size = 128
-num_classes = 10
-epochs = 2
-
-# input image dimensions
-img_rows, img_cols = 28, 28
-
-# the data, split between train and test sets
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-
-if K.image_data_format() == 'channels_first':
-    x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
-    x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
-    input_shape = (1, img_rows, img_cols)
-else:
-    x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
-    x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
-    input_shape = (img_rows, img_cols, 1)
-
-x_train = x_train.astype('float32')
-x_test = x_test.astype('float32')
-x_train /= 255
-x_test /= 255
-print('x_train shape:', x_train.shape)
-print(x_train.shape[0], 'train samples')
-print(x_test.shape[0], 'test samples')
-
-# convert class vectors to binary class matrices
-y_train = tensorflow.keras.utils.to_categorical(y_train, num_classes)
-y_test = tensorflow.keras.utils.to_categorical(y_test, num_classes)
-
-# select a set of background examples to take an expectation over
-background = x_train[np.random.choice(x_train.shape[0], 100, replace=False)]
-
-logging.info("finished data prep for mnist")
-
-
-def trainCNNMnist():
-
-    global trainingModel
-    if trainingModel:
-        return
-
-    trainingModel = True
-
-    logging.info("start training cnn for mnist")
-    model = Sequential()
-    model.add(Conv2D(32, kernel_size=(3, 3),
-                 activation='relu',
-                 input_shape=input_shape))
-    model.add(Conv2D(64, (3, 3), activation='relu'))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.25))
-    model.add(Flatten())
-    model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(num_classes, activation='softmax'))
-
-    model.compile(loss=tensorflow.keras.losses.categorical_crossentropy,
-              optimizer=tensorflow.keras.optimizers.Adadelta(),
-              metrics=['accuracy'])
-
-    model.fit(x_train, y_train,
-          batch_size=batch_size,
-          epochs=epochs,
-          verbose=1,
-          validation_data=(x_test, y_test))
-
-    logging.info("finished training cnn for mnist")
-
-    score = model.evaluate(x_test, y_test, verbose=0)
-
-    logging.info("cnn test loss: %.6f  test accuracy: %.6f", score[0], score[1])
-
-    startInit = time.time()
-
-    logging.info("before cnn explainer init in: %d ms", int((time.time() - startInit) * 1000))
-
-    # explain predictions of the model on four images
-    explainer = shap.DeepExplainer(Model(model.layers[0].input, model.layers[-1].output), background)
-    logging.info("cnn explainer init in: %d ms", int((time.time() - startInit) * 1000))
-
-
-    cachedModels["model-cnn"] = explainer
-
 
 
 
@@ -399,7 +327,9 @@ def trainVGG16():
 
 
 
-def trainVGG16Eli5(canonicalName):
+def trainVGG16Eli5(modelMeta):
+
+    canonicalName = modelMeta["canonicalName"]
 
     # load pre-trained model and choose two images to explain
     model = ResNet50(weights='imagenet', include_top=True)
@@ -418,6 +348,7 @@ def trainVGG16Eli5(canonicalName):
       "pipelineRunId": "run-id-1",
       "pipelineStage": "model",
       "framework": "keras",
+      "inputModality": "image",
       "versionName": "keras.1.2.2"
     })
 
@@ -426,6 +357,52 @@ def trainVGG16Eli5(canonicalName):
     cachedModels["imagenet/classes"] = {"classes":class_names}
 
 
+
+
+def trainTextClassifier(modelMeta):
+
+    canonicalName = modelMeta["canonicalName"]
+
+
+    categories = ['alt.atheism', 'soc.religion.christian',
+              'comp.graphics', 'sci.med']
+
+    twenty_train = fetch_20newsgroups(
+      subset='train',
+      categories=categories,
+      shuffle=True,
+      random_state=42,
+      remove=('headers', 'footers'),
+    )
+
+    #pipeline is composed out of tfid +LSA
+    vec = TfidfVectorizer(min_df=3, stop_words='english',
+                      ngram_range=(1, 2))
+    svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
+    lsa = make_pipeline(vec, svd)
+
+    clf = SVC(C=150, gamma=2e-2, probability=True)
+    pipe = make_pipeline(lsa, clf)
+
+    # fit and score
+    pipe.fit(twenty_train.data, twenty_train.target)
+
+    model = {"model": pipe, "func": "predict_proba", "target_names":twenty_train.target_names}
+
+
+    # save model to file
+    saveModel(model, {
+      "canonicalName": canonicalName,
+      "application": "search",
+      "pipelineName": "pipeline-sklearn-text-classifier",
+      "pipelineRunId": "run-id-1",
+      "pipelineStage": "model",
+      "framework": "sklearn",
+      "inputModality": "text",
+      "versionName": "sklearn-text.1.2.2"
+    })
+
+    logging.info("trained text classifier Model and saved on ModelStore")
 
 
 def convert_input(entries):
@@ -447,9 +424,20 @@ def convert_input(entries):
 
 
 # training test models
-getTrainedModel("tree/explainer/xgboost-1")
+getTrainedModel({
+    "canonicalName": "tree/explainer/xgboost-1",
+    "application": "search"
+})
+
+trainTextClassifier({
+    "canonicalName": "modelstore/text/svm/vectorizer/1",
+    "application": "search"
+})
 #trainVGG16()
-trainVGG16Eli5("modelstore/cnn/keras/resnet50/1")
+#trainVGG16Eli5({
+#    "canonicalName": "modelstore/cnn/keras/resnet50/1",
+#    "application": "search"
+#})
 
 
 
@@ -480,14 +468,19 @@ def explanation():
 
     sample = json.loads(request.data)
     canonicalName = sample["canonicalName"]
+    modelMeta = sample["modelMeta"] if "modelMeta" in sample else {
+      "canonicalName": canonicalName,
+    }
     entries = sample["entries"] if "entries" in sample else None
     imageEntryBase64 = sample["image"] if "image" in sample else None
+    textInput = sample["text"] if "text" in sample else None
+
 
     if entries:
         data_to_explain = convert_input(entries)
 
 
-    explainer = getTrainedModel(canonicalName)
+    explainer = getTrainedModel(modelMeta)
     logging.info("created explainer")
 
     expected_value = 0
@@ -497,9 +490,12 @@ def explanation():
     image_predicted_class = ""
     image_predicted_class_score = 0
     image_base64 = ""
+    explanation = None
+    metrics = None
 
     if imageEntryBase64:
 
+       # explain image predictions via keras or tf CNN's
         dims = explainer.input_shape[1:3]
         logging.info("model takes input image of shape:" + str(dims))
 
@@ -543,8 +539,29 @@ def explanation():
         image_base64 = base64.b64encode(buffered.read()).decode('utf-8')
 
 
-    else:
+    elif textInput:
+        # explain text predictions via LIME
+        # using eli5 lime to do the explanation of the text classifier
+        textExplainer = TextExplainer(random_state=42)
+        if "model" in explainer and "func" in explainer:
+            textExplainer.fit(textInput, getattr(explainer["model"], explainer["func"]))
+        else:
+            textExplainer.fit(textInput, explainer)
 
+
+        if "target_names" in explainer:
+            number_labels = len(explainer["target_names"])
+            explanation = textExplainer.explain_prediction(target_names=explainer["target_names"])
+        else:
+            number_labels = 1
+            explanation = textExplainer.explain_prediction()
+
+
+        metrics = textExplainer.metrics_
+
+
+    else:
+        # tabular data using shapley values.
         expected_value = explainer.expected_value
         shap_values = explainer.shap_values(data_to_explain)
         interaction_values = explainer.shap_interaction_values(data_to_explain)
@@ -566,7 +583,7 @@ def explanation():
 
 
     diff = int((time.time() - startTime) * 1000)
-    logging.info("finished shap compute in: %d ms", diff)
+    logging.info("finished compute in: %d ms", diff)
 
 
     response = jsonify({
@@ -576,8 +593,14 @@ def explanation():
       "shapley_interactions": interaction_values,
       "image": image_base64,
       "class": image_predicted_class,
-      "score": image_predicted_class_score
-      })
+      "score": image_predicted_class_score,
+      "textExplanation": format_as_dict(explanation) if explanation else None,
+      "metrics": metrics if metrics else None,
+      "explainer": {
+        "classifier": "log",
+        "vectorizer": {"name": "CountVectorizer", "ngrams":[1,2]}
+      } if metrics and explanation else None
+    })
 
     originHeader = request.headers.get('Origin')
     response.headers.add('Access-Control-Allow-Origin', originHeader)
@@ -585,3 +608,12 @@ def explanation():
     response.headers['Access-Control-Allow-Headers'] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
 
     return response
+
+
+
+
+@health_api.route("/healthz", methods=["GET", "POST"])
+def explanation():
+    return jsonify({
+      "ping": "ping!"
+    })
