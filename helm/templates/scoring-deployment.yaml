@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "genome.fullname" . }}-scoring-deployment
+  namespace: "{{ .Values.environment }}"
+  labels:
+    app: {{ template "genome.fullname" . }}
+    chart: {{ template "genome.chart" . }}
+    component: "{{ .Values.scoring.fullname }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "genome.fullname" . }}
+      component: "{{ .Values.scoring.name }}"
+      release: {{ .Release.Name }}
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ template "genome.fullname" . }}
+        component: "{{ .Values.scoring.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "genome.fullname" . }}-node
+        image: "{{ .Values.scoring.image.repository }}:{{ .Values.scoring.image.tag }}"
+        imagePullPolicy: "{{ .Values.scoring.image.pullPolicy }}"
+        env:
+          - name: MODELSTORE
+            value: http://{{ template "genome.fullname" . }}-modelstore-service:3000
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 120
+        ports:
+        - containerPort: 5000
+        resources: {}
+        workingDir: /
+      restartPolicy: Always
+status: {}

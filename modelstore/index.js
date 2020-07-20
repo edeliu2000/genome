@@ -28,9 +28,8 @@ function authRequired(req, res, next) {
 
   const accessToken = match[1];
 
-  return auth.verifyToken(accessToken, auth.getScope(req))
+  return auth.verifyToken(accessToken, auth.getScope(req, "search"))
     .then((jwt) => {
-      console.log("jwt claims:", jwt.claims)
       req.jwt = jwt;
       next();
     })
@@ -61,8 +60,12 @@ app.post('/v1.0/genome/searchkeywords', authRequired, search.searchByKeywords);
 app.post('/v1.0/genome/blob', blob.blob);
 app.get('/v1.0/genome/blob/:id', blob.get);
 
+app.get('/v1.0/genome/healthz', (req, res) => {
+  res.send('ping!\n');
+});
+
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`ModelStore app listening on port ${PORT}!`);
 })

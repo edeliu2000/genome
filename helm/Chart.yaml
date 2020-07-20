@@ -1,0 +1,13 @@
+apiVersion: v1
+appVersion: "1.0"
+description: a Model Store and Model Explainer for modern ML
+name: genome
+keywords:
+- tensorflow
+- shapley
+- nodejs
+- nginx
+- modelstore
+version: 0.1.0
+sources:
+- https://bitbucket.org/edeliu2000/genome

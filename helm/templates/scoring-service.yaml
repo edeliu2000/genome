@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "genome.fullname" . }}-scoring-service
+  namespace: "{{ .Values.environment }}"
+  labels:
+    app: {{ template "genome.fullname" . }}
+    chart: {{ template "genome.chart" . }}
+    component: "{{ .Values.scoring.name }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+  selector:
+    app: {{ template "genome.fullname" . }}
+    component: "{{ .Values.scoring.name }}"
+    release: {{ .Release.Name }}
+status:
+  loadBalancer: {}

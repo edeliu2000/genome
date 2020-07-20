@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "genome.fullname" . }}-nginx-deployment
+  namespace: "{{ .Values.environment }}"
+  labels:
+    app: {{ template "genome.fullname" . }}
+    chart: {{ template "genome.chart" . }}
+    component: "{{ .Values.nginx.name }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "genome.fullname" . }}
+      component: "{{ .Values.nginx.name }}"
+      release: {{ .Release.Name }}
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ template "genome.fullname" . }}
+        component: "{{ .Values.nginx.name }}"
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: {{ template "genome.fullname" . }}-nginx
+        image: "{{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}"
+        imagePullPolicy: "{{ .Values.nginx.image.pullPolicy }}"
+        ports:
+        - containerPort: 8080
+        resources: {}
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: nginx-proxy-config
+      restartPolicy: Always
+      volumes:
+      - name: nginx-proxy-config
+        configMap:
+          name: {{ template "genome.fullname" . }}-configmap
+status: {}

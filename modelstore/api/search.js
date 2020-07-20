@@ -79,6 +79,7 @@ var search = function(req, res){
   var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 7));
   var toDate = Number(req.query.to || Date.now());
 
+  console.log("query for search", req.body);
 
   var query = {
     index: 'model-artifacts',

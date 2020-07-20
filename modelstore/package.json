@@ -7,6 +7,7 @@
     "@elastic/elasticsearch": "^7.x",
     "@okta/jwt-verifier":"^1.x",
     "uuid": "^7.x",
+    "node-cache": "^5.1.x",
     "aws-sdk":"latest"
   },
   "scripts": {

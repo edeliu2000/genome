@@ -1,5 +1,7 @@
 const OktaJwtVerifier = require('@okta/jwt-verifier');
 const config = require('./config')
+const NodeCache = require( "node-cache" );
+const authCache = new NodeCache();
 
 function OktaProvider(cfg){
   this.okta = new OktaJwtVerifier({issuer:cfg.issuer});
@@ -16,19 +18,28 @@ function providerFactory(){
   throw {status: 401, message: "no auth provider found"}
 }
 
-function getScope(req){
-  var mode = "." + (req.path.indexOf("search") >= 0 ? "read" : "manage");
+function getScope(req, requestedOp){
+  var mode = "." + (req.path.indexOf(requestedOp) >= 0 ? "read" : "manage");
   var app = ".app:" + (req.body.application || "*")
   var scope = req.path + app + mode;
-  console.log("api scope requested:", scope);
   return scope;
 }
 
 
 function verifyToken(token, scope){
   var provider = providerFactory();
-  return provider.verify(token, scope);
+  cachedJWT = authCache.get(token);
+  if(cachedJWT == undefined){
+    verification = provider.verify(token, scope);
+    verification.then((jwt) => {
+      authCache.set(token, verification, 120);
+    });
+    return verification;
+  }
+  console.log("using cached auth token")
+  return Promise.resolve(cachedJWT);
 }
+
 
 
 module.exports = {
