@@ -1,0 +1,14 @@
+{
+  "name": "routing",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.16.4",
+    "@okta/jwt-verifier":"^1.x",
+    "axios": "^0.19.x",
+    "node-cache": "^5.1.x"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}

@@ -33,8 +33,8 @@ from tensorflow.keras.layers import Dense, Dropout, Flatten
 from tensorflow.keras.layers import Conv2D, MaxPooling2D
 from tensorflow.keras import backend as K
 
-from tensorflow.keras.applications.resnet50 import ResNet50
-from tensorflow.keras.applications.resnet50 import preprocess_input
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 tensorflow.compat.v1.disable_v2_behavior()
 
@@ -332,7 +332,7 @@ def trainVGG16Eli5(modelMeta):
     canonicalName = modelMeta["canonicalName"]
 
     # load pre-trained model and choose two images to explain
-    model = ResNet50(weights='imagenet', include_top=True)
+    model = MobileNetV2(weights='imagenet', include_top=True)
 
     # load the ImageNet class names
     url = "https://s3.amazonaws.com/deep-learning-models/image-models/imagenet_class_index.json"
@@ -352,7 +352,7 @@ def trainVGG16Eli5(modelMeta):
       "versionName": "keras.1.2.2"
     })
 
-    logging.info("trained VGG16 Model and saved on ModelStore")
+    logging.info("trained MobileNetV2 Model and saved on ModelStore")
 
     cachedModels["imagenet/classes"] = {"classes":class_names}
 
@@ -424,20 +424,20 @@ def convert_input(entries):
 
 
 # training test models
-getTrainedModel({
-    "canonicalName": "tree/explainer/xgboost-1",
-    "application": "search"
-})
+#getTrainedModel({
+#    "canonicalName": "tree/explainer/xgboost-1",
+#    "application": "search"
+#})
 
 trainTextClassifier({
     "canonicalName": "modelstore/text/svm/vectorizer/1",
     "application": "search"
 })
 #trainVGG16()
-#trainVGG16Eli5({
-#    "canonicalName": "modelstore/cnn/keras/resnet50/1",
-#    "application": "search"
-#})
+trainVGG16Eli5({
+    "canonicalName": "modelstore/cnn/keras/resnet50/1",
+    "application": "search"
+})
 
 
 
@@ -514,16 +514,16 @@ def explanation():
         processed = preprocess_input(doc)
 
         logging.info("finished map_to_layer compute in: %d ms", int((time.time() - startTime) * 1000))
-        explanation = explain_prediction(explainer, processed)
+        predExplanation = explain_prediction(explainer, processed)
         class_names = cachedModels["imagenet/classes"]["classes"]
         logging.info("finished explanation compute in: %d ms", int((time.time() - startTime) * 1000))
 
-        logging.info(explanation)
+        logging.info(predExplanation)
 
-        image_predicted_class = class_names[str(explanation.targets[0].target)][1]
-        image_predicted_class_score = explanation.targets[0].score.item()
+        image_predicted_class = class_names[str(predExplanation.targets[0].target)][1]
+        image_predicted_class_score = predExplanation.targets[0].score.item()
 
-        picExplanation = format_as_image(explanation)
+        picExplanation = format_as_image(predExplanation)
 
         # get the names for the classes
         #index_names = np.vectorize(lambda x: class_names[str(x)][1])(indexes)
