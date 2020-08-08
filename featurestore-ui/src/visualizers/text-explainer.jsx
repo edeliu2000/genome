@@ -12,6 +12,31 @@ import Paper from '@material-ui/core/Paper';
 
 import Tooltip from '@material-ui/core/Tooltip';
 
+class NormalSpan extends React.Component{
+  render(){
+    return (
+      <span class="word">
+        {this.props.text}
+      </span>
+    );
+  }
+}
+
+
+class WeightedSpan extends React.Component{
+  render(){
+    return (
+      <Tooltip title={"score: " + this.props.weight.toFixed(4)}>
+      <span class="weightedWord" style={{
+        backgroundColor:this.props.color,
+        opacity:this.props.opacity
+      }}>
+        {this.props.text}
+      </span>
+      </Tooltip>
+    );
+  }
+}
 
 class TextExplainerVisualizer extends React.Component {
   state = {
@@ -51,14 +76,15 @@ class TextExplainerVisualizer extends React.Component {
     });
   }
 
-  _addColor(weight, maxWeight){
+  _getColor(weight, maxWeight){
     var hue = weight > 0 ? 120 : 0;
     var saturation = 1;
     var relWeight = Math.pow((Math.abs(weight) / maxWeight), 0.7);
     var lightness = 1.0 - (1 - 0.6) * relWeight;
-    return "background-color:" +
-      "hsl("+ hue +"," + (saturation * 100) + "%, " + (lightness * 100).toFixed(2) + "% );" +
-      "opacity:" + (0.8 + ((Math.abs(weight)/maxWeight) * 0.2)).toFixed(2) + ";"
+    return {
+      color: "hsl("+ hue +"," + (saturation * 100) + "%, " + (lightness * 100).toFixed(2) + "% )",
+      opacity: (0.8 + ((Math.abs(weight)/maxWeight) * 0.2)).toFixed(2)
+    }
   }
 
 
@@ -147,25 +173,36 @@ class TextExplainerVisualizer extends React.Component {
     var charWeights = currentSpans && this._getCharWeights(currentSpans);
     var processedSpans = charWeights && this._getProcessedSpans(charWeights);
 
+    var spanChildren = []
+
 
     processedSpans && processedSpans.forEach((item, i) => {
-        const col = this._addColor(item[1], maxWeight);
+        const colStyle = this._getColor(item[1], maxWeight);
 
         var span = item[0];
-        docWithWeights += this.props.doc.slice(prevEnd, span[0]) +
-            "<span style=\"" + col + "\">" +
-            this.props.doc.slice(span[0], span[1]) +
-            "</span>";
+
+        if(prevEnd !== span[0]){
+          spanChildren.push(<NormalSpan text={this.props.doc.slice(prevEnd, span[0])} />)
+        }
+
+        spanChildren.push(
+          <WeightedSpan
+            text={this.props.doc.slice(span[0], span[1])}
+            weight={item[1]}
+            color={colStyle.color}
+            opacity={colStyle.opacity}
+          />
+        );
 
         prevEnd = span[1];
 
         // on last item, append remaining text section
         if(i === processedSpans.length - 1){
-          docWithWeights += this.props.doc.slice(prevEnd, this.props.doc.length);
+          spanChildren.push(<NormalSpan text={ this.props.doc.slice(prevEnd, this.props.doc.length)} />);
         }
     })
 
-
+    console.log("text to render with weighted span num:", spanChildren.length)
 
     return (
 
@@ -208,7 +245,9 @@ class TextExplainerVisualizer extends React.Component {
         }}
         elevation={2}
       >
-        <div dangerouslySetInnerHTML={{__html: docWithWeights}} ></div>
+        <div>
+        {spanChildren}
+        </div>
       </Paper>
 
       {

@@ -23,6 +23,7 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardMedia from '@material-ui/core/CardMedia';
 import Divider from '@material-ui/core/Divider';
+import Paper from '@material-ui/core/Paper';
 
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile';
@@ -43,6 +44,8 @@ import IconButton from '@material-ui/core/IconButton';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import PhotoCamera from '@material-ui/icons/PhotoCamera';
+import Avatar from '@material-ui/core/Avatar';
+import {Tooltip as TooltipReact} from '@material-ui/core/Tooltip';
 
 import { withStyles } from '@material-ui/core/styles';
 
@@ -454,7 +457,7 @@ export default class ModelEditPicker extends React.Component {
 
 
         { this.props.meta.inputModality && this.props.meta.inputModality === "tabular" &&
-          <div id="shap-vizualizer" style={{"float":"left", "width":"100%", "marginTop":"3em"}}>
+          <div id="shap-vizualizer" style={{"width":"100%", "marginTop":"1em"}}>
           <AdditiveForceVisualizer
             baseValue={this.state.forceBaseValue}
             outNames={["score"]}
@@ -481,10 +484,11 @@ export default class ModelEditPicker extends React.Component {
           </Button>
 
           </div>
+
         }
 
         { this.props.meta.inputModality && this.props.meta.inputModality === "text" &&
-          <div id="lime-vizualizer" style={{"float":"left", "width":"100%", "marginTop":"3em"}}>
+          <div id="lime-vizualizer" style={{"width":"100%", "marginTop":"1em"}}>
           <TextExplainerVisualizer
             targetClasses={this.state.targetExplainerClasses}
             doc={this.state.textToExplain}
@@ -511,11 +515,12 @@ export default class ModelEditPicker extends React.Component {
 
           </div>
 
+
         }
 
 
         { this.props.meta.inputModality && this.props.meta.inputModality === "image" &&
-          <div id="gradcam-vizualizer" style={{"float":"left", "width":"100%", "marginTop":"3em"}}>
+          <div id="gradcam-vizualizer" style={{"width":"100%", "marginTop":"1em"}}>
 
           <input
             accept="image/*"
@@ -526,23 +531,42 @@ export default class ModelEditPicker extends React.Component {
             type="file"
           />
 
-          <InputLabel htmlFor="raised-button-file">
-            <Button variant="raised" component="span" style={{marginTop:"1em"}}>
-              <PhotoCamera />
-            </Button>
-          </InputLabel>
 
+          <GridList cellHeight={60} cols={2} style={{width:"65%", margin:"auto", marginTop:"0.5em"}}>
 
-          <GridList cellHeight={200} cols={2} style={{marginTop:"0.5em"}}>
             <GridListTile style={{textAlign:"center"}} cols={1}>
-              <img height="190" style={{width:"auto"}} id="image-to-upload" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=" />
+            <InputLabel htmlFor="raised-button-file">
+              <Button variant="raised" component="span" style={{marginTop:"1em"}}>
+                <PhotoCamera />
+              </Button>
+            </InputLabel>
+            </GridListTile>
+
+            <GridListTile style={{textAlign:"center"}} cols={1}>
+              <Chip
+                avatar={<Avatar>E</Avatar>}
+                label={"Model Explainer"}
+                variant="outlined"
+                style={{marginTop:"1em"}}
+              />
+            </GridListTile>
+          </GridList>
+
+
+          <GridList cellHeight={215} cols={2} style={{width:"65%", margin:"auto", marginTop:"0.5em"}}>
+            <GridListTile style={{textAlign:"center"}} cols={1}>
+              <Paper style={{height:"200px", width:"200px", margin:"auto", marginTop:"0.3em"}} elevation={2}>
+                <img height="190" style={{width:"auto"}} id="image-to-upload" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=" />
+              </Paper>
             </GridListTile>
             <GridListTile style={{textAlign:"center"}} cols={1}>
+            <Paper style={{height:"200px", width:"200px", margin:"auto", marginTop:"0.3em"}} elevation={2}>
               <img height="190" style={{width:"auto"}} id="explanation-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAoMBgDTD2qgAAAAASUVORK5CYII=" />
-              <GridListTileBar style={{width:"40%", height:"2.5em", opacity:0.9, marginLeft:"auto", marginRight:"auto"}}
+              <GridListTileBar style={{width:"52%", height:"2.5em", opacity:0.9, marginBottom:"0.3em", marginLeft:"auto", marginRight:"auto"}}
                 title={this.state.imageExplanationTitle}
                 subtitle={<span>score: {this.state.imageExplanationScore}</span>}
               />
+            </Paper>
             </GridListTile>
           </GridList>
 
