@@ -31,7 +31,18 @@ spec:
         imagePullPolicy: "{{ .Values.modelstore.image.pullPolicy }}"
         env:
           - name: ES_ENDPOINT
-            value: http://10.0.2.2:9200
+            value: https://{{ template "genome.fullname" .}}-es-http:9200
+          - name: ES_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "genome.fullname" .}}-es-elastic-user
+                key: elastic
+          - name: ES_CERT
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "genome.fullname" .}}-es-http-ca-internal
+                key: tls.crt
+
         livenessProbe:
           httpGet:
             path: /v1.0/genome/healthz

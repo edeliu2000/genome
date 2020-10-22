@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "genome.fullname" . }}-elastic-configmap
+  namespace: "{{ .Values.environment }}"
+  labels:
+    app: {{ template "genome.fullname" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    component: "{{ .Values.elastic.name }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+
+data:
+  config: |
+{{ .Files.Get "modelArtifactIndex.json" | indent 4 }}

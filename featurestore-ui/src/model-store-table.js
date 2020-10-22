@@ -1,6 +1,6 @@
 const React = require('react');
 const ReactDOM = require("react-dom");
-const vis = require("vis");
+// const vis = require("vis");
 
 const MUIDataTable = require("mui-datatables");
 
@@ -18,6 +18,7 @@ import Button from '@material-ui/core/Button';
 import Icon from '@material-ui/core/Icon';
 import IconButton from '@material-ui/core/IconButton';
 import ChartIcon from '@material-ui/icons/Timeline';
+import CancelIcon from '@material-ui/icons/Cancel';
 import OnlineIcon from '@material-ui/icons/CheckCircle';
 import OfflineIcon from '@material-ui/icons/RadioButtonUnchecked';
 import Snackbar from '@material-ui/core/Snackbar';
@@ -53,10 +54,10 @@ var SELECTED_DATES = {start: null, end:null, featureStart:null, featureEnd:null}
 var ARTIFACT_TYPE = "model";
 
 var GRAPH_INSTANCE = null;
-var GRAPH_DATA = {
-    nodes: new vis.DataSet([]),
-    edges: new vis.DataSet([])
-};
+//var GRAPH_DATA = {
+//    nodes: new vis.DataSet([]),
+//    edges: new vis.DataSet([])
+//};
 
 const GRAPH_CONFIG = {
   height:"250px",
@@ -132,11 +133,17 @@ const columns = [
            return (<div className={"cellSmall"}>{value}</div>)
         }
       }},
-      {name:"Online", options:{
+      {name:"Status", options:{
         filter:true,
         customRender: (value, tableMeta, updateValue) => {
           const colorOfBtn = value === "deployed" ? "primary" : "disabled"
-          const BtnType = value === "deployed" ? <OnlineIcon color="primary" className={styles.icon} style={{fontSize:"1.6em"}}/> : <OfflineIcon className={styles.icon} style={{fontSize:"1.6em"}}/>
+          const online = value === "deployed" || value === 1;
+          const error = value === 2;
+          var BtnType = online ? <OnlineIcon color="primary" className={styles.icon} style={{fontSize:"1.6em"}}/> : <OfflineIcon className={styles.icon} style={{fontSize:"1.6em"}}/>
+          if(error){
+            BtnType = <CancelIcon color="secondary" className={styles.icon} style={{fontSize:"1.6em"}}/>
+          }
+
           return (
           <div style={{"width":"2em"}}>
               {BtnType}
@@ -483,22 +490,23 @@ export default class ModelStoreTable extends React.Component {
 
       ReactDOM.render(<Chip label={"Job Runs (" + canonicalName + ") | last 24h"} />, document.getElementById('chart-ctn-state-title'))
 
-      GRAPH_DATA = {nodes:new vis.DataSet(nodes)}
-      GRAPH_INSTANCE = new vis.Network(document.getElementById('chart-ctn-state'), GRAPH_DATA, GRAPH_CONFIG);
-      GRAPH_INSTANCE.on("click", function(evt){
-        if(evt.nodes && evt.nodes.length){
-          var message = evt.nodes[0]
-          if(message != "legend-jobs"){
-            var canonicalName = message.split(" ")[0];
-            var state = message.split(" ")[1].replace("(", "").replace(")", "");
+      //GRAPH_DATA = {nodes:new vis.DataSet(nodes)}
 
-            self.handleJobStateData(canonicalName, state);
-            self.setState({snackbarOpen:true, snackbarMessage: message })
-          }
-        }else{
-          self.setState({snackbarOpen:false})
-        }
-      })
+      //GRAPH_INSTANCE = new vis.Network(document.getElementById('chart-ctn-state'), GRAPH_DATA, GRAPH_CONFIG);
+      //GRAPH_INSTANCE.on("click", function(evt){
+      //  if(evt.nodes && evt.nodes.length){
+      //    var message = evt.nodes[0]
+      //    if(message != "legend-jobs"){
+      //      var canonicalName = message.split(" ")[0];
+      //      var state = message.split(" ")[1].replace("(", "").replace(")", "");
+
+      //      self.handleJobStateData(canonicalName, state);
+      //      self.setState({snackbarOpen:true, snackbarMessage: message })
+      //    }
+      //  }else{
+      //    self.setState({snackbarOpen:false})
+      //  }
+      //})
     }
 
   }
@@ -541,27 +549,36 @@ export default class ModelStoreTable extends React.Component {
 
       DATA = hits.map(function(el){
         var chartURL = self._timeleonOutputChartURL(el["pipelineName"], el["pipelineStage"], el["pipelineName"], self._getInputColumns(el["schemaMeta"]))
-        return [el["pipelineName"], el["pipelineStage"] || "", el["pipelineRunId"] || "",
-          el["id"], el["online"] || "no", el["versionName"] || "",
+        var pipelineRunId = input.artifactType === "pipelineRun" ? el["id"] : (el["pipelineRunId"] || "");
+        var modelId = input.artifactType === "model" ? el["id"] : "";
+        var status = el["status"] || el["online"] || "no"
+
+        return [el["pipelineName"], el["pipelineStage"] || "", pipelineRunId,
+          modelId, status, el["versionName"] || "",
           self._printDate(el["created"]),
           {
             "mid":el["id"],
             "artifactType": el["artifactType"],
             "canonicalName": el["canonicalName"],
+            "application": el["application"],
             "pipelineName": el["pipelineName"],
             "pipelineStage": el["pipelineStage"] || "",
             "pipelineRunId": el["pipelineRunId"] || "",
+            "status": status,
             "framework": el["framework"] || "",
             "version": el["versionName"] || "",
             "parameters": el["parameters"] || {},
             "recipeRef": el["recipeRef"] || {},
             "artifactBlob": el["artifactBlob"] || {},
+            "schedule": el["schedule"] || "",
+            "nextRun": el["nextRun"] || 0,
             "featureImportance": el["featureImportance"] || [],
             "inputModality": el["inputModality"] || "",
             "start": self._printDate(el["created"]),
             "end": self._printDate(el["created"]),
             "updated": self._printDate(el["updated"]),
             "created": self._printDate(el["created"]),
+            "duration": el["updated"] - el["created"],
             "schema":el["schema"],
             "schemaMeta":el["schemaMeta"],
             "title":el["title"],

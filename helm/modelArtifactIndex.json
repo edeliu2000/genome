@@ -1,0 +1,115 @@
+{
+  "mappings": {
+    "properties": {
+
+      "artifactType": {"type": "keyword"},
+
+      "canonicalName": {
+        "type": "keyword",
+        "fields": {
+          "text": {
+            "type":  "text"
+          }
+        }
+      },
+      "application": {"type": "keyword"},
+
+      "pipelineName": {"type": "keyword"},
+      "pipelineRef": {
+        "dynamic": "strict",
+        "properties": {
+          "ref": {"type": "keyword"},
+          "refType": {"type": "keyword"}
+        }
+      },
+
+      "pipelineRunId": {"type": "keyword"},
+      "pipelineStage": {"type": "keyword"},
+
+
+      "versionName": {"type": "keyword"},
+      "framework": {"type": "keyword"},
+      "inputModality": {"type": "keyword"},
+
+
+      "code": {
+        "dynamic": "strict",
+        "properties": {
+          "ref": {"type": "keyword"},
+          "refType": {"type": "keyword"}
+        }
+      },
+
+      "parameters":{
+        "dynamic": true,
+
+        "properties": {
+          "__type__": {"type": "keyword"},
+          "__estimator_class_name__": {"type": "keyword"},
+          "__estimator_category__": {"type": "keyword"},
+          "__num_estimators__": {"type": "keyword"},
+          "__prediction_type__": {"type": "keyword"},
+          "__batchSize__": {"type": "integer"},
+          "__iteration__": {"type": "integer"},
+          "__optimizer__": {"type": "keyword"},
+          "__loss_function__": {"type": "keyword"}
+        }
+      },
+
+      "recipeRef": {
+        "dynamic": "strict",
+        "properties": {
+          "ref": {"type": "keyword"},
+          "refType": {"type": "keyword"}
+        }
+      },
+
+      "artifactBlob": {
+        "dynamic": "strict",
+        "properties": {
+          "ref": {"type": "keyword"},
+          "refType": {"type": "keyword"}
+        }
+      },
+
+      "dataRefs": {
+        "type": "nested",
+        "dynamic": "strict",
+        "properties": {
+          "ref": {"type": "keyword"},
+          "refType": {"type": "keyword"}
+        }
+      },
+
+      "schedule": {"type": "keyword"},
+      "nextRun": {"type": "date"},
+      "shard": {"type": "keyword"},
+
+      "status": {
+        "type": "short"
+      },
+
+      "featureImportance": {
+        "type": "nested",
+        "dynamic": "strict",
+        "properties": {
+          "feature": {"type": "keyword"},
+          "importance": {"type": "half_float"}
+        }
+      },
+
+      "user": {"type": "keyword"},
+
+      "tags": {
+        "properties": {
+          "__checkpoint__": {"type": "keyword"}
+        }
+      },
+
+      "context": {"type": "object", "enabled": false},
+      "created": {"type" : "date"},
+      "updated": {"type" : "date"}
+
+    }
+  }
+}

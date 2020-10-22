@@ -94,7 +94,9 @@ const getBlob = (req, res, next) => {
 
     var readStream = fs.createReadStream('./models/' + id)
      .on('error', function(err){
-       err.status = 400
+       console.log("error on blob fetch:", id, JSON.stringify(err, null, 4));
+       err.status = 500;
+       err.message = 'error during storing of blob: ';
        return next(err)
      })
     // This pipes the POST data to the file

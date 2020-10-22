@@ -1,0 +1,55 @@
+# Default values for node-hello.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+environment: local
+
+nginx:
+  name: nginx
+  image:
+    repository: nginx
+    tag: alpine
+    pullPolicy: IfNotPresent
+  service:
+    type: NodePort
+    nodePort: 30000
+
+modelstore:
+  name: modelstore
+  image:
+    repository: genome-modelstore
+    tag: local.1.1.164
+    pullPolicy: IfNotPresent
+
+routing:
+  name: routing
+  image:
+    repository: genome-routing
+    tag: local.1.28
+    pullPolicy: IfNotPresent
+
+compute:
+  name: compute
+  image:
+    repository: genome-compute
+    tag: local.55
+    pullPolicy: IfNotPresent
+
+scoring:
+  name: scoring
+  image:
+    repository: genome-scoring
+    tag: local.56
+    pullPolicy: IfNotPresent
+
+visualizer:
+  name: visualizer
+  image:
+    repository: genome-visualizer
+    tag: local.212
+    pullPolicy: IfNotPresent
+
+elastic:
+  name: elastic

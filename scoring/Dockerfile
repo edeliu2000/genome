@@ -4,12 +4,13 @@ FROM python:3.6
 RUN apt-get update
 
 #install requirements
-COPY ./requirements.txt /tmp/requirements.txt
+COPY ./scoring/requirements.txt /tmp/requirements.txt
 WORKDIR /tmp
 RUN pip3 install -r requirements.txt
 
 #copy app
-COPY . /api
+COPY ./scoring /api
+COPY ./modelstore/sdk/src/python/modelstore /api/api/modelstore
 WORKDIR /
 
 EXPOSE 5000

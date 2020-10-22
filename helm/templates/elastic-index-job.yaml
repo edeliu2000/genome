@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: initialize-index
+  namespace: "{{ .Values.environment }}"
+spec:
+  backoffLimit: 10
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      containers:
+      - name: index-job
+        image: curlimages/curl
+        command:
+        - curl
+        - "-iX PUT"
+        - "-H"
+        - "Content-Type: application/json; charset=UTF-8"
+        - "-u"
+        - "elastic:$(ES_PASS)"
+        - "-k"
+        - "-d"
+        - "$(ES_INDEX_PAYLOAD)"
+        - "$(ES_URL)/model-artifacts"
+        env:
+        - name: ES_URL
+          value: https://{{ template "genome.fullname" . }}-es-http:9200
+
+        - name: ES_INDEX_PAYLOAD
+          valueFrom:
+            configMapKeyRef:
+              name: {{ template "genome.fullname" . }}-elastic-configmap
+              key: config
+
+        - name: ES_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "genome.fullname" . }}-es-elastic-user
+              key: elastic
+
+
+
+      restartPolicy: Never

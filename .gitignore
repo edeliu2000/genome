@@ -1,3 +1,8 @@
 fjalet*.txt
+docker-packages.txt
+.DS_Store
 *.pyc
+*.tfstate
+*.tfstate.backup
 featurestore-ui/node_modules
+terraform/local-test/.terraform

@@ -6,6 +6,7 @@ services:
     container_name: modelstore_api
     restart: always
     build: ./modelstore
+    image: genome-modelstore:development
     networks:
       - apinetwork
     expose:
@@ -18,10 +19,32 @@ services:
           memory: 500M
 
 
+  routing:
+    container_name: routing_api
+    restart: always
+    build: ./routing
+    image: genome-routing:development
+    networks:
+      - apinetwork
+    expose:
+      - "3003"
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - MODELSTORE=http://modelstore:3000
+
+    deploy:
+      resources:
+        limits:
+          memory: 500M
+
+
   scoring:
     container_name: scoring_api
     restart: always
     build: ./scoring
+    image: genome-scoring:development
     networks:
       - apinetwork
     expose:

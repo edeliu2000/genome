@@ -1,0 +1,11 @@
+FROM python:3.6
+
+#update
+RUN apt-get update
+
+#copy app
+COPY ./modelstore/sdk/src/python /app
+WORKDIR /
+
+ENV MODELSTORE http://genome.ai
+CMD ["python", "-m", "unittest", "app.test.test_sdk"]

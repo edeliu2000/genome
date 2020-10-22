@@ -3,6 +3,8 @@ const express = require('express');
 const body_parser = require('body-parser');
 const router = require('./api/router');
 const auth = require('./auth/auth');
+const axios = require('axios');
+
 
 const app = express();
 
@@ -51,6 +53,8 @@ const PORT = process.env.PORT || 3000;
 const elastic = process.env.ES_ENDPOINT;
 
 app.post('/v1.0/genome/explain', authRequired, router.route);
+app.post('/v1.0/genome/explanation/samples', authRequired, router.route);
+app.post('/v1.0/genome/visualization', authRequired, router.route);
 
 app.get('/v1.0/genome/healthz', (req, res) => {
   res.send('ping!\n');
@@ -60,4 +64,13 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Router app listening on port ${PORT}!`);
+  console.log(`Router app second listening on port ${PORT}!`);
+  var promise = axios.get( "http://localhost:8001/" + "api/v1/namespaces/local/services" + "?labelSelector=component%3Dvisualizer")
+  .then(function(response){
+    console.log("querying to apiserver list services test: ", response.data);
+    return response.data
+  }).catch((err) => {
+    console.log("err on api server test:", err)
+  });
+
 })

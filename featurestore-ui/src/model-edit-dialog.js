@@ -36,6 +36,11 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
 
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
+
 import Collapse from '@material-ui/core/Collapse';
 
 
@@ -44,18 +49,32 @@ import IconButton from '@material-ui/core/IconButton';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import PhotoCamera from '@material-ui/icons/PhotoCamera';
+import ShareIcon from '@material-ui/icons/Share';
+import AccessTime from '@material-ui/icons/AccessTime';
+import DoneIcon from '@material-ui/icons/Done';
 import Avatar from '@material-ui/core/Avatar';
+
+import CancelIcon from '@material-ui/icons/Cancel';
+import OnlineIcon from '@material-ui/icons/CheckCircle';
+import OfflineIcon from '@material-ui/icons/RadioButtonUnchecked';
+
 import {Tooltip as TooltipReact} from '@material-ui/core/Tooltip';
 
 import { withStyles } from '@material-ui/core/styles';
 
 
-import DataLineageViewer from './feature-lineage-viewer'
+// import DataLineageViewer from './feature-lineage-viewer'
+// depends "vis": "^4.21.0",
 
 import {PieChart, Pie, Legend, Tooltip, Cell, Sector} from 'recharts'
 import {BarChart, Bar, ReferenceLine, XAxis, YAxis, CartesianGrid} from 'recharts'
 import AdditiveForceVisualizer from './visualizers/additive-force'
 import TextExplainerVisualizer from './visualizers/text-explainer'
+
+import ModelVisualizer from './visualizers/model-visualizer'
+
+import AdditiveRemoteVisualizer from './visualizers/additive-remote'
+import PipelineVisualizer from './visualizers/pipeline'
 
 const _fetchData = require("./elastic-queries")._fetchData
 const _fetchDataRaw = require("./elastic-queries")._fetchDataRaw
@@ -172,50 +191,48 @@ class OnlinePieChart extends React.Component {
 
 export default class ModelEditPicker extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      startDate: null,
+      endDate: null,
+      clearedDate: null,
 
-  state = {
-    startDate: null,
-    endDate: null,
-    clearedDate: null,
+      title: "",
+      description: "",
+      tags: "",
+      howtouse: "",
 
-    title: "",
-    description: "",
-    tags: "",
-    howtouse: "",
+      inputs:[],
+      numInputs: "fetching...",
 
-    inputs:[],
-    numInputs: "fetching...",
+      inputsModelMeta:[],
 
-    inputsModelMeta:[],
+      duration:"0m",
+      cost:"0$",
+      release:"",
 
-    duration:"0m",
-    cost:"0$",
-    release:"",
+      schedule: "",
 
-    schedule: "",
+      textToExplain: "",
+      imageExplanationTitle : "",
+      imageExplanationScore: "",
 
-    entryToExplain: "",
-    textToExplain: "",
-    imageExplanationTitle : "",
-    imageExplanationScore: "",
+      targetExplainerClasses: [],
+      explainerMetrics:null,
+      explainer:null,
 
-    forceBaseValue: 0,
-    forceFeatures: {},
-    forceFeatureNames: {},
-
-    targetExplainerClasses: [],
-    explainerMetrics:null,
-    explainer:null,
-
-    open: false,
-    openProps: false,
-    openCollapsable: false,
-    openCollapsableHyper: false,
-    openCollapsableTags: false,
-    openCollapsableSchema: false,
-    snackbarOpen: false,
-    snackbarMessage: "",
+      open: false,
+      openProps: false,
+      openCollapsable: false,
+      openCollapsableHyper: false,
+      openCollapsableTags: false,
+      openCollapsableSchema: false,
+      snackbarOpen: false,
+      snackbarMessage: "",
+    }
   }
+
 
   componentWillUnmount = () => {
       this.setState({imageExplanationTitle:"", imageExplanationScore:""})
@@ -272,8 +289,7 @@ export default class ModelEditPicker extends React.Component {
 
   onExplainClick = () => {
     var canonicalName = this.props.meta["canonicalName"];
-    const { entryToExplain, textToExplain } = this.state;
-    var entries = JSON.parse("[" + entryToExplain + "]");
+    const { textToExplain } = this.state;
 
     var self = this;
     var accToken = sessionStorage.getItem('accessToken');
@@ -282,7 +298,6 @@ export default class ModelEditPicker extends React.Component {
     _fetchDataRaw({
       canonicalName:canonicalName,
       application: "search",
-      entries: entries,
       text: textToExplain || ""
     }, function(err, explanations){
 
@@ -299,21 +314,6 @@ export default class ModelEditPicker extends React.Component {
          });
          return;
        }
-
-       var base = explanations.expected instanceof Array ? explanations.expected[0] :explanations.expected;
-       var shapley = explanations.shapley[0];
-       var features = {};
-       var featureNames = {};
-       shapley.forEach((el, i) => {
-         featureNames["" + (i+1)] = "feat-" + (i+1);
-         features["" + (i+1)] = {value:entries[0][i], effect: el};
-       })
-
-       self.setState({
-         forceBaseValue: base,
-         forceFeatures: features,
-         forceFeatureNames: featureNames
-       })
 
     }, "/v1.0/genome/routing/explain",
       window.location.protocol + "//" + window.location.host,
@@ -395,6 +395,15 @@ export default class ModelEditPicker extends React.Component {
   render(){
 
     const { startDate, endDate } = this.state;
+    const isPipeline = this.props.meta.artifactType === "pipelineRun" || this.props.meta.artifactType === "pipeline";
+    const steps = isPipeline && this.props.meta.recipeRef ? JSON.parse(this.props.meta.recipeRef.ref) : null;
+    steps && this.props.meta.schedule ? steps.unshift({
+      schedule: this.props.meta.schedule,
+      nextRun: this.props.meta.nextRun,
+      stepName: "schedule",
+      stepType: "schedule",
+      parameters: this.props.meta.parameters,
+    }) : null;
 
     return (
       <div style={{"float":"left", "width":"50%", "marginRight":"1.3em", "marginLeft":"-1em", "marginTop":"0.8em"}}>
@@ -413,7 +422,7 @@ export default class ModelEditPicker extends React.Component {
           aria-labelledby="dialog-title"
           scroll="body"
         >
-        <DialogTitle id="dialog-title">{ this.props.meta.artifactType == "model" ? "Model" : "Pipeline" } Properties</DialogTitle>
+        <DialogTitle id="dialog-title">{{"model":"Model", "pipeline":"Pipeline", "pipelineRun":"Pipeline Run"}[this.props.meta.artifactType]} Properties</DialogTitle>
         <DialogContent >
         <div>
 
@@ -455,37 +464,19 @@ export default class ModelEditPicker extends React.Component {
         </div>
         }
 
+        { isPipeline &&
+          <PipelineVisualizer
+            genomePipeline={steps}
+            width={"100%"}
+            height={"200"}
+          />
+        }
 
         { this.props.meta.inputModality && this.props.meta.inputModality === "tabular" &&
-          <div id="shap-vizualizer" style={{"width":"100%", "marginTop":"1em"}}>
-          <AdditiveForceVisualizer
-            baseValue={this.state.forceBaseValue}
-            outNames={["score"]}
-            link={"identity"}
-            features={this.state.forceFeatures}
-            featureNames={this.state.forceFeatureNames}
-          />
-          <TextField
-            id="entryToExplain"
-            label="Entry to Explain from Model"
-            style={{ marginTop: "1.5em"}}
-            placeholder="[1.0,2.0,1.5, ...]"
-            helperText="json list"
-            fullWidth
-            margin="normal"
-            onChange={this._onChange}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-
-          <Button onClick={this.onExplainClick} size="small" variant="contained" color="primary">
-            explain
-          </Button>
-
-          </div>
-
+            <AdditiveRemoteVisualizer
+              canonicalName={this.props.meta.canonicalName} />
         }
+
 
         { this.props.meta.inputModality && this.props.meta.inputModality === "text" &&
           <div id="lime-vizualizer" style={{"width":"100%", "marginTop":"1em"}}>
@@ -579,15 +570,58 @@ export default class ModelEditPicker extends React.Component {
               <Icon>arrow_right</Icon>
             </ListItemIcon>
             <ListItemText inset
-              primary={
-                this.props.meta.pipelineName +
-                (this.props.meta.pipelineStage ? " | " : "") +
-                this.props.meta.pipelineStage} secondary={this.props.meta.pipelineId}
+              primary={[
+                this.props.meta.pipelineName,
+
+                (this.props.meta.artifactType === "pipelineRun" ? {
+                  0:" (running..)",
+                  1: <Chip
+                      style={{marginLeft:"0.5em"}}
+                      avatar={<Avatar>C</Avatar>}
+                      label={"completed"}
+                      variant="outlined"
+                      deleteIcon={<DoneIcon />}
+                     />,
+                  2: <Chip
+                      style={{marginLeft:"0.5em"}}
+                      avatar={<Avatar>F</Avatar>}
+                      label={"failed"}
+                      color="secondary"
+                      variant="outlined"
+                     />
+                }[this.props.meta.status] : ""),
+
+                (this.props.meta.pipelineStage ? <Chip
+                    style={{marginLeft:"0.5em"}}
+                    avatar={<Avatar>S</Avatar>}
+                    label={this.props.meta.pipelineStage}
+                    variant="outlined"
+                   /> : ""),
+
+                <Chip
+                  style={{position:"relative", top:"0.3em", marginLeft:"0.5em"}}
+                  avatar={<Avatar><AccessTime /></Avatar>}
+                  label={"duration( " + (this.props.meta.duration / 1000 * 60) + "m )"}
+                  variant="outlined"
+                />
+
+              ]}
 
               secondary={this.props.meta.canonicalName || ""}
 
               />
           </ListItem>
+
+          { isPipeline && this.props.meta.schedule &&
+          <ListItem divider>
+          <ListItemIcon>
+              <Icon>arrow_right</Icon>
+            </ListItemIcon>
+            <ListItemText inset primary={"schedule"} secondary={
+              this.props.meta.schedule + " | " + new Date(this.props.meta.nextRun)
+            } />
+          </ListItem>
+          }
 
 
           <ListItem button onClick={this.handleCollapsableHyper} style={{minWidth:"35em"}}>
@@ -715,7 +749,19 @@ export default class ModelEditPicker extends React.Component {
             </ListItemIcon>
             <ListItemText inset primary="Framework" secondary={this.props.meta.framework} />
           </ListItem>
+
         </List>
+
+        { this.props.meta.artifactType === "model" &&
+        <ModelVisualizer
+          canonicalName={ this.props.meta.canonicalName || ""}
+          application={ this.props.meta.application || ""}
+          ensembleEstimators={ this.props.meta.parameters.__num_estimators__ || 1}
+          estimatorCategory={this.props.meta.parameters.__estimator_category__ || ""}
+          estimatorClassName={ this.props.meta.parameters.__estimator_class_name__ || "Random Forest"}
+          framework={this.props.meta.framework}
+          />
+        }
 
         <div style={{marginTop:"0.5em"}}><Chip color="secondary" label={"id: " + this.props.meta.mid}/></div>
 

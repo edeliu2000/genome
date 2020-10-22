@@ -148,6 +148,7 @@ class AdditiveForceVisualizer extends React.Component {
       .tickFormat(d => this.tickFormat(this.invLinkFunction(d)))
       .tickPadding(-18);
 
+
     // draw and then listen for resize events
     //this.draw();
     window.addEventListener("resize", this.redraw);
@@ -178,7 +179,7 @@ class AdditiveForceVisualizer extends React.Component {
     let width = this.svg.node() && this.svg.node().parentNode ?
       this.svg.node().parentNode.offsetWidth : 0;
     if (width == 0) return setTimeout(() => this.draw(this.props), 500);
-    this.svg.style("height", 150 + "px");
+    this.svg.style("height", 100 + "px");
     this.svg.style("width", width + "px");
     let topOffset = 50;
 
@@ -196,7 +197,7 @@ class AdditiveForceVisualizer extends React.Component {
 
     this.scaleCentered
       .domain([-this.domainSize / 2, this.domainSize / 2])
-      .range([0, width])
+      .range([30, width])
       .clamp(true);
     this.axisElement
       .attr("transform", "translate(0," + topOffset + ")")

@@ -34,7 +34,7 @@ function authRequired(req, res, next) {
       next();
     })
     .catch((err) => {
-      console.log("err on jwt token:", err)
+      console.log("err on jwt token:", JSON.stringify(err, null, 4))
       return next({status:401, message:err.message});
     });
 }
@@ -55,6 +55,7 @@ const elastic = process.env.ES_ENDPOINT;
 app.post('/v1.0/genome/model', genome.createModel);
 app.post('/v1.0/genome/pipeline', genome.createPipeline);
 app.post('/v1.0/genome/pipelineRun', genome.createPipelineRun);
+app.post('/v1.0/genome/pipelineRun/:runId/status', genome.createPipelineRunStatus);
 app.post('/v1.0/genome/search', search.search);
 app.post('/v1.0/genome/searchkeywords', authRequired, search.searchByKeywords);
 app.post('/v1.0/genome/blob', blob.blob);

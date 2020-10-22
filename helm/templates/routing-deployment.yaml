@@ -34,6 +34,8 @@ spec:
             value: http://{{ template "genome.fullname" . }}-modelstore-service:3000
           - name: SCORING
             value: http://{{ template "genome.fullname" . }}-scoring-service:5000
+          - name: VISUALIZER
+            value: http://{{ template "genome.fullname" . }}-visualizer-service:5000
         livenessProbe:
           httpGet:
             path: /v1.0/genome/healthz
@@ -45,5 +47,11 @@ spec:
         - containerPort: 3000
         resources: {}
         workingDir: /
+
+      - name: sidecar-apiserver
+        image: sidecar-kubectl:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8001
       restartPolicy: Always
 status: {}

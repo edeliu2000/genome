@@ -1,7 +1,10 @@
 FROM node:10 as build
 
 WORKDIR /app
-COPY . ./
+
+COPY ./routing ./
+COPY ./core/auth ./auth
+
 RUN npm install
 
 FROM node:10-alpine

@@ -260,7 +260,7 @@ class ModelStorePicker extends React.Component {
           value={this.state.artifactType}
           onChange={this.handleArtifactType}
         >
-          <MenuItem value={"model"}>Models and Transformations</MenuItem>
+          <MenuItem value={"model"}>Models</MenuItem>
           <MenuItem value={"pipeline"}>Pipelines</MenuItem>
           <MenuItem value={"pipelineRun"}>PipelineRuns</MenuItem>
         </Select>

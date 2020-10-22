@@ -30,9 +30,26 @@ routing:
     tag: development
     pullPolicy: IfNotPresent
 
+compute:
+  name: compute
+  image:
+    repository: genome-compute
+    tag: development
+    pullPolicy: IfNotPresent
+
 scoring:
   name: scoring
   image:
     repository: genome-scoring
     tag: development
     pullPolicy: IfNotPresent
+
+visualizer:
+  name: visualizer
+  image:
+    repository: genome-visualizer
+    tag: local
+    pullPolicy: IfNotPresent
+
+elastic:
+  name: elastic

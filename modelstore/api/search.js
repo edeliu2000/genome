@@ -1,14 +1,87 @@
 const { Client } = require('@elastic/elasticsearch')
 const elastic = process.env.ES_ENDPOINT || 'http://docker.for.mac.localhost:9200';
-const client = new Client({ node: elastic })
+const client = new Client({
+  node: elastic,
+  auth: {
+    username:"elastic",
+    password:process.env.ES_PASS
+  },
+  ssl: {
+    ca: process.env.ES_CERT
+  }
 
-var searchByKeywords = function(req, res){
+})
+
+
+const createError = (status, message, err) => {
+  var error = err || new Error(message);
+  error.status = status;
+  error.message = message;
+  return error;
+};
+
+
+
+const queryPipelinesToRun = function(req, res, next){
+
+  if(!req.body.nextRun){
+    return next(createError(400, 'nextRun field missing'));
+  }
+
+  var artifactTypeProperty = "pipeline";
+  var sortPropertyDesc = "nextRun";
+  var sortProperty = {};
+  var sortList = [];
+
+
+  sortProperty[sortPropertyDesc] = {"order":"desc"}
+  sortList.push(sortProperty)
+
+
+  var shard = req.body.shard || "shard-1";
+
+  var query = {
+    index: 'model-artifacts',
+    body: {
+      from : 0,
+      size: 10,
+      sort: sortList,
+      query: { bool: { must: [
+        {term: {"artifactType": artifactTypeProperty}},
+        {term: {"shard": shard}},
+        {range : {
+          nextRun : {
+            lte : Number(req.body.nextRun)
+          }
+        }}
+        ]}
+      }}
+  };
+
+
+  client.search(query, (err, result) => {
+      if (err) {
+        console.log(JSON.stringify(err, null, 4));
+        return next(createError(500, 'error during storing of ' + artifactTypeProperty + ': ', err));
+      }
+
+      var arr = [];
+      if(result.body.hits && result.body.hits.hits){
+        result.body.hits.hits.forEach((item, i) => {
+          item._source.id = item._id;
+          arr.push(item._source);
+        });
+      }
+      return res.json(arr);
+  })
+};
+
+
+
+const searchByKeywords = function(req, res, next){
 
   if(!req.body.query){
-    var validationErr = new Error('query field missing');
-    validationErr.status = 400
-    validationErr.message = 'query field missing'
-    throw validationErr;
+    return next(createError(400, 'query field missing'));
   }
 
   var artifactTypeProperty = req.query.artifactType || "model";
@@ -53,7 +126,13 @@ var searchByKeywords = function(req, res){
 
 
   client.search(query, (err, result) => {
-      if (err) console.log(err);
+      if (err) {
+        console.log(JSON.stringify(err, null, 4));
+        return next(createError(
+          500,
+          'error during storing of ' + artifactTypeProperty + ': ',
+          err));
+      }
 
       var arr = [];
       if(result.body.hits && result.body.hits.hits){
@@ -62,12 +141,15 @@ var searchByKeywords = function(req, res){
           arr.push(item._source);
         });
       }
-
       return res.json(arr);
   })
 };
 
-var search = function(req, res){
+
+
+
+const search = function(req, res, next){
+
 
   var artifactTypeProperty = req.query.artifactType || "model";
   var sortPropertyDesc = req.query.sortDesc || "created";
@@ -79,7 +161,11 @@ var search = function(req, res){
   var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 7));
   var toDate = Number(req.query.to || Date.now());
 
-  console.log("query for search", req.body);
+  if(!req.body.application){
+    return next(createError(400, 'application field missing'));
+  }
+
+  console.log("query for search", req.body, fromDate, toDate);
 
   var query = {
     index: 'model-artifacts',
@@ -140,7 +226,11 @@ var search = function(req, res){
   }});
 
   client.search(query, (err, result) => {
-    if (err) console.log(err);
+
+    if (err) {
+      console.log(JSON.stringify(err, null, 4));
+      return next(createError(500, 'error during storing of ' + artifactTypeProperty + ': ', err));
+    }
 
     var arr = [];
     if(result.body.hits && result.body.hits.hits){
@@ -157,5 +247,6 @@ var search = function(req, res){
 
 module.exports = {
   search: search,
-  searchByKeywords: searchByKeywords
+  searchByKeywords: searchByKeywords,
+  queryPipelinesToRun: queryPipelinesToRun
 }

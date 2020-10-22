@@ -10,7 +10,11 @@
     "node-cache": "^5.1.x",
     "aws-sdk":"latest"
   },
+  "devDependencies" : {
+    "jest": "^26.4.2"
+  },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "jest"
   }
 }

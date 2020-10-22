@@ -361,9 +361,9 @@
       var respJSON = response.json()
       return respJSON
     }).then(function(respJSON){
-
       return callback(null, respJSON)
     }).catch(function(err){
+      console.log("_fetchRaw mystery error: ", err)
       if(err.json){
         err.json().then(errJson => {
           return callback({status: err.status, message: errJson.error.message},[])

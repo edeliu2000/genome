@@ -1,10 +1,18 @@
 const modelStoreLocation = process.env.MODELSTORE || 'http://modelstore:3000';
 const scoringLocation = process.env.SCORING || 'http://scoring:5000';
+const visualizerLocation = process.env.VISUALIZER || 'http://visualizer:5000';
 const axios = require('axios');
 const NodeCache = require( "node-cache" );
 const metaCache = new NodeCache();
 
-var routeToExplainer = function(req, res, next){
+const clusters = {
+  "/v1.0/genome/explain": { "loc": scoringLocation, "format": "json"},
+  "/v1.0/genome/explanation/samples": { "loc": scoringLocation, "format": "json"},
+  "/v1.0/genome/visualization": {"loc": visualizerLocation, "format": "blob"}
+};
+
+
+const routeToExplainer = (req, res, next) => {
 
   if(!req.body.canonicalName){
     var validationErr = new Error('canonicalName field missing');
@@ -36,22 +44,36 @@ var routeToExplainer = function(req, res, next){
     promise = Promise.resolve(modelInfoResp)
   }
 
+  var path = req.baseUrl + req.path
+  var clusterLocation = clusters[path];
+
   promise
   .then(function (data) {
     var modelInfos = data
-    if(modelInfos.length <=0) return next({
-      status:400,
-      message: "no model found with: " + req.body.canonicalName
-    });
+    if(modelInfos.length <=0) {
+      return next({
+        status:400,
+        message: "no model found with: " + req.body.canonicalName
+      });
+    }
+
+    console.log("scoring model: ", modelInfos);
     console.log("scoring model with format: " + modelInfos[0].framework);
     var payload = req.body
     payload.modelMeta = modelInfos[0];
-    return axios.post(scoringLocation + '/explain', payload)
+
+    return axios.post(clusterLocation["loc"] + req.originalUrl.replace("/v1.0/genome", ""), payload)
   })
-  .then(function(scoringResp){
-    return res.status(200).json(scoringResp.data)
+  .then(function(clusterResponse){
+    console.log("scoring resp with format: ", clusterResponse);
+    if(clusterLocation["format"] === "json"){
+      return res.status(200).json(clusterResponse.data)
+    }else{
+      return res.status(200).send(clusterResponse.data)
+    }
   })
   .catch(function (error) {
+    console.log("error from scoring backend: ", error);
     return next(error);
   });
 };

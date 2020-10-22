@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "genome.fullname" . }}-compute-service
+  namespace: "{{ .Values.environment }}"
+  labels:
+    app: {{ template "genome.fullname" . }}
+    chart: {{ template "genome.chart" . }}
+    component: "{{ .Values.compute.name }}"
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: {{ template "genome.fullname" . }}
+    component: "{{ .Values.compute.name }}"
+    release: {{ .Release.Name }}
+status:
+  loadBalancer: {}

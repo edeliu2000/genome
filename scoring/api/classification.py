@@ -44,26 +44,29 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
+
 
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.datasets import fetch_california_housing
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import SVC
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import SVC
-from sklearn.decomposition import TruncatedSVD
-from sklearn.pipeline import Pipeline, make_pipeline
-
-
 
 import xgboost
 import shap
+
 from .eli5.keras import explain_prediction
 from .eli5.image import format_as_image
 from .eli5.lime import TextExplainer
 from .eli5.formatters.as_dict import format_as_dict
 from .eli5.sklearn.explain_prediction import explain_prediction_linear_classifier
+
+from .modelstore.client import ModelStore
+from .modelstore.estimator import GenomeEstimator
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -74,6 +77,9 @@ explanation_api = Blueprint('explanation_api', __name__)
 health_api = Blueprint('health_api', __name__)
 
 modelstore_api = os.environ['MODELSTORE']
+is_train_job = os.environ['TRAIN_PARAMS'] if "TRAIN_PARAMS" in os.environ else False
+
+
 
 logging.info("starting container with modelstore:" + modelstore_api)
 
@@ -81,173 +87,11 @@ logging.info("starting container with modelstore:" + modelstore_api)
 cachedModels = {}
 trainingModel = False
 
+modelStore = ModelStore()
 
 X,y = shap.datasets.adult()
 X_multi,y_multi = shap.datasets.linnerud()
 X_image,y_image = shap.datasets.imagenet50()
-
-
-def zipdir(path, ziph):
-    # ziph is zipfile handle
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            ziph.write(os.path.join(root, file))
-
-
-def loadModel(meta):
-    # first check with model store yada-yada
-    model = None
-
-    if "framework" not in meta or "artifactBlob" not in meta:
-
-        # post model metadata
-        modelMeta = {
-            "canonicalName": meta["canonicalName"] if "canonicalName" in meta else "modelPipeline",
-            "application": meta["application"] if "application" in meta else "modelPipeline"
-        }
-
-        reqMeta = urllib.request.Request(modelstore_api + "/v1.0/genome/search")
-        reqMeta.add_header(
-            'Content-Type',
-            'application/json',
-        )
-
-        responseMeta = urllib.request.urlopen(reqMeta, json.dumps(modelMeta).encode('utf-8'))
-        data = responseMeta.read()
-        modelMetaResp = json.loads(data)
-
-        if not modelMetaResp or len(modelMetaResp) == 0:
-            logging.info('No Model Found in ModelStore: ' + json.dumps(modelMeta))
-            return model
-
-
-
-        logging.info('Models Found in ModelStore: ' + json.dumps(modelMetaResp) + " len: " + str(len(modelMetaResp)))
-
-        modelMetaArtifact =  modelMetaResp[0]
-        model_id = modelMetaArtifact["artifactBlob"]["ref"]
-        logging.info('Model Found in ModelStore: ' + json.dumps(modelMetaArtifact["artifactBlob"]))
-    else:
-        modelMetaArtifact = meta
-        model_id = modelMetaArtifact["artifactBlob"]["ref"]
-
-
-
-    logging.info("fetching model from url: " + modelstore_api + "/v1.0/genome/blob/" + model_id)
-
-    try:
-        response = urllib.request.urlopen(modelstore_api + "/v1.0/genome/blob/" + model_id)
-        model_file = response.read()
-
-        if "keras" in modelMetaArtifact["framework"] or "tensorflow" in modelMetaArtifact["framework"]:
-            logging.info("initializing keras model:" + model_id)
-            tmpdir = tempfile.mkdtemp()
-            z = zipfile.ZipFile(io.BytesIO(model_file))
-            logging.info("files in zip:" + str(z.namelist()))
-            z.extractall(tmpdir)
-            model = tensorflow.keras.models.load_model(tmpdir)
-        elif "tensorflow" in modelMetaArtifact["framework"]:
-            logging.info("initializing tensorflow model:" + model_id)
-            tmpdir = tempfile.mkdtemp()
-            z = zipfile.ZipFile(io.BytesIO(model_file))
-            logging.info("files in zip:" + str(z.namelist()))
-            z.extractall(tmpdir)
-            model = tensorflow.saved_model.load(tmpdir)
-
-        else:
-            model = pickle.loads(model_file)
-
-        cachedModels[model_id] = model
-        cachedModels[meta["canonicalName"]] = model
-
-    except URLError as e:
-        if hasattr(e, 'reason'):
-            logging.info('We failed to reach a server.')
-            logging.info('Reason: ' + e.reason)
-        elif hasattr(e, 'code'):
-            logging.info('The server couldn\'t fulfill the request.')
-            logging.info('Error code: ' + str(e.code))
-
-    return model
-
-
-def saveModel(model, meta):
-
-    # post model blob
-    serializedModel = None
-    if "sklearn" in str(type(model)):
-        serializedModel = pickle.dumps(model)
-    elif "xgboost" in str(type(model)):
-        serializedModel = pickle.dumps(model)
-    elif "lightgbm" in str(type(model)).lower():
-        serializedModel = pickle.dumps(model)
-    elif "catboost" in str(type(model)).lower():
-        serializedModel = pickle.dumps(model)
-
-    elif "keras" in str(type(model)):
-        tmpdir = tempfile.mkdtemp()
-        kerasmodel_save_path = os.path.join(tmpdir, "model")
-        tensorflow.saved_model.save(model, kerasmodel_save_path)
-        shutil.make_archive(os.path.join(tmpdir, 'model-file'), 'zip', kerasmodel_save_path)
-        fileobj = open(tmpdir + "/model-file.zip", 'rb')
-        serializedModel = fileobj.read()
-
-    elif "tensorflow" in str(type(model)):
-        tmpdir = tempfile.mkdtemp()
-        tfmodel_save_path = os.path.join(tmpdir, "model")
-        tensorflow.saved_model.save(model, tfmodel_save_path)
-        shutil.make_archive(os.path.join(tmpdir, 'model-file'), 'zip', tfmodel_save_path)
-        fileobj = open(tmpdir + "/model-file.zip", 'rb')
-        serializedModel = fileobj.read()
-
-    else:
-        logging.info("Could not find the main library this model is from. Pickling the entire object")
-        serializedModel = pickle.dumps(model)
-
-
-
-
-    req = urllib.request.Request(modelstore_api + "/v1.0/genome/blob")
-    req.add_header(
-        'Content-Type',
-        'application/octet-stream',
-    )
-
-    response = urllib.request.urlopen(req, serializedModel)
-    data = response.read()
-    modelResp = json.loads(data)
-    logging.info("blob-id: " + str(modelResp["id"]))
-
-
-    # post model metadata
-    modelMeta = {
-        "canonicalName": meta["canonicalName"] if "canonicalName" in meta else "modelPipeline",
-        "application": meta["application"] if "application" in meta else "modelPipeline",
-        "pipelineName": meta["pipelineName"] if "pipelineName" in meta else "modelPipeline",
-        "pipelineRunId": meta["pipelineRunId"] if "pipelineRunId" in meta else "modelPipeline",
-        "pipelineStage": meta["pipelineStage"] if "pipelineStage" in meta else "modelPipeline",
-        "code": meta["code"] if "code" in meta else {"ref":"noref", "refType":"nocode"},
-        "framework": meta["framework"] if "framework" in meta else "tensorflow",
-        "versionName": "1.2.3",
-        "artifactBlob": {"ref": modelResp["id"], "refType": "modelstore"},
-        "inputModality": meta["inputModality"] if "inputModality" in meta else "tabular",
-        "dataRefs": [{
-          "ref": "s3:/dataset/uuid-123",
-          "refType": "mllake"
-        }],
-
-    }
-    reqMeta = urllib.request.Request(modelstore_api + "/v1.0/genome/model")
-    reqMeta.add_header(
-        'Content-Type',
-        'application/json',
-    )
-
-    responseMeta = urllib.request.urlopen(reqMeta, json.dumps(modelMeta).encode('utf-8'))
-    data = responseMeta.read()
-    modelMetaResp = json.loads(data)
-    logging.info("model-id: " + str(modelMetaResp["id"]))
-
 
 
 
@@ -259,7 +103,7 @@ def getTrainedModel(modelMeta):
         return cachedModels[canonicalName]
 
 
-    explainer = loadModel(modelMeta)
+    explainer = modelStore.loadModel(modelMeta)
 
     if not explainer:
         global trainingModel
@@ -284,7 +128,7 @@ def getTrainedModel(modelMeta):
         explainer = shap.TreeExplainer(model)
 
         # save model to file
-        saveModel(explainer, {
+        modelStore.saveModel(explainer, {
           "canonicalName": canonicalName,
           "application": "search",
           "pipelineName": "pipeline-test",
@@ -327,6 +171,24 @@ def trainVGG16():
 
 
 
+def getImageNetClasses():
+    if "imagenet/classes" in cachedModels:
+        return cachedModels["imagenet/classes"]
+    # load the ImageNet class names
+    url = "https://s3.amazonaws.com/deep-learning-models/image-models/imagenet_class_index.json"
+    fname = shap.datasets.cache(url)
+    with open(fname) as f:
+        class_names = json.load(f)
+
+        cachedModels["imagenet/classes"] = {"classes":class_names}
+
+        return cachedModels["imagenet/classes"]
+
+
+
+
+
+
 def trainVGG16Eli5(modelMeta):
 
     canonicalName = modelMeta["canonicalName"]
@@ -334,14 +196,8 @@ def trainVGG16Eli5(modelMeta):
     # load pre-trained model and choose two images to explain
     model = MobileNetV2(weights='imagenet', include_top=True)
 
-    # load the ImageNet class names
-    url = "https://s3.amazonaws.com/deep-learning-models/image-models/imagenet_class_index.json"
-    fname = shap.datasets.cache(url)
-    with open(fname) as f:
-        class_names = json.load(f)
-
     # save model to file
-    saveModel(model, {
+    modelStore.saveModel(model, {
       "canonicalName": canonicalName,
       "application": "search",
       "pipelineName": "pipeline-keras-test",
@@ -349,13 +205,11 @@ def trainVGG16Eli5(modelMeta):
       "pipelineStage": "model",
       "framework": "keras",
       "inputModality": "image",
-      "versionName": "keras.1.2.2"
+      "versionName": "keras.1.2.2",
+      "predictionType": "classification"
     })
 
     logging.info("trained MobileNetV2 Model and saved on ModelStore")
-
-    cachedModels["imagenet/classes"] = {"classes":class_names}
-
 
 
 
@@ -381,17 +235,21 @@ def trainTextClassifier(modelMeta):
     svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
     lsa = make_pipeline(vec, svd)
 
-    clf = SVC(C=150, gamma=2e-2, probability=True)
-    pipe = make_pipeline(lsa, clf)
+    #clf = SVC(C=150, gamma=2e-2, probability=True)
+    forest_model = RandomForestClassifier(n_estimators=205,max_depth=5)
+
+    pipe = make_pipeline(lsa, forest_model)
 
     # fit and score
     pipe.fit(twenty_train.data, twenty_train.target)
 
-    model = {"model": pipe, "func": "predict_proba", "target_names":twenty_train.target_names}
+    model = GenomeEstimator(pipe,
+        estimator_predict="predict_proba",
+        target_classes=twenty_train.target_names)
 
 
     # save model to file
-    saveModel(model, {
+    modelStore.saveModel(model, {
       "canonicalName": canonicalName,
       "application": "search",
       "pipelineName": "pipeline-sklearn-text-classifier",
@@ -399,10 +257,106 @@ def trainTextClassifier(modelMeta):
       "pipelineStage": "model",
       "framework": "sklearn",
       "inputModality": "text",
-      "versionName": "sklearn-text.1.2.2"
+      "versionName": "sklearn-text.1.2.2",
+      "predictionType": "classification"
     })
 
     logging.info("trained text classifier Model and saved on ModelStore")
+
+
+
+def trainAdultXGBoost(modelMeta):
+    canonicalName = modelMeta["canonicalName"]
+
+    logging.info("started training XGBoost Model")
+    # train XGBoost model
+    model = xgboost.train({"learning_rate": 0.01}, xgboost.DMatrix(X.values, label=y), 100)
+
+
+    # explain the model's predictions using SHAP
+    # (same syntax works for LightGBM, CatBoost, scikit-learn and spark models)
+    explainer = shap.TreeExplainer(model)
+
+    genome_model = GenomeEstimator(model,
+        target_classes=["over_50k"],
+        explainer=explainer)
+
+
+    # save model to file
+    modelStore.saveModel(genome_model, {
+      "canonicalName": canonicalName,
+      "application": "search",
+      "pipelineName": "pipeline-test",
+      "pipelineRunId": "run-id-1",
+      "pipelineStage": "model",
+      "framework": "xgboost",
+      "inputModality": "tabular",
+      "versionName": "xgboost.1.2.1"
+    })
+
+    logging.info("trained and saved XGBoost Model")
+
+
+
+def trainCaliforniaHousing(modelMeta):
+
+    canonicalName = modelMeta["canonicalName"]
+
+    logging.info("started training Housing Model")
+
+
+    dataset_train=fetch_california_housing()
+
+    forest_model = RandomForestRegressor(n_estimators=120,max_depth=5)
+    forest_model = forest_model.fit(dataset_train.data, dataset_train.target)
+
+
+
+    explainer = shap.TreeExplainer(forest_model)
+
+    # create global model explanations
+    # for a global explanations view of the model
+    expected_value = explainer.expected_value
+    data_to_explain = dataset_train.data[np.random.choice(dataset_train.data.shape[0], 1200, replace=False), :]
+    shap_values = explainer.shap_values(data_to_explain)
+    shap_values = shap_values.tolist() if isinstance(shap_values, np.ndarray) else [a.tolist() for a in shap_values]
+    #convert from numpy to python types
+    if not isinstance(expected_value,np.ndarray):
+        expected_value = expected_value.item() if isinstance(expected_value,np.float32) else expected_value
+    else:
+        expected_value = expected_value.tolist()
+
+    number_labels = 1 if not isinstance(expected_value, list) else len(expected_value)
+
+
+
+
+    genome_model = GenomeEstimator(forest_model,
+        target_classes=["price"],
+        feature_names=dataset_train.feature_names,
+        explainer=explainer,
+        explanations={
+            "expected_value": expected_value,
+            "shap_values": shap_values,
+            "number_labels": number_labels
+        })
+
+    # save model to file
+    modelStore.saveModel(genome_model, {
+      "canonicalName": canonicalName,
+      "application": "search",
+      "pipelineName": "pipeline-sklearn-housing",
+      "pipelineRunId": "run-id-1",
+      "pipelineStage": "model",
+      "framework": "sklearn",
+      "inputModality": "tabular",
+      "versionName": "1.2.3"
+    })
+
+    logging.info("trained and saved Housing Model")
+
+
+
 
 
 def convert_input(entries):
@@ -429,15 +383,31 @@ def convert_input(entries):
 #    "application": "search"
 #})
 
-trainTextClassifier({
+
+
+
+if is_train_job:
+
+
+  trainTextClassifier({
     "canonicalName": "modelstore/text/svm/vectorizer/1",
     "application": "search"
-})
-#trainVGG16()
-trainVGG16Eli5({
+  })
+
+  trainAdultXGBoost({
+      "canonicalName": "modelstore/tabular/xgboost/adult/1",
+      "application": "search"
+  })
+
+  trainCaliforniaHousing({
+      "canonicalName": "modelstore/tabular/forest/housing/1"
+  })
+
+  #trainVGG16()
+  trainVGG16Eli5({
     "canonicalName": "modelstore/cnn/keras/resnet50/1",
     "application": "search"
-})
+  })
 
 
 
@@ -449,6 +419,47 @@ def classification():
     trainCNNMnist()
 
     return jsonify({"m":1, "text": sample})
+
+
+
+
+@explanation_api.route("/explanation/samples", methods=["POST", "OPTIONS"])
+def global_explanations():
+    if request.method == "OPTIONS":
+        response = jsonify({})
+        originHeader = request.headers.get('Origin')
+        response.headers.add('Access-Control-Allow-Origin', originHeader)
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+        return response
+
+
+
+    sample = json.loads(request.data)
+    canonicalName = sample["canonicalName"]
+    modelMeta = sample["modelMeta"] if "modelMeta" in sample else {
+      "canonicalName": canonicalName,
+    }
+    entries = sample["entries"] if "entries" in sample else None
+
+    explainer = getTrainedModel(modelMeta)
+    logging.info("fetched model and explainer")
+
+    explanations = {}
+    if isinstance(explainer, GenomeEstimator) and getattr(explainer, "explanations", None):
+        explanations = explainer.explanations
+
+
+
+
+    response = jsonify(explanations)
+
+    originHeader = request.headers.get('Origin')
+    response.headers.add('Access-Control-Allow-Origin', originHeader)
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+
+    return response
 
 
 
@@ -515,7 +526,7 @@ def explanation():
 
         logging.info("finished map_to_layer compute in: %d ms", int((time.time() - startTime) * 1000))
         predExplanation = explain_prediction(explainer, processed)
-        class_names = cachedModels["imagenet/classes"]["classes"]
+        class_names = getImageNetClasses()["classes"]
         logging.info("finished explanation compute in: %d ms", int((time.time() - startTime) * 1000))
 
         logging.info(predExplanation)
@@ -543,15 +554,15 @@ def explanation():
         # explain text predictions via LIME
         # using eli5 lime to do the explanation of the text classifier
         textExplainer = TextExplainer(random_state=42)
-        if "model" in explainer and "func" in explainer:
-            textExplainer.fit(textInput, getattr(explainer["model"], explainer["func"]))
+        if explainer.estimator and explainer.estimator_predict:
+            textExplainer.fit(textInput, getattr(explainer.estimator, explainer.estimator_predict))
         else:
             textExplainer.fit(textInput, explainer)
 
 
-        if "target_names" in explainer:
-            number_labels = len(explainer["target_names"])
-            explanation = textExplainer.explain_prediction(target_names=explainer["target_names"])
+        if explainer.target_classes:
+            number_labels = len(explainer.target_classes)
+            explanation = textExplainer.explain_prediction(target_names=explainer.target_classes)
         else:
             number_labels = 1
             explanation = textExplainer.explain_prediction()
@@ -561,6 +572,11 @@ def explanation():
 
 
     else:
+
+
+        explainer = explainer.explainer if isinstance(explainer, GenomeEstimator) else explainer
+
+
         # tabular data using shapley values.
         expected_value = explainer.expected_value
         shap_values = explainer.shap_values(data_to_explain)
@@ -580,6 +596,9 @@ def explanation():
         shap_values = shap_values.tolist() if isinstance(shap_values, np.ndarray) else [a.tolist() for a in shap_values]
         interaction_values = interaction_values.tolist() if isinstance(interaction_values, np.ndarray) else [a.tolist() for a in interaction_values]
         number_labels = 1 if not isinstance(expected_value, list) else len(expected_value)
+
+
+
 
 
     diff = int((time.time() - startTime) * 1000)
@@ -613,7 +632,7 @@ def explanation():
 
 
 @health_api.route("/healthz", methods=["GET", "POST"])
-def explanation():
+def explanation_health():
     return jsonify({
       "ping": "ping!"
     })
