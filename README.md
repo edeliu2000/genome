@@ -24,7 +24,7 @@ Scalable ML Platform for demystifying, dissecting, validating and trusting incre
 
 ## Components and Architecture:
 -  Genome Model Store - Store and track models
--  Compute and Sequencer - Create run/schedule pipelines
+-  Compute and Sequencer - Create pipeline runs/schedules
 -  Realtime Explainer - Explain Models from Model Store
 -  Realtime Visualizer - Visualize Models from Model Store
 -  Routing - Routes to correct explainer or visualizer
