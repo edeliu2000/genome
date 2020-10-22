@@ -13,9 +13,9 @@ Scalable ML Platform for demystifying, dissecting, validating and trusting incre
 -  Store, Version, Search Models with Model Store
 -  Define model and data pipelines with Compute and Sequencer
 -  Explain in realtime any model type, in particular:
-    -  models working on tabular data (linear, logistic, tree based, ensembles)
-    -  image based models (CNN architectures)
-    -  text based models operating on documents
+    -  models working on tabular data (linear, logistic, tree based, ensembles) via SHAP
+    -  image based models (CNN architectures) via GradCAM
+    -  text based models operating on documents via LIME
 
 -  visualize model internals
     -  linear, logistic model types
@@ -23,11 +23,12 @@ Scalable ML Platform for demystifying, dissecting, validating and trusting incre
 
 
 ## Components and Architecture:
--  Genome Model Store
--  Compute and Sequencer
--  Realtime Scoring
--  Realtime Visualizer
--  Routing
+-  Genome Model Store - Store and track models
+-  Compute and Sequencer - Create run/schedule pipelines
+-  Realtime Explainer - Explain Models from Model Store
+-  Realtime Visualizer - Visualize Models from Model Store
+-  Routing - Routes to correct explainer or visualizer
+-  UI - UI for pipelines and models
 -  Gateway
 
 
