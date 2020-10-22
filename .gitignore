@@ -4,5 +4,5 @@ docker-packages.txt
 *.pyc
 *.tfstate
 *.tfstate.backup
-featurestore-ui/node_modules
+modelstore-ui/node_modules
 terraform/local-test/.terraform
