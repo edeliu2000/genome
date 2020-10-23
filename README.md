@@ -23,20 +23,69 @@ Scalable ML Platform for demystifying, dissecting, validating and trusting incre
 
 
 ## Components and Architecture:
--  Genome Model Store - Store and track models
--  Compute and Sequencer - Create pipeline runs/schedules
--  Realtime Explainer - Explain Models from Model Store
--  Realtime Visualizer - Visualize Models from Model Store
+-  Genome Model Store - API-s to store and track models
+-  Compute and Sequencer - API-s to create pipeline runs/schedules
+-  Realtime Explainer - API-s to explain models from Model Store
+-  Realtime Visualizer - API-s to visualize Models from Model Store
 -  Routing - Routes to correct explainer or visualizer
+-  Auth - Auth[n|z] for external facing API-s
 -  UI - UI for pipelines and models
 -  Gateway
 
 
 ## Run Locally:
 
-## Testing:
-Tests for our components can be initiated via running
+#### Install Docker
+Follow instructions on Docker site
+
+#### Install Minikube (Local Kubernetes)
+For MacOS run
 ```
-test-images.sh
+brew install minikube
+```
+otherwise follow instructions at minikube site: https://minikube.sigs.k8s.io/docs/start/
+
+
+#### Install Terraform
+Follow instructions at terraform site: https://learn.hashicorp.com/tutorials/terraform/install-cli
+
+#### Build Component Images
+to build the genome service images run
+```
+./build-images.sh
+```
+
+To have a few example working models run:
+```
+./build-example-image.sh
+```
+This will create images for the example folder
+
+#### Running
+First do a terraform apply
+```
+cd terraform/local-test
+terraform apply
+```
+
+After this the services will be running in minikube. The last step is to port-forward the nginx gateway in minikube to localhost:
+```
+ kubectl -n local port-forward service/genome-a-nginx-service 8080
+```
+
+*Note:* The Genome services will be running in the namespace _local_
+
+Now all services are reachable. Go to the below address in the browser:
+```
+http://127.0.0.1:8080/static/index.html
+```
+
+![Genome Login](resources/img/login-page.png)
+
+
+## Testing:
+To run tests for our components start:
+```
+.test-images.sh
 ```
 To run tests only for specific components disable undesired components in the script above.

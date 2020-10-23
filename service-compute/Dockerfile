@@ -2,7 +2,7 @@ FROM node:10 as build
 
 WORKDIR /app
 
-COPY ./compute ./
+COPY ./service-compute ./
 COPY ./core/auth ./auth
 
 RUN npm install
@@ -12,4 +12,4 @@ FROM node:10-alpine
 COPY --from=build /app /
 
 EXPOSE 3000
-CMD ["npm", "test"]
+CMD ["npm", "start"]

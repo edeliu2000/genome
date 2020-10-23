@@ -6,13 +6,13 @@ RUN apt-get update
 RUN apt install -y graphviz
 
 #install requirements
-COPY ./visualizer/requirements.txt /tmp/requirements.txt
+COPY ./service-visualizer/requirements.txt /tmp/requirements.txt
 WORKDIR /tmp
 RUN pip3 install -r requirements.txt
 
 #copy app
-COPY ./visualizer /api
-COPY ./modelstore/sdk/src/python/modelstore /api/api/modelstore
+COPY ./service-visualizer /api
+COPY ./service-modelstore/sdk/src/python/modelstore /api/api/modelstore
 WORKDIR /
 
 EXPOSE 5000

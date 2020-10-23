@@ -2,7 +2,7 @@ FROM node:10 as build
 
 WORKDIR /app
 
-COPY ./compute ./
+COPY ./service-routing ./
 COPY ./core/auth ./auth
 
 RUN npm install

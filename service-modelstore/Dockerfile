@@ -2,7 +2,7 @@ FROM node:10 as build
 
 WORKDIR /app
 
-COPY ./modelstore ./
+COPY ./service-modelstore ./
 COPY ./core/auth ./auth
 
 RUN npm install
