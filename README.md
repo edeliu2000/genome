@@ -33,6 +33,53 @@ Scalable ML Platform for demystifying, dissecting, validating and trusting incre
 -  Gateway
 
 
+## Examples
+#### Models on tabular data and explanation
+In this example we'll be creating and training a tree based model, specifically a random forest regressor, and then store it in the model store to get realtime explanations out of it.
+
+```python
+# using the california housing dataset
+dataset_train=fetch_california_housing()
+
+# creating and fitting an sklearn random forest
+forest_model = RandomForestRegressor(n_estimators=120,max_depth=5)
+forest_model = forest_model.fit(dataset_train.data, dataset_train.target)
+
+# creating the explainer, a shap tree explainer
+explainer = shap.TreeExplainer(forest_model)
+
+# creating a genome model with the explainer and with sample explanations
+genome_model = GenomeEstimator(forest_model,
+      target_classes=["price"],
+      feature_names=dataset_train.feature_names,
+      explainer=explainer,
+      explanations={
+          "expected_value": expected_value,
+          "shap_values": shap_values,
+          "number_labels": number_labels
+      })
+
+# save the genome model to model store
+modelStore.saveModel(genome_model, {
+    "canonicalName": canonicalName,
+    "application": application_parameter or "search",
+    "pipelineName": pipelinename_parameter or "pipeline-keras-test",
+    "pipelineRunId": pipelinerun_parameter,
+    "pipelineStage": stepname_parameter or "model",
+    "framework": "sklearn",
+    "inputModality": "tabular",
+    "versionName": "1.2.3"
+  })
+
+```
+
+
+#### Models on images and explanation
+
+#### Models on text and explanation
+
+
+
 ## Run Locally:
 
 #### Install Docker
@@ -86,6 +133,6 @@ http://127.0.0.1:8080/static/index.html
 ## Testing:
 To run tests for our components start:
 ```
-.test-images.sh
+./test-images.sh
 ```
 To run tests only for specific components disable undesired components in the script above.
