@@ -60,7 +60,7 @@ genome_model = GenomeEstimator(forest_model,
           "number_labels": number_labels
       })
 
-# save the genome model to model store
+# save the genome model in model store
 modelStore.saveModel(genome_model, {
     "canonicalName": canonicalName,
     "application": application_parameter or "search",
@@ -74,6 +74,28 @@ modelStore.saveModel(genome_model, {
 
 ```
 
+After saving the trained model and the explainer, we can get realtime explanations via the UI or programmatically via the API:
+
+Explanations from UI. both the precomputed set from the example above and new explanations via a json entry can be obtained:
+![Explanations UI](resources/img/explanations-ui.png)
+
+
+Explanations can be obtained via the API as well. The API will use the latest trained model with the specified canonicalName.
+```
+POST http://127.0.0.1:8080/v1.0/genome/routing/explain
+```
+
+```javascript
+{
+  "application": "your-app",
+  "canonicalName": "model-canonical-name",
+  // list of entries to explain, will be converted to a numpy array, or a panda dataframe in that sequence
+  "entries": [
+    [1,2.3,-0.243,...], //record 1
+    [2.21,0.3,-0.443,...] //record 2 ...
+  ]
+}
+```
 
 #### Models on images and explanation
 
