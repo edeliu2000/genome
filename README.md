@@ -79,7 +79,7 @@ modelStore.saveModel(genome_model, {
 
 #### Models on text and explanation
 
-## Defining Pipelines of Models
+## Chaining Models - Defining Pipelines of Models
 To have pipelines with multiple steps and place them on schedule use our pipeline solution, the Sequencer. The Sequencer is part of our compute platform and provides a declarative way via API-s to chain compute images.
 
 #### Example Pipeline Run - sequence of steps:
@@ -112,7 +112,7 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
     "stepType": "model",
     // set of user defined parameters propagated to the modeling image
     // in the modeling image these parameters are available as an env variable
-    // under TRANSFORM_PARAMETERS
+    // under PARAMETERS
     "parameters":{
       "TEXT_TRAIN": true
     },
