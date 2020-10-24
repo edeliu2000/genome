@@ -49,10 +49,11 @@ forest_model = forest_model.fit(dataset_train.data, dataset_train.target)
 explainer = shap.TreeExplainer(forest_model)
 
 # creating a genome model with the explainer and with sample explanations
+# the explanations parameter captures a sample set of precalculated shapley explanations to store and display along with the model
 genome_model = GenomeEstimator(forest_model,
       target_classes=["price"],
       feature_names=dataset_train.feature_names,
-      explainer=explainer,
+      explainer=explainer, # the explinaer we created before
       explanations={
           "expected_value": expected_value,
           "shap_values": shap_values,
@@ -78,6 +79,180 @@ modelStore.saveModel(genome_model, {
 
 #### Models on text and explanation
 
+## Defining Pipelines of Models
+To have pipelines with multiple steps and place them on schedule use our pipeline solution, the Sequencer. The Sequencer is part of our compute platform and provides a declarative way via API-s to chain compute images.
+
+#### Example Pipeline Run - sequence of steps:
+This is an example of creating a pipeline run of a sequence of three modeling steps. Note the comments:
+```
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
+```
+
+```javascript
+
+{
+    "pipelineName": "pipe-1",
+    "canonicalName":"/search/pipe-1",
+    "application":"search",
+    "steps": [{
+    "stepName": "step-1",
+    "stepType": "model",
+    "parameters":{
+      "CA_TRAIN": true
+    },
+    "datasets":[],
+    // the image for model training
+    // several env variables are reserved for passing dynamic information
+    // like PIPELINE_RUNID, see below for full list
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  },{
+    "stepName": "step-2",
+    "stepType": "model",
+    // set of user defined parameters propagated to the modeling image
+    // in the modeling image these parameters are available as an env variable
+    // under TRANSFORM_PARAMETERS
+    "parameters":{
+      "TEXT_TRAIN": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  },{
+    "stepName": "step-3",
+    "stepType": "model",
+    "parameters":{
+      "IMAGE_TRAIN": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  }]
+}
+
+```
+
+ENV variables passed to each step container:
+
+-  APPLICATION
+-  PIPELINE_RUNID
+-  PIPELINE_NAME
+-  STEP_NAME
+-  STEP_TYPE
+
+
+
+#### Example Pipeline Run - sequence of parallel steps:
+This is an example of creating a pipeline run of a sequence. The sequence contains a first step, then a set of 2 steps running in parallel, then a last step running after the preceding parallel steps complete:
+
+```
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
+```
+
+```json
+
+{
+    "pipelineName": "pipe-1",
+    "canonicalName":"/search/pipe-1",
+    "application":"search",
+    "steps": [{
+    "stepName": "step-1",
+    "stepType": "model",
+    "parameters":{
+      "CA_TRAIN": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  },[{
+    "stepName": "step-2a",
+    "stepType": "model",
+    "parameters":{
+      "TEXT_TRAIN_1": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  },{
+    "stepName": "step-2b",
+    "stepType": "model",
+    "parameters":{
+      "TEXT_TRAIN_2": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  }],{
+    "stepName": "step-3",
+    "stepType": "model",
+    "parameters":{
+      "IMAGE_TRAIN": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  }]
+}
+
+```
+
+
+
+#### Example Pipeline with Schedule:
+This is an example API of creating a pipeline that runs every 6h. Its scheduling a sequence of 3 steps, same as in the first example. The very first schedule is not run immediately but only after the period defined in the API elapses:
+
+```
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequence
+```
+
+```json
+
+{
+    "pipelineName": "pipe-1",
+    "canonicalName":"/search/pipe-1",
+    "application":"search",
+    "schedule": "6h",
+    "steps": [{
+    "stepName": "step-1",
+    "stepType": "model",
+    "parameters":{
+      "CA_TRAIN": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  },{
+    "stepName": "step-2",
+    "stepType": "model",
+    "parameters":{
+      "TEXT_TRAIN": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  },{
+    "stepName": "step-3",
+    "stepType": "model",
+    "parameters":{
+      "IMAGE_TRAIN": true
+    },
+    "datasets":[],
+    "image": "ensemble-training:local.3",
+    "timeout": "360s",
+    "retry": "3"
+  }]
+}
+
+```
 
 
 ## Run Locally:
