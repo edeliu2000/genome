@@ -73,10 +73,37 @@ modelStore.saveModel(genome_model, {
   })
 
 ```
+To run this code first it needs to be built as a docker image, say with a name _housing-ca-forest-model_ and tag _local.1_ Then it can run via a call to our sequencer API-s as part of a one step pipeline. (See the Chaining Steps section):
 
-After saving the trained model and the explainer, we can get realtime explanations via the UI or programmatically via the API:
+```
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
+```
 
-Explanations from UI. both the precomputed set from the example above and new explanations via a json entry can be obtained:
+```javascript
+
+{
+    "pipelineName": "pipe-1",
+    "canonicalName":"/housing/ca/forest-1",
+    "application":"search",
+    "steps": [{
+    "stepName": "step-housing",
+    "stepType": "model",
+    "parameters":{
+    },
+    "datasets":[],
+    // the image for model training
+    // several env variables are reserved for passing dynamic information
+    // like PIPELINE_RUNID, see below for full list
+    "image": "housing-ca-forest-model:local.1",
+    "timeout": "360s",
+    "retry": "3"
+  }]
+}
+```
+
+After running this sequencer pipeline the trained model and the explainer will be available in the UI. We can than get realtime explanations via wither the UI or programmatically via the API.
+
+Explanations from UI - both the precomputed set from the example above and new explanations via a json entry can be obtained:
 ![Explanations UI](resources/img/explanations-ui.png)
 
 
@@ -97,12 +124,27 @@ POST http://127.0.0.1:8080/v1.0/genome/routing/explain
 }
 ```
 
-#### Models on images and explanation
+RESPONSE:
+```javascript
+// RESPONSE:
+{
+  "expected": [2.0697080214631782], // base line prediction
+  "number_labels": 1,
+  "shapley": [  // shapley values for each feature of the records
+    [2.385286622444727, -0.018421615109792185, -0.014984237058267673, -0.005339789397244816,…],
+    [1.410856622444727, -0.016421615109792185, -0.044984237058267673, -0.005339789397244816,…]
+  ]
+}
+
+
+```
+
+#### Models on Images and Explanation
 
 #### Models on text and explanation
 
-## Chaining Models - Defining Pipelines of Models
-To have pipelines with multiple steps and place them on schedule use our pipeline solution, the Sequencer. The Sequencer is part of our compute platform and provides a declarative way via API-s to chain compute images.
+## Sequencer - Chaining Compute Steps
+To have pipelines with multiple steps and place them on schedule use our pipeline solution, the Sequencer. The Sequencer is part of our compute platform and provides a declarative way via API-s to chain compute steps.
 
 #### Example Pipeline Run - sequence of steps:
 This is an example of creating a pipeline run of a sequence of three modeling steps. Note the comments:
