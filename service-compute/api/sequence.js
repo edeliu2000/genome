@@ -43,13 +43,13 @@ const convertStep = (step, pipeline, templateName) => {
 
   if(step.datasets){
     convertedStep["arguments"]["parameters"].push({
-      "name": "TRANSFORM_DATASETS", "value": JSON.stringify(step.datasets)
+      "name": "DATASETS", "value": JSON.stringify(step.datasets)
     })
   }
 
   if(step.parameters){
     convertedStep["arguments"]["parameters"].push({
-      "name": "TRANSFORM_PARAMETERS", "value": JSON.stringify(step.parameters)
+      "name": "PARAMETERS", "value": JSON.stringify(step.parameters)
     })
   }
 
@@ -238,8 +238,8 @@ const runSequence = (req, res, next) => {
               {"name": "PIPELINE_RUNID"},
               {"name": "STEP_NAME"},
               {"name": "STEP_TYPE", "value":"model"},
-              {"name": "TRANSFORM_DATASETS", "value":"[]"},
-              {"name": "TRANSFORM_PARAMETERS"},
+              {"name": "DATASETS", "value":"[]"},
+              {"name": "PARAMETERS"},
               {"name": "image"},
               {"name": "timeout", "value": "600s"},
               {"name": "retry", "value": "3"}
@@ -277,11 +277,11 @@ const runSequence = (req, res, next) => {
               "name": "STEP_NAME",
               "value": "{{inputs.parameters.STEP_NAME}}"
             },{
-              "name": "TRANSFORM_DATASETS",
-              "value": "{{inputs.parameters.TRANSFORM_DATASETS}}"
+              "name": "DATASETS",
+              "value": "{{inputs.parameters.DATASETS}}"
             },{
-              "name": "TRANSFORM_PARAMETERS",
-              "value": "{{inputs.parameters.TRANSFORM_PARAMETERS}}"
+              "name": "PARAMETERS",
+              "value": "{{inputs.parameters.PARAMETERS}}"
             }]
           }
         }]

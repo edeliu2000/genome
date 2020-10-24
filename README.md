@@ -135,13 +135,15 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
 
 ```
 
-ENV variables passed to each step container:
+ENV variables passed to each step image/container:
 
 -  APPLICATION
 -  PIPELINE_RUNID
 -  PIPELINE_NAME
 -  STEP_NAME
 -  STEP_TYPE
+-  PARAMETERS
+-  DATASETS
 
 
 
