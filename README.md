@@ -144,7 +144,7 @@ For models working on images we support explanations of classification use cases
 
 Again, the code to train our image classification model or even the code to use a popular pretrained model (VGG, ResNet50 etc.) needs to be provided and then built as a docker image. An example code below:
 
-```
+```python
 canonicalName = "/classifier/mobilenet/v2"
 
 # load keras pre-trained MobileNetV2 model
