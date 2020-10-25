@@ -1,5 +1,17 @@
+
+
 # Genome - Platform for Realtime ML Model Explanations and Inspection
-Genome is a cloud native (K8) platform for model explanations and tests, geared towards production grade ML and AI pipelines. It comes with a suite of components that can be used in tandem or isolated to achieve realtime explanations of all model types. It is built on top of scalable technologies that lend themselves well to be operated at large scale in the cloud.
+Genome is a cloud native (K8) platform for model explanations and tests, geared towards production grade ML and AI pipelines. It comes with a suite of components that can be used in tandem or isolated to achieve realtime explanations of all model types. It is built on top of scalable technologies that lend themselves well to be operated at scale in the cloud.
+
+# Table of Contents
+1. [Vision](#vision)
+2. [Genome Capabilities](#genomecapabilities)
+3. [Components and Architecture](#componentsandarchitecture)
+4. [Examples on Explaining Model Predictions](#examplesonexplainingmodelpredictions)
+5. [Model Visualizations](#modelvisualizations)
+6. [Sequencer - Chaining Compute Steps](#sequencer-chainingcomputesteps)
+7. [Run Locally](#runlocally)
+8. [Testing](#testing)
 
 ## Vision
 Scalable ML Platform for demystifying, dissecting, validating and trusting increasingly complex production AI. We plan to achieve this via:
@@ -33,7 +45,7 @@ Scalable ML Platform for demystifying, dissecting, validating and trusting incre
 -  Gateway
 
 
-## Examples
+## Examples on Explaining Model Predictions
 #### Explaining Models on tabular data
 In this example we'll be creating and training a tree based model, specifically a random forest regressor that predicts on the CA housing dataset. Then the model will be stored in the model store to get realtime explanations out of it.
 
@@ -203,7 +215,7 @@ The base64 encoded image response can be directly attached in the _src_ attribut
 TODO
 
 
-### Model Visualizations
+## Model Visualizations
 
 To disect and debug model decisions on tabular data we provide visualizations of linear, logistic and tree based models (or ensembles) for _sklearn_ and _xgboost_. Visualizing models internals, especially decision trees, can be helpful in understanding the path in the tree that the prediction took and dissecting the role of each feature value in the prediction, in addition to understanding distribution of the data points in the leaves. In the Model Store UI the model detail page provides a model visualizer. We do not have an API defined for this (yet).
 
@@ -392,7 +404,7 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence
 ```
 
 
-## Run Locally:
+## Run Locally
 
 #### Install Docker
 Follow instructions on Docker site
@@ -442,9 +454,18 @@ http://127.0.0.1:8080/static/index.html
 ![Genome Login](resources/img/login-page.png)
 
 
-## Testing:
+## Testing
 To run tests for our components start:
 ```
 ./test-images.sh
 ```
 To run tests only for specific components disable undesired components in the script above.
+
+## Built with
+-  SHAP
+-  LIME
+-  dtreeviz
+-  React
+-  NodeJS
+-  ElasticSearch
+-  K8
