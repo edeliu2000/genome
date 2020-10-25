@@ -7,7 +7,7 @@ Genome is a cloud native (K8) platform for model explanations and tests, geared 
 1. [Vision](#vision)
 2. [Genome Capabilities](#genomecapabilities)
 3. [Components and Architecture](#componentsandarchitecture)
-4. [Examples on Explaining Model Predictions](#examplesonexplainingmodelpredictions)
+4. [Explaining Model Predictions](#explainingmodelpredictions-examples)
 5. [Model Visualizations](#modelvisualizations)
 6. [Sequencer - Chaining Compute Steps](#sequencer-chainingcomputesteps)
 7. [Run Locally](#runlocally)
@@ -51,8 +51,8 @@ Considering explanations are expensive, especially the ones derived from model-a
 -  Gateway
 
 
-## Examples on Explaining Model Predictions
-#### Explaining Models on tabular data
+## Explaining Model Predictions - Examples
+### Explaining Models on tabular data
 In this example we'll be creating and training a tree based model, specifically a random forest regressor that predicts on the CA housing dataset. Then the model will be stored in the model store to get realtime explanations out of it.
 
 ```python
@@ -157,7 +157,7 @@ RESPONSE:
 
 ```
 
-#### Explaining Models for Images
+### Explaining Models for Images
 For models working on images we support explanations of classification use cases via GradCAM. Our basic assumption for models working on images is that they are using CNN architectures internally. While black box approaches would  also be possible (i.e. shapley values would be a candidate here as well), the restrictions associated with realtime explanations prevent us from going that route. We think focusing on the most widely used architectures for image classification is a reasonable way to go to remain within time budgets.
 
 Again, the code to train our image classification model or even the code to use a popular pretrained model (VGG, ResNet50 etc.) needs to be provided and then built as a docker image. An example code below:
@@ -217,7 +217,7 @@ RESPONSE:
 
 The base64 encoded image response can be directly attached in the _src_ attribute of an _img_ tag in html.
 
-#### Models on text and explanation
+### Models on text and explanation
 TODO
 
 
@@ -235,7 +235,7 @@ The example below shows the first tree visualization of the random forest we tra
 ## Sequencer - Chaining Compute Steps
 To have pipelines with multiple steps and place them on schedule use our pipeline solution, the Sequencer. The Sequencer is part of our compute platform and provides a declarative way via API-s to chain compute steps.
 
-#### Example Pipeline Run - sequence of steps:
+### Example Pipeline Run - sequence of steps:
 This is an example of creating a pipeline run of a sequence of three modeling steps. Note the comments:
 ```
 POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
@@ -300,7 +300,7 @@ ENV variables passed to each step image/container:
 
 
 
-#### Example Pipeline Run - sequence of parallel steps:
+### Example Pipeline Run - sequence of parallel steps:
 This is an example of creating a pipeline run of a sequence. The sequence contains a first step, then a set of 2 steps running in parallel, then a last step running after the preceding parallel steps complete:
 
 ```
@@ -360,7 +360,7 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
 
 
 
-#### Example Pipeline with Schedule:
+### Example Pipeline with Schedule:
 This is an example API of creating a pipeline that runs every 6h. Its scheduling a sequence of 3 steps, same as in the first example. The very first schedule is not run immediately but only after the period defined in the API elapses:
 
 ```
@@ -412,10 +412,10 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence
 
 ## Run Locally
 
-#### Install Docker
+### Install Docker
 Follow instructions on Docker site
 
-#### Install Minikube (Local Kubernetes)
+### Install Minikube (Local Kubernetes)
 For MacOS run
 ```
 brew install minikube
@@ -423,10 +423,10 @@ brew install minikube
 otherwise follow instructions at minikube site: https://minikube.sigs.k8s.io/docs/start/
 
 
-#### Install Terraform
+### Install Terraform
 Follow instructions at terraform site: https://learn.hashicorp.com/tutorials/terraform/install-cli
 
-#### Build Component Images
+### Build Component Images
 to build the genome service images run
 ```
 ./build-images.sh
@@ -438,7 +438,7 @@ To have a few example working models run:
 ```
 This will create images for the example folder
 
-#### Running
+### Running
 First do a terraform apply
 ```
 cd terraform/local-test
