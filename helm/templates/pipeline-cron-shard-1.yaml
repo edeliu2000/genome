@@ -25,6 +25,7 @@ spec:
 
             command:
             - npm
+            - run-script
             - run_schedules
 
           restartPolicy: Never

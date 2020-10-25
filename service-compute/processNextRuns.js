@@ -21,7 +21,7 @@ const processSchedules = (modelStoreLocation, sequencerLocation, shard) => {
     var nextRuns = pipelinesToRun.map((pipe) => {
       var nextRun = pipe.schedule + pipe.nextRun
       return axios.put(modelStoreLocation + "/v1.0/genome/pipeline/" + pipe.id + "/nextRun", {
-        nextRun: sequence.calculateNextRun(pipe.schedule, pipe.nextRun);
+        nextRun: sequence.calculateNextRun(pipe.schedule, pipe.nextRun),
       })
     })
 
