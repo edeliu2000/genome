@@ -52,8 +52,8 @@ app.use(function(req, res, next) {
 const PORT = process.env.PORT || 3000;
 const elastic = process.env.ES_ENDPOINT;
 
-app.post('/v1.0/genome/sequence', sequence.scheduleSequence);
-app.post('/v1.0/genome/sequence/run', sequence.sequence);
+app.post('/v1.0/genome/sequencer', sequence.scheduleSequence);
+app.post('/v1.0/genome/sequencer/run', sequence.sequence);
 
 app.get('/v1.0/genome/healthz', (req, res) => {
   res.send('ping!\n');
