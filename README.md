@@ -14,30 +14,30 @@ Genome is a cloud native (K8) platform for model explanations and tests, geared 
 8. [Testing](#testing)
 
 ## Vision
-Scalable realtime ML platform for demystifying, dissecting, validating and enabling (mis)trusting increasingly complex production AI. We plan to achieve this via:
+Scalable realtime ML platform for demystifying, dissecting, validating and enhancing trust on increasingly complex production AI. We plan to achieve this via:
 
--  Scalable Realtime Explanations of ML Models
-    -  on all types of data (image, text based, tabular)
+-  Scalable Realtime Explanations of ML model predictions
+    -  on all types of data (tabular, image, text based)
 -  Production grade Tracking and Versioning ML Models and Pipelines
 -  Robust test pipelines and flagging of problematic models
 
 #### Why Realtime?
 Providing realtime explanations for models is at the core of our vision. Why realtime plays a big role is because we want _auditors_ (yes, we believe ML should increasingly be audited and regulated) and ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
 
-Considering explanations are expensive, especially the ones derived from model-agnostic/blackbox approaches, getting explanations *on-demand* on a per need basis, rather than doing it on blanket for all training data, drops the cost and hence accessibility of model explanations in general, which is critical and increasingly important. The current and future realtime capabilities of genome are well positioned to service this need.
+Considering that especially explanations derived from model-agnostic/blackbox approaches are expensive, getting explanations *on-demand* and on a per need basis, rather than doing it on blanket for all training data, drops the cost and hence accessibility of model explanations in general for any particular prediction, which is critical and increasingly important. The current and future realtime capabilities of Genome are well positioned to service this need.
 
 
 ## Genome Capabilities
--  Store, Version, Search Models with Model Store
--  Define model and data pipelines with Compute and Sequencer
+-  Store, Version, Search Models and Pipelines with the Genome Model Store
+-  Define model and ML pipelines with Compute and Sequencer
 -  Explain in realtime predictions of any model type, in particular:
     -  predictions of models working on tabular data (linear, logistic, tree based, ensembles) via SHAP library
     -  image based models (CNN architectures) via GradCAM
     -  text based models operating on documents via LIME
 
--  visualize model internals
-    -  linear, logistic model types
+-  Visualize model architecture and internals. This is helpful for explainable model types, especially in teh case of trees, to help interpret their decisions.
     -  trees, forests, ensembles (sklearn, XGBoost, Spark ML)
+    -  linear, logistic model types
 
 
 ## Components and Architecture:
