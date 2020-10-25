@@ -158,7 +158,7 @@ RESPONSE:
 ```
 
 ### Explaining Models for Images
-For models working on images we support explanations of classification use cases via GradCAM. Our basic assumption for models working on images is that they are using CNN architectures internally. While black box approaches would  also be possible (i.e. shapley values would be a candidate here as well), the restrictions associated with realtime explanations prevent us from going that route. We think focusing on the most widely used architectures for image classification is a reasonable way to go to remain within time budgets.
+For models working on images we support explanations of classification use cases via GradCAM. Our basic assumption for models working on images is that they are using CNN architectures internally. While black box approaches would  also be possible (i.e. shapley values would be a candidate here as well), the restrictions associated with realtime explanations prevent us from going that route. We think focusing on the most widely used architectures for image classification is a reasonable way to remain within time budgets.
 
 Again, the code to train our image classification model or even the code to use a popular pretrained model (VGG, ResNet50 etc.) needs to be provided and then built as a docker image. An example code below:
 
@@ -358,6 +358,9 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
 
 ```
 
+Sequencer pipelines and pipeline runs can be viewed in the UI:
+
+![Pipeline UI](resources/img/pipeline-run.png)
 
 
 ### Example Pipeline with Schedule:
