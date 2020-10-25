@@ -54,9 +54,11 @@ const elastic = process.env.ES_ENDPOINT;
 
 app.post('/v1.0/genome/model', genome.createModel);
 app.post('/v1.0/genome/pipeline', genome.createPipeline);
+app.put('/v1.0/genome/pipeline/:pipelineId/nextRun', genome.updatePipelineNextRun);
 app.post('/v1.0/genome/pipelineRun', genome.createPipelineRun);
 app.post('/v1.0/genome/pipelineRun/:runId/status', genome.createPipelineRunStatus);
 app.post('/v1.0/genome/search', search.search);
+app.post('/v1.0/genome/search/activeSchedules', search.queryPipelinesToRun);
 app.post('/v1.0/genome/searchkeywords', authRequired, search.searchByKeywords);
 app.post('/v1.0/genome/blob', blob.blob);
 app.get('/v1.0/genome/blob/:id', blob.get);

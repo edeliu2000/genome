@@ -152,6 +152,11 @@ const createModel = function(req, res, next){
 }
 
 const createPipeline = function(req, res, next){
+  // assign a shard if there is a schedule involved
+  if(req.body && req.body.schedule){
+    req.body["shard"] = "shard-1";
+  }
+
   create(req, res, next, "pipeline");
 }
 
@@ -177,9 +182,10 @@ const createPipelineRunStatus = function(req, res, next){
     // type: '_doc', // uncomment this line if you are using {es} ≤ 6
     body: {
       script: {
-        source: 'ctx._source.status = params.status',
+        source: 'ctx._source.status = params.status; ctx._source.updated = params.updated;',
         params:{
-          status: status
+          status: status,
+          updated: Date.now(),
         }
       }
     }

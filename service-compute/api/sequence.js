@@ -68,7 +68,8 @@ const convertStep = (step, pipeline, templateName) => {
   return convertedStep;
 };
 
-const calculateNextRun = (schedule) => {
+
+const calculateNextRun = (schedule, now) => {
     var period = schedule[schedule.length - 1];
     var periodMs = {
       "d": 1000 * 60 * 60 * 24, // 24hr
@@ -78,7 +79,7 @@ const calculateNextRun = (schedule) => {
 
     var numeric = schedule.slice(0, schedule.length-1);
 
-    return Date.now() + (periodMs * Number(numeric))
+    return (now || Date.now()) + (periodMs * Number(numeric))
 };
 
 
@@ -302,5 +303,6 @@ const runSequence = (req, res, next) => {
 
 module.exports = {
   scheduleSequence: scheduleSequence,
-  sequence: runSequence
+  sequence: runSequence,
+  calculateNextRun: calculateNextRun,
 }
