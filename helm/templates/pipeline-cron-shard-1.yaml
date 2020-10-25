@@ -1,0 +1,30 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: cron-shard-1
+  namespace: "{{ .Values.environment }}"
+
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: per-minute-schedule-cron
+            image: "{{ .Values.compute.image.repository }}:{{ .Values.compute.image.tag }}"
+            imagePullPolicy: "{{ .Values.compute.image.pullPolicy }}"
+            env:
+              - name: MODELSTORE
+                value: http://{{ template "genome.fullname" . }}-modelstore-service:3000
+              - name: COMPUTE
+                value: http://{{ template "genome.fullname" . }}-compute-service:3000
+              - name: SCHEDULE_SHARD
+                value: shard-1
+
+
+            command:
+            - npm
+            - run_schedules
+
+          restartPolicy: Never

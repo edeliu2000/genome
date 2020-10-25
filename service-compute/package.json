@@ -13,6 +13,7 @@
   },
   "scripts": {
     "start": "node index.js",
+    "run_schedules": "node processNextRuns.js",
     "test": "jest"
   }
 }

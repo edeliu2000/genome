@@ -8,6 +8,8 @@ const processSchedules = (modelStoreLocation, sequencerLocation, shard) => {
     "nextRun": Date.now()
   }
 
+  console.log("RUNNING JOB - trigger active sheduled pipelines with nextRun below: ", scheduleQuery.nextRun);
+
   var pipelinesToRun = null;
 
   // get all active piplines with nextRun smaller then now
