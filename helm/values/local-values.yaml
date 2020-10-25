@@ -34,7 +34,7 @@ compute:
   name: compute
   image:
     repository: genome-compute
-    tag: local.55
+    tag: local.56
     pullPolicy: IfNotPresent
 
 scoring:

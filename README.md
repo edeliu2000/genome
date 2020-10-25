@@ -94,7 +94,7 @@ modelStore.saveModel(genome_model, {
 To run this code first it needs to be built as a docker image, say with a name _housing-ca-forest-model_ and tag _local.1_ Then it can run via a call to our sequencer API-s as part of a one step pipeline. (See the Chaining Steps section):
 
 ```
-POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequencer/run
 ```
 
 ```javascript
@@ -238,7 +238,7 @@ To have pipelines with multiple steps and place them on schedule use our pipelin
 ### Example Pipeline Run - sequence of steps:
 This is an example of creating a pipeline run of a sequence of three modeling steps. Note the comments:
 ```
-POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequencer/run
 ```
 
 ```javascript
@@ -304,7 +304,7 @@ ENV variables passed to each step image/container:
 This is an example of creating a pipeline run of a sequence. The sequence contains a first step, then a set of 2 steps running in parallel, then a last step running after the preceding parallel steps complete:
 
 ```
-POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequencer/run
 ```
 
 ```json
@@ -368,7 +368,7 @@ Sequencer pipelines and pipeline runs can be viewed in the UI:
 This is an example API of creating a pipeline that runs every 6h. Its scheduling a sequence of 3 steps, same as in the first example. The very first schedule is not run immediately but only after the first period defined in the API elapses:
 
 ```
-POST http://127.0.0.1:8080/v1.0/genome/compute/sequence
+POST http://127.0.0.1:8080/v1.0/genome/compute/sequencer
 ```
 
 ```json
