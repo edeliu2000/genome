@@ -35,7 +35,7 @@ Scalable ML Platform for demystifying, dissecting, validating and trusting incre
 
 ## Examples
 #### Explaining Models on tabular data
-In this example we'll be creating and training a tree based model, specifically a random forest regressor, and then store it in the model store to get realtime explanations out of it.
+In this example we'll be creating and training a tree based model, specifically a random forest regressor that predicts on the CA housing dataset. Then the model will be stored in the model store to get realtime explanations out of it.
 
 ```python
 # using the california housing dataset
@@ -200,6 +200,19 @@ RESPONSE:
 The base64 encoded image response can be directly attached in the _src_ attribute of an _img_ tag in html.
 
 #### Models on text and explanation
+TODO
+
+
+### Model Visualizations
+
+To disect and debug model decisions on tabular data we provide visualizations of tree based models (or ensembles) for sklearn and xgboost. Visualizing decision trees can be helpful in understanding the path in the tree that the prediction took and dissecting the role of each feature value in the prediction, in addition to understanding distribution of the data points in the leaves. In the Model Store UI the model detail page provides a model visualizer. We do not have an API defined for this (yet).
+
+
+The example below shows the first tree visualization of the random forest we trained in the tabular data example:
+
+![Explanations UI](resources/img/tree-visualization.png)
+
+
 
 ## Sequencer - Chaining Compute Steps
 To have pipelines with multiple steps and place them on schedule use our pipeline solution, the Sequencer. The Sequencer is part of our compute platform and provides a declarative way via API-s to chain compute steps.
