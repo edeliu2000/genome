@@ -358,13 +358,14 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence/run
 
 ```
 
+
 Sequencer pipelines and pipeline runs can be viewed in the UI:
 
 ![Pipeline UI](resources/img/pipeline-run.png)
 
 
 ### Example Pipeline with Schedule:
-This is an example API of creating a pipeline that runs every 6h. Its scheduling a sequence of 3 steps, same as in the first example. The very first schedule is not run immediately but only after the period defined in the API elapses:
+This is an example API of creating a pipeline that runs every 6h. Its scheduling a sequence of 3 steps, same as in the first example. The very first schedule is not run immediately but only after the first period defined in the API elapses:
 
 ```
 POST http://127.0.0.1:8080/v1.0/genome/compute/sequence
@@ -411,6 +412,8 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequence
 }
 
 ```
+*Sequencer Scheduled Pipeline*  
+![Pipeline Schedule UI](resources/img/pipeline-schedule.png)
 
 
 ## Run Locally
@@ -439,7 +442,7 @@ To have a few example working models run:
 ```
 ./build-example-image.sh
 ```
-This will create images for the example folder
+This will create images for the model code in the example folder. A *pipeline run* needs to be created via a call to the sequencer API, like described in the Sequencer section, for the model code to actually execute and a few models to be stored in the Genome model store.
 
 ### Running
 First do a terraform apply
