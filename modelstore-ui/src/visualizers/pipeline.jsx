@@ -28,7 +28,8 @@ class PipelineVisualizer extends React.Component {
   state = {
     selectedStep: {},
     displayStepInfo: "none",
-    openCollapsableParams: false
+    openCollapsableParams: false,
+    openCollapsableDatasets: false
   }
 
   handleSelection = (e) => {
@@ -43,6 +44,10 @@ class PipelineVisualizer extends React.Component {
 
   handleCollapsableParams = () => {
     this.setState(state => ({ openCollapsableParams: !state.openCollapsableParams }));
+  }
+
+  handleCollapsableDatasets = () => {
+    this.setState(state => ({ openCollapsableDatasets: !state.openCollapsableDatasets }));
   }
 
   closeStepInfo = (e) => {
@@ -152,6 +157,7 @@ class PipelineVisualizer extends React.Component {
           group: group || 0,
           stepName: item.stepName,
           stepParameters: item.parameters,
+          stepDatasets: item.datasets,
           schedule: item.schedule || "",
           nextRun: item.nextRun || 0,
           image: item.image || "",
@@ -262,6 +268,8 @@ class PipelineVisualizer extends React.Component {
             />
           </ListItem>
           }
+
+
           <ListItem divider button onClick={this.handleCollapsableParams}>
             <ListItemIcon>
               <Icon>storage</Icon>
@@ -286,6 +294,33 @@ class PipelineVisualizer extends React.Component {
               }
             </List>
           </Collapse>
+
+
+          <ListItem divider button onClick={this.handleCollapsableDatasets}>
+            <ListItemIcon>
+              <Icon>storage</Icon>
+            </ListItemIcon>
+            <ListItemText inset primary={
+              "Datasets (" + (this.state.selectedStep.stepDatasets ? this.state.selectedStep.stepDatasets.length : 0) + ") "
+            } />
+            {this.state.openCollapsableDatasets ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+          <Collapse in={this.state.openCollapsableDatasets} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding >
+              {
+                this.state.selectedStep.stepDatasets ? this.state.selectedStep.stepDatasets.map((entry, i) => <ListItem button>
+                <ListItemIcon>
+                  <Icon>arrow_right</Icon>
+                </ListItemIcon>
+                <ListItemText inset primary={"(" + (i + 1) + ") " + entry.ref} secondary={"" + entry.refType}/>
+                </ListItem>
+                ) : <ListItem button><ListItemIcon><Icon>arrow_right</Icon></ListItemIcon>
+                <ListItemText inset primary={"no-params"}/>
+                </ListItem>
+              }
+            </List>
+          </Collapse>
+
 
           <ListItem divider>
             <ListItemText inset

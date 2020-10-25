@@ -601,7 +601,7 @@ export default class ModelEditPicker extends React.Component {
                 <Chip
                   style={{position:"relative", top:"0.3em", marginLeft:"0.5em"}}
                   avatar={<Avatar><AccessTime /></Avatar>}
-                  label={"duration( " + (this.props.meta.duration / 1000 * 60) + "m )"}
+                  label={"duration ( " + (this.props.meta.duration / (1000 * 60)).toFixed(2) + "m )"}
                   variant="outlined"
                 />
 

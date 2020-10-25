@@ -67,7 +67,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 modelstore_api = os.environ['MODELSTORE']
 
-transform_parameters = os.environ['TRANSFORM_PARAMETERS'] if "TRANSFORM_PARAMETERS" in os.environ else "{\"ADULT_TRAIN\":true}"
+# fetching step parameters from env variables
+transform_parameters = os.environ['PARAMETERS'] if "PARAMETERS" in os.environ else "{\"ADULT_TRAIN\":true}"
 logging.info("json parameters:" + transform_parameters)
 transform_parameters = json.loads(transform_parameters)
 
