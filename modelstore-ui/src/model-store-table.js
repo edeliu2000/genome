@@ -1,6 +1,5 @@
 const React = require('react');
 const ReactDOM = require("react-dom");
-// const vis = require("vis");
 
 const MUIDataTable = require("mui-datatables");
 
@@ -52,65 +51,7 @@ var DATA = [
 var CHART_DATA = [];
 var SELECTED_DATES = {start: null, end:null, featureStart:null, featureEnd:null};
 var ARTIFACT_TYPE = "model";
-
-var GRAPH_INSTANCE = null;
-//var GRAPH_DATA = {
-//    nodes: new vis.DataSet([]),
-//    edges: new vis.DataSet([])
-//};
-
-const GRAPH_CONFIG = {
-  height:"250px",
-  nodes:{
-    color:{
-      border: '#444444',
-      background: 'rgba(181, 209, 255, 0.9)',
-      highlight: {
-        border: '#333333',
-        background: 'rgba(118, 158, 224, 1)'
-      },
-    },
-    shape:"dot",
-    shadow: true,
-    borderWidth: 2.5,
-    borderWidthSelected: 4.5,
-    font: {
-      color: '#444444',
-      size: 24
-    }
-  },
-  edges: {
-    width:2,
-    selectionWidth: function (width) {return width*2;},
-  }
-};
-
-
-//Used for enabling direct links to AWS Lambda logs from training and deployment stages of jobs
-var LAMBDA_TO_GRAPH_STATES_MAPPING = {
-
-  "schedule":{
-    "training": "MLModel_Scheduled_Job_Handler",
-    "trained": "MLModel_Framework_JobStatus_Updater",
-    "error": "MLModel_Framework_JobStatus_Updater",
-  },
-
-  "subscriptions":{
-    "training": "MLModel_Scheduled_Job_Handler",
-    "trained": "MLModel_Framework_JobStatus_Updater",
-    "error": "MLModel_Framework_JobStatus_Updater",
-  },
-
-  "manual": {
-    "training": "MLModel_Framework_Job_Handler",
-    "trained": "MLModel_Framework_JobStatus_Updater",
-    "error": "MLModel_Framework_JobStatus_Updater"
-  }
-
-}
-
-
-var NUM_SEARCH = 0
+var NUM_SEARCH = 0;
 
 const columns = [
       {name:"PipelineName", options:{filter:true}},
@@ -171,9 +112,6 @@ const columns = [
         sort:false,
         customRender: (value, tableMeta, updateValue) => {
           console.log("columnValue", value)
-          var mid = value["mid"];
-          var schemaColumnInput = value["schema"];
-
           return (
             <div style={{"float":"left", width:"8em"}}>
             <ModelEditPicker meta={value} />
@@ -338,43 +276,6 @@ export default class ModelStoreTable extends React.Component {
   }
 
 
-  _timeleonOutputChartURL(tenant, modelName, schema, columns){
-
-    var link = "http://search-ml-model-manager-fntwapjhjdo4wvfvanrvkx2prq.us-west-2.es.amazonaws.com/_plugin/kibana/app/timelion#?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-7d,interval:'1d',mode:quick,timezone:America%2FLos_Angeles,to:now))&_a=(columns:2,interval:'1h',rows:2,selected:0,sheet:!('.es(index%3Dmodel-manager-index,%20q%3D!'_type:ml_model_feature%20AND%20tenant:"
-                + encodeURIComponent(tenant)
-                + "%20AND%20type:output%20AND%20modelName:"
-                + encodeURIComponent(modelName)
-                + "%20AND%20schema:"
-                + encodeURIComponent(schema)
-                + "!',%20timefield%3D!'created!').lines(fill%3D1.5).label(!'versions%2Fhr!')'"
-
-
-                columns = columns || [];
-
-                columns.push("_job_duration_m");
-                columns.push("_job_container_num");
-                columns.push("_job_cost_dollar");
-
-                for(var i = 0; i < columns.length; i++){
-                  link += ",'.es(index%3Dmodel-manager-index,%20q%3D!'_type:ml_model_feature_metric%20AND%20metric:count%20AND%20type:output%20AND%20name:"
-
-                  + encodeURIComponent(modelName)
-                  + "%20AND%20tenant:"
-                  + encodeURIComponent(tenant)
-                  + "%20AND%20column:"
-                  + encodeURIComponent(columns[i])
-                  + "!',%20timefield%3D!'created!',%20metric%3Davg:val.nd).lines(fill%3D2).title(!'"
-                  + "%20column%20-%20" + columns[i] + "!').label(!'counts!')'"
-
-                }
-
-        link += "))"
-
-    return link
-
-  }
-
-
   _afterDeletedChangeUI(d){
 
     d = d.map(function(el){
@@ -385,131 +286,6 @@ export default class ModelStoreTable extends React.Component {
 
   }
 
-
-
-
-
-  handleJobStateData(canonicalName, state){
-    var self = this;
-    var queryToES = _getLastFeatureJobs(canonicalName, state);
-
-    var prependZero = function(num){ return num < 10 ? "0" + num : num}
-
-    _fetchDataRaw(queryToES, function(resp){
-      if(resp.hits && resp.hits.hits){
-        var jobFound = resp.hits.hits[0]
-        var isSchedule = jobFound["_source"]["schedule"] !== "@once"
-        var isSubscription = jobFound["_source"]["subscriptions"]
-        var isManual = jobFound["_source"]["schedule"] === "@once" && !jobFound["_source"]["backfill"] && !isSubscription
-
-        var relevantLambdaName = "";
-        if(isManual){
-          relevantLambdaName = LAMBDA_TO_GRAPH_STATES_MAPPING["manual"][state]
-        }else if(isSchedule){
-          relevantLambdaName = LAMBDA_TO_GRAPH_STATES_MAPPING["schedule"][state]
-        }else if(isSubscription){
-          relevantLambdaName = LAMBDA_TO_GRAPH_STATES_MAPPING["subscriptions"][state]
-        }
-
-        var jobUpdated = new Date(Number(jobFound["_source"]["updated"]) || Date.now())
-        var utcTimeStr = jobUpdated.getUTCFullYear() + "-" + prependZero(jobUpdated.getUTCMonth() + 1)
-        + "-" + prependZero(jobUpdated.getUTCDate()) + "T" + prependZero(jobUpdated.getUTCHours()) + ":" + prependZero(jobUpdated.getUTCMinutes()) + ":"
-        + jobUpdated.getUTCSeconds() + "Z"
-
-        var lambdaLogsURL = "https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2#logEventViewer:group=/aws/lambda/"
-        + relevantLambdaName + ";start=" + utcTimeStr
-
-        var splunkLogsURL = "http://splunk.metrics.kmb.sonynei.net/en-US/app/search/search?q=search%20index%3Dservice%20svtype%3Demr%20clustername%3D%22kmj-ml-mastermind*%22%20type%3D%22emr-application%22%20"
-        + encodeURIComponent(canonicalName) + "&display.page.search.mode=verbose&dispatch.sample_ratio=1&earliest=-24h%40h&latest=now&display.page.search.tab=events&display.general.type=events"
-
-
-        self.setState({snackbarLambdaLink: lambdaLogsURL, snackbarSplunkLink:splunkLogsURL})
-
-      }
-    }, "ml_model/_search?sort=updated:desc");
-  }
-
-
-  handleJobStateGraphData(canonicalName){
-    var self = this;
-    var queryToES = _getFeatureJobAggregations(canonicalName);
-
-    _fetchDataRaw(queryToES, function(resp){
-      if(resp.aggregations){
-        var tenants = resp.aggregations.tenants.buckets.map(function(tenant){
-          return {"name": tenant.key, subElements: tenant.names.buckets.map(function(job){ return {
-            name: job.key,
-            count: job.doc_count,
-            subElements: job.status.buckets.map(function(status){return {
-              name : status.key,
-              count: status.doc_count
-            }})
-          }})}
-        });
-        self.setState({elements: tenants}, self.updateJobStateGraphUI(canonicalName))
-        console.log("tenants",tenants)
-      }
-    }, "ml_model/_search?sort=updated:desc");
-  }
-
-
-  updateJobStateGraphUI(canonicalName){
-
-
-    var self = this;
-
-    return function(){
-
-      var nodes = [], edges =[];
-      var nodeIds = {};
-
-      var posY = -130
-      var posX = -90
-
-      for(var i = 0; i< self.state.elements.length; i++){
-        var tenant = self.state.elements[i]
-        for(var j=0;j<tenant.subElements.length;j++){
-          var job = tenant.subElements[j]
-          var jobName = tenant["name"] + "/" + job["name"]
-          posY += 80
-          posX = -90
-          for(var k=0;k<job.subElements.length;k++){
-            posX += 50
-            var state = job.subElements[k]
-            var cols = {"training": "#aaaaaa", "trained": "#3f9370", "error": "#f32222", "evaluated": "#ffa733"};
-            var node = { x: posX, y: posY, size: 17, physics: false, fixed:true, id: jobName + " (" + state.name + ")", label:"" + state.count, font:"14px arial " + cols[state.name]};
-            node.color = {border: cols[state.name], background:"rgba(253, 255, 254, 0.85)"}
-            nodes.push(node);
-          }
-        }
-      }
-
-      //var legendNode = { x: -120, y:  -40, fixed:true, shape:"text", id: "legend-jobs", label:"Job Runs (" + canonicalName + ")", font:"18px arial #777777"};
-      //legendNode.color = {background:"rgba(254, 255, 254, 0.85)"}
-      //nodes.push(legendNode);
-
-      ReactDOM.render(<Chip label={"Job Runs (" + canonicalName + ") | last 24h"} />, document.getElementById('chart-ctn-state-title'))
-
-      //GRAPH_DATA = {nodes:new vis.DataSet(nodes)}
-
-      //GRAPH_INSTANCE = new vis.Network(document.getElementById('chart-ctn-state'), GRAPH_DATA, GRAPH_CONFIG);
-      //GRAPH_INSTANCE.on("click", function(evt){
-      //  if(evt.nodes && evt.nodes.length){
-      //    var message = evt.nodes[0]
-      //    if(message != "legend-jobs"){
-      //      var canonicalName = message.split(" ")[0];
-      //      var state = message.split(" ")[1].replace("(", "").replace(")", "");
-
-      //      self.handleJobStateData(canonicalName, state);
-      //      self.setState({snackbarOpen:true, snackbarMessage: message })
-      //    }
-      //  }else{
-      //    self.setState({snackbarOpen:false})
-      //  }
-      //})
-    }
-
-  }
 
 
   searchForValue(input, startVal, endVal, tags, accessToken){
@@ -548,7 +324,6 @@ export default class ModelStoreTable extends React.Component {
 
 
       DATA = hits.map(function(el){
-        var chartURL = self._timeleonOutputChartURL(el["pipelineName"], el["pipelineStage"], el["pipelineName"], self._getInputColumns(el["schemaMeta"]))
         var pipelineRunId = input.artifactType === "pipelineRun" ? el["id"] : (el["pipelineRunId"] || "");
         var modelId = input.artifactType === "model" ? el["id"] : "";
         var status = el["status"] || el["online"] || "no"
@@ -588,7 +363,7 @@ export default class ModelStoreTable extends React.Component {
             "pills": el["pills"],
             "tags":el["tags"],
             "inputs": el["dataRefs"] || [],
-            "url":chartURL
+            "url":"#"
           }]
       });
 
