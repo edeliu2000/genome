@@ -217,7 +217,7 @@ TODO
 
 ## Model Visualizations
 
-To disect and debug model decisions on tabular data we provide visualizations of linear, logistic and tree based models (or ensembles) for _sklearn_ and _xgboost_. Visualizing models internals, especially decision trees, can be helpful in understanding the path in the tree that the prediction took and dissecting the role of each feature value in the prediction, in addition to understanding distribution of the data points in the leaves. In the Model Store UI the model detail page provides a model visualizer. We do not have an API defined for this (yet).
+To dissect and debug model decisions on tabular data we provide visualizations of linear, logistic and tree based models (or ensembles) for _sklearn_ and _xgboost_. Visualizing models internals, especially decision trees, can be helpful in understanding the path in the tree that the prediction took and dissecting the role of each feature value in the prediction, in addition to understanding distribution of the data points in the leaves. In the Model Store UI the model detail page provides a model visualizer. We do not have an API defined for this (yet).
 
 
 The example below shows the first tree visualization of the random forest we trained in the tabular data example:
