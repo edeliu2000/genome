@@ -1,5 +1,8 @@
 import React from "react";
 
+const skmeans = require("skmeans");
+
+
 import MenuItem from '@material-ui/core/MenuItem';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
@@ -41,13 +44,15 @@ class AdditiveForceArrayVisualizer extends React.Component {
     this.redraw = debounce(() => this.draw(), 200);
 
     this.state = {
-      xLabelSelection: "similarity",
+      xLabelSelection: "effect similarity",
       xLabelOptions: [
-        "similarity",
+        "effect similarity",
+        "output similarity",
         "output value",
         "original ordering"
       ]
-    }
+    };
+
   }
 
 
@@ -61,6 +66,11 @@ class AdditiveForceArrayVisualizer extends React.Component {
 
 
   componentDidMount() {
+
+    if(this.props.explanations){
+      this.calcSimilarityKMeans(this.state);
+    }
+
     // create our permanent elements
     this.mainGroup = this.svg.append("g");
     this.onTopGroup = this.svg.append("g");
@@ -188,8 +198,61 @@ class AdditiveForceArrayVisualizer extends React.Component {
     window.setTimeout(this.redraw, 50); // re-draw after interface has updated
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
+
+    // redo similarity mapping via skmean only if number explanations has changed
+    if(this.props.explanations){
+      const lengthInd = "" + this.props.explanations.length;
+      console.log("lengthExplanations: ", lengthInd, prevState.explanationsGenerated)
+
+      if(!prevState.explanationsGenerated || !prevState.explanationsGenerated[lengthInd]){
+        this.calcSimilarityKMeans(prevState);
+      }
+    }
+
     this.draw();
+  }
+
+  calcSimilarityKMeans(prevState){
+
+    const lengthInd = "" + this.props.explanations.length;
+
+    var effectClusters = this.props.explanations.map( x => {
+      return Object.entries(x.features).map(e => {
+        return e[1].effect;
+      })
+    });
+
+    var outValueClusters = this.props.explanations.map( x => {
+      return x.outValue;
+    });
+
+    var res = skmeans(effectClusters, this.props.numClusters || 5, "kmpp", 25);
+    if(this.effectCentroids){
+      this.effectCentroids[lengthInd] = res.idxs;
+    }else{
+      this.effectCentroids = {};
+      this.effectCentroids[lengthInd] = res.idxs;
+    }
+
+    var resOut = skmeans(outValueClusters, this.props.numClusters || 5, "kmpp", 25);
+    if(this.outValueCentroids){
+      this.outValueCentroids[lengthInd] = resOut.idxs;
+    }else{
+      this.outValueCentroids = {};
+      this.outValueCentroids[lengthInd] = resOut.idxs;
+    }
+
+    if(!prevState.explanationsGenerated){
+      var exp = {};
+      exp[lengthInd] = Number(lengthInd);
+      this.setState({explanationsGenerated: exp});
+    }else{
+      var nested = {...prevState.explanationsGenerated}
+      nested[lengthInd] = Number(lengthInd);
+      this.setState({explanationsGenerated: nested});
+    }
+
   }
 
   mouseOut() {
@@ -378,8 +441,18 @@ class AdditiveForceArrayVisualizer extends React.Component {
     if (!this.props.explanations || this.props.explanations.length === 0)
       return;
 
+    const lengthInd = "" + this.props.explanations.length;
+
     // record the order in which the explanations were given
     each(this.props.explanations, (x, i) => (x.origInd = i));
+
+    // cluster of effects via centroids from kmean
+    each(this.props.explanations, (x, i) =>
+    (x.centroid = this.effectCentroids && this.effectCentroids[lengthInd] ? this.effectCentroids[lengthInd][i] : 0));
+
+    // cluster of values via centroids from kmean
+    each(this.props.explanations, (x, i) =>
+    (x.outCentroid = this.outValueCentroids && this.outValueCentroids[lengthInd] ? this.outValueCentroids[lengthInd][i] : 0));
 
     // Find what features are actually used
     let posDefinedFeatures = {};
@@ -423,7 +496,8 @@ class AdditiveForceArrayVisualizer extends React.Component {
     );
 
     let options = [
-      "similarity",
+      "effect similarity",
+      "output similarity",
       "output value",
       "original ordering"
     ].concat(this.singleValueFeatures.map(i => this.props.featureNames[i]));
@@ -440,12 +514,12 @@ class AdditiveForceArrayVisualizer extends React.Component {
 
     let n = this.props.outNames[0]
       ? this.props.outNames[0]
-      : "model output value";
+      : "output value";
     options = map(this.usedFeatures, i => [
       this.props.featureNames[i],
       this.props.featureNames[i] + " effects"
     ]);
-    options.unshift(["model output value", n]);
+    options.unshift(["output value", n]);
     let yLabelOptions = this.ylabel.selectAll("option").data(options);
     yLabelOptions
       .enter()
@@ -491,8 +565,11 @@ class AdditiveForceArrayVisualizer extends React.Component {
     this.xaxis.scale(this.xscale);
 
 
-    if (xsort === "similarity") {
-      explanations = sortBy(this.props.explanations, x => x.simIndex);
+    if (xsort === "effect similarity") {
+      explanations = sortBy(this.props.explanations, x => x.centroid);
+      each(explanations, (e, i) => (e.xmap = i));
+    } else if (xsort === "output similarity") {
+      explanations = sortBy(this.props.explanations, x => x.outCentroid);
       each(explanations, (e, i) => (e.xmap = i));
     } else if (xsort === "output value") {
       explanations = sortBy(this.props.explanations, x => -x.outValue);
@@ -564,7 +641,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
     this.currNegOrderedFeatures = this.negOrderedFeatures;
     //let filteredFeatureNames = this.props.featureNames;
     let yvalue = this.ylabel.node().value;
-    if (yvalue !== "model output value") {
+    if (yvalue !== "output value") {
       let olde = explanations;
       explanations = cloneDeep(explanations); // TODO: add pointer from old explanations which is prop.explanations to new ones
       let ind = findKey(this.props.featureNames, x => x === yvalue);
