@@ -45,7 +45,7 @@ class AdditiveRemoteVisualizer extends React.Component {
       numSamples: null,
       numShownSamples: 250,
       numClusters:5,
-
+      clusterSizes: [3,5,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25],
 
       force: null,
       forceBaseValue: 0,
@@ -80,20 +80,6 @@ class AdditiveRemoteVisualizer extends React.Component {
       forceFeatureNames: prevState.featureNames,
       entryToExplain: "",
     }))
-  }
-
-
-  handleError = (err) => {
-    if(err){
-
-      var errMsg = err.message || "an error happened";
-      if( err.status === 403 || err.status === 401 ){
-        errMsg = "session is not valid"
-      }
-      console.log("error to show snack")
-      this.setState({snackbarOpen:true, snackbarMessage: errMsg })
-      return;
-    }
   }
 
 
@@ -135,7 +121,7 @@ class AdditiveRemoteVisualizer extends React.Component {
 
        if(err) {
          console.log("error on explanation", err);
-         return self.handleError(err);
+         return self.props.handleError(err);
        }
 
        var base = explanations.expected_value instanceof Array ? explanations.expected_value[0] :explanations.expected_value;
@@ -187,7 +173,7 @@ class AdditiveRemoteVisualizer extends React.Component {
 
        if(err) {
          console.log("error on explanation", err);
-         return self.handleError(err);
+         return self.props.handleError(err);
        }
 
        var base = explanations.expected instanceof Array ? explanations.expected[0] :explanations.expected;
@@ -244,7 +230,6 @@ class AdditiveRemoteVisualizer extends React.Component {
           variant="outlined"
         />
 
-
         <FormControl variant="outlined" style={{marginLeft:"1em", minWidth:130, maxWidth:150}}>
           <InputLabel id="numShapSamples">Num Samples</InputLabel>
           <Select
@@ -268,10 +253,9 @@ class AdditiveRemoteVisualizer extends React.Component {
             value={this.state.numClusters}
             onChange={this.handleNumClustersSelection}
           >
-              <MenuItem value={3}>{3}</MenuItem>
-              <MenuItem value={5}>{5}</MenuItem>
-              <MenuItem value={7}>{7}</MenuItem>
-              <MenuItem value={9}>{9}</MenuItem>
+          {
+           this.state.clusterSizes.map((v, i) => <MenuItem value={v}>{v}</MenuItem>)
+          }
           </Select>
         </FormControl>
 

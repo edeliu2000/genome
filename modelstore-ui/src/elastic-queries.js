@@ -358,6 +358,9 @@
         referrer: "no-referrer", // no-referrer, *client
         body: JSON.stringify(body), // body data type must match "Content-Type" header
     }).then(function(response) {
+      if(!response.ok){
+        throw response;
+      }
       var respJSON = response.json()
       return respJSON
     }).then(function(respJSON){

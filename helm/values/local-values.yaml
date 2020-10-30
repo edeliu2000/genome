@@ -20,7 +20,7 @@ modelstore:
   name: modelstore
   image:
     repository: genome-modelstore
-    tag: local.1.1.195
+    tag: local.1.1.197
     pullPolicy: IfNotPresent
 
 routing:

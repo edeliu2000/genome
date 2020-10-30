@@ -231,6 +231,8 @@ export default class ModelEditPicker extends React.Component {
       snackbarOpen: false,
       snackbarMessage: "",
     }
+
+    this.handleError = this.handleError.bind(this);
   }
 
 
@@ -377,7 +379,11 @@ export default class ModelEditPicker extends React.Component {
           canonicalName: canonicalName,
           image: e.target.result.replace(reg, "")
         }, function(err, explanations){
-           if(err) return self.handleError(err);
+
+           if(err) {
+             return self.handleError(err);
+           }
+
            var imageExplanation = 'data:image/png;base64,' + explanations.image
            var imageClass = explanations.class
            var classScore = explanations.score
@@ -388,6 +394,7 @@ export default class ModelEditPicker extends React.Component {
         accToken || "");
 
       });
+
       reader.readAsDataURL( event.target.files[0] );
     }
   }
@@ -474,6 +481,7 @@ export default class ModelEditPicker extends React.Component {
 
         { this.props.meta.inputModality && this.props.meta.inputModality === "tabular" &&
             <AdditiveRemoteVisualizer
+              handleError={this.handleError}
               canonicalName={this.props.meta.canonicalName} />
         }
 

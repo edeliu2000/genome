@@ -53,6 +53,8 @@ class AdditiveForceArrayVisualizer extends React.Component {
       ]
     };
 
+    this.clusteringIterations = 40
+
   }
 
 
@@ -226,7 +228,8 @@ class AdditiveForceArrayVisualizer extends React.Component {
       return x.outValue;
     });
 
-    var res = skmeans(effectClusters, this.props.numClusters || 5, "kmpp", 25);
+    var res = skmeans(effectClusters, this.props.numClusters || 5,
+      "kmpp", this.clusteringIterations);
     if(this.effectCentroids){
       this.effectCentroids[lengthInd] = res.idxs;
     }else{
@@ -234,7 +237,8 @@ class AdditiveForceArrayVisualizer extends React.Component {
       this.effectCentroids[lengthInd] = res.idxs;
     }
 
-    var resOut = skmeans(outValueClusters, this.props.numClusters || 5, "kmpp", 25);
+    var resOut = skmeans(outValueClusters, this.props.numClusters || 5,
+      "kmpp", this.clusteringIterations);
     if(this.outValueCentroids){
       this.outValueCentroids[lengthInd] = resOut.idxs;
     }else{
