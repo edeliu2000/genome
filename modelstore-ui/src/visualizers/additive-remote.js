@@ -44,6 +44,8 @@ class AdditiveRemoteVisualizer extends React.Component {
 
       numSamples: null,
       numShownSamples: 250,
+      numClusters:5,
+
 
       force: null,
       forceBaseValue: 0,
@@ -109,6 +111,14 @@ class AdditiveRemoteVisualizer extends React.Component {
       numShownSamples: Number(event.target.value)
     }))
   }
+
+  handleNumClustersSelection = (event) => {
+    var self = this;
+    this.setState({
+      numClusters: Number(event.target.value)
+    })
+  }
+
 
 
   onBatchExplain = () => {
@@ -250,6 +260,21 @@ class AdditiveRemoteVisualizer extends React.Component {
           </Select>
         </FormControl>
 
+        <FormControl variant="outlined" style={{marginLeft:"3em", minWidth:130, maxWidth:150}}>
+          <InputLabel id="numSimClusters">Clusters</InputLabel>
+          <Select
+            labelId="numSimClusters"
+            id="numClustersSelect"
+            value={this.state.numClusters}
+            onChange={this.handleNumClustersSelection}
+          >
+              <MenuItem value={3}>{3}</MenuItem>
+              <MenuItem value={5}>{5}</MenuItem>
+              <MenuItem value={7}>{7}</MenuItem>
+              <MenuItem value={9}>{9}</MenuItem>
+          </Select>
+        </FormControl>
+
 
         <AdditiveForceArrayVisualizer
           onClick={this.handleForceArrayClick}
@@ -257,6 +282,7 @@ class AdditiveRemoteVisualizer extends React.Component {
           expected={this.state.expected}
           featureNames={this.state.featureNames}
           baseValue={this.state.expected}
+          numClusters={this.state.numClusters}
           outNames={[""]}
           link="identity"
         />

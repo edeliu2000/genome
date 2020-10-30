@@ -202,8 +202,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
 
     // redo similarity mapping via skmean only if number explanations has changed
     if(this.props.explanations){
-      const lengthInd = "" + this.props.explanations.length;
-      console.log("lengthExplanations: ", lengthInd, prevState.explanationsGenerated)
+      const lengthInd = "" + this.props.explanations.length + "-" + this.props.numClusters;
 
       if(!prevState.explanationsGenerated || !prevState.explanationsGenerated[lengthInd]){
         this.calcSimilarityKMeans(prevState);
@@ -215,7 +214,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
 
   calcSimilarityKMeans(prevState){
 
-    const lengthInd = "" + this.props.explanations.length;
+    const lengthInd = "" + this.props.explanations.length + "-" + this.props.numClusters;
 
     var effectClusters = this.props.explanations.map( x => {
       return Object.entries(x.features).map(e => {
@@ -245,11 +244,11 @@ class AdditiveForceArrayVisualizer extends React.Component {
 
     if(!prevState.explanationsGenerated){
       var exp = {};
-      exp[lengthInd] = Number(lengthInd);
+      exp[lengthInd] = this.props.explanations.length;
       this.setState({explanationsGenerated: exp});
     }else{
       var nested = {...prevState.explanationsGenerated}
-      nested[lengthInd] = Number(lengthInd);
+      nested[lengthInd] = this.props.explanations.length;
       this.setState({explanationsGenerated: nested});
     }
 
@@ -441,7 +440,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
     if (!this.props.explanations || this.props.explanations.length === 0)
       return;
 
-    const lengthInd = "" + this.props.explanations.length;
+    const lengthInd = "" + this.props.explanations.length + "-" + this.props.numClusters;
 
     // record the order in which the explanations were given
     each(this.props.explanations, (x, i) => (x.origInd = i));
