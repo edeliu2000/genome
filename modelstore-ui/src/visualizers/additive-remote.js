@@ -177,7 +177,7 @@ class AdditiveRemoteVisualizer extends React.Component {
        }
 
        var base = explanations.expected instanceof Array ? explanations.expected[0] :explanations.expected;
-       var shapley = explanations.shapley[0];
+       var shapley = explanations && explanations.shapley ? explanations.shapley[0] : [];
        var features = {};
        var featureNames = {};
        var outVal = base

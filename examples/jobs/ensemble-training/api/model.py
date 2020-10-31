@@ -291,7 +291,9 @@ def trainCaliforniaHousing(modelMeta):
         explanations={
             "expected_value": expected_value,
             "shap_values": shap_values,
-            "number_labels": number_labels
+            "number_labels": number_labels,
+            "feature_values": data_to_explain.tolist(),
+            "feature_names": dataset_train.feature_names,
         })
 
     # save model to file
