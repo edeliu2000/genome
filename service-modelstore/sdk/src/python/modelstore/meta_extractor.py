@@ -9,6 +9,13 @@ except ImportError:
 
 
 try:
+    from pyspark.ml.regression import DecisionTreeRegressionModel
+    from pyspark.ml.classification import DecisionTreeClassificationModel
+except ImportError:
+    warnings.warn('pyspark.ml could not be imported', ImportWarning)
+
+
+try:
     import xgboost
 except ImportError:
     warnings.warn('xgboost could not be imported', ImportWarning)
@@ -65,10 +72,64 @@ class SKMetaExtractor(ModelMetaExtractor):
         estimatorClassName = str(type(child_estimator).__name__.split(".")[-1])
 
 
-        meta["__estimator_category__"] = "ensemble"
+        meta["__estimator_category__"] = modelClass
         meta["__num_estimators__"] = ensembleRank
         meta["__estimator_class_name__"] = estimatorClassName
         return meta
+
+
+
+    def getTreeFromEnsemble(self, estimator, treeIndex):
+        return estimator.estimators_[treeIndex]
+
+
+# pyspark
+class SparkMetaExtractor(ModelMetaExtractor):
+
+    def _modelClass(self, estimator):
+
+        modelClass = None
+        artifact = estimator
+
+        if "forest" in str(type(estimator)).lower():
+            modelClass = "ensemble"
+        elif "gbt" in str(type(estimator)).lower():
+            modelClass = "ensemble"
+        elif "tree" in str(type(estimator)).lower():
+            modelClass = "tree"
+        elif "linear" in str(type(estimator)).lower():
+            modelClass = "linear"
+
+
+        return (modelClass, artifact)
+
+
+
+    def extract(self, estimator):
+        meta = {}
+
+        modelClass, child_estimator = self._modelClass(estimator)
+        ensembleRank = child_estimator._call_java('getNumTrees') if "ensemble" == modelClass else 1
+        estimatorClassName = str(type(child_estimator).__name__.split(".")[-1])
+
+        meta["__estimator_category__"] = modelClass
+        meta["__num_estimators__"] = ensembleRank
+        meta["__estimator_class_name__"] = estimatorClassName
+        return meta
+
+
+    def getTreeFromEnsemble(self, estimator, treeIndex):
+        javaTreeModel = estimator._call_java('trees')[treeIndex]
+
+        if "regression" in str(type(estimator)).lower():
+            return DecisionTreeRegressionModel(javaTreeModel)
+
+        # classification
+        return DecisionTreeClassificationModel(javaTreeModel)
+
+
+
+
 
 
 # xg boost

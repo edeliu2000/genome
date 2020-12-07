@@ -353,7 +353,6 @@ export default class ModelEditPicker extends React.Component {
 
   handleError = (err) => {
     if(err){
-
       var errMsg = err.message || "an error happened";
       if( err.status === 403 || err.status === 401 ){
         errMsg = "session is not valid"
@@ -678,9 +677,9 @@ export default class ModelEditPicker extends React.Component {
               <Icon>arrow_right</Icon>
             </ListItemIcon>
             <ListItemText inset primary={"artifactBlob"} secondary={
-              (this.props.meta.artifactBlob ? this.props.meta.artifactBlob.refType : "")
-              + " | "
-              + (this.props.meta.artifactBlob ? this.props.meta.artifactBlob.ref : "")
+              (this.props.meta.artifactBlob.refType ? this.props.meta.artifactBlob.refType : "")
+              + " | " + (this.props.meta.artifactBlob.ref)
+              + " - explainer - " + (this.props.meta.artifactBlob.explainerRef || "")
             } />
           </ListItem>
           }

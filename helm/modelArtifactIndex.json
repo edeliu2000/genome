@@ -68,6 +68,7 @@
         "dynamic": "strict",
         "properties": {
           "ref": {"type": "keyword"},
+          "explainerRef": {"type": "keyword"},
           "refType": {"type": "keyword"}
         }
       },
@@ -88,6 +89,13 @@
       "status": {
         "type": "short"
       },
+
+
+      "checkpoint": {"type": "keyword"},
+      "epoch": {"type": "short"},
+
+      "metrics": {"type": "object", "enabled": false},
+
 
       "featureImportance": {
         "type": "nested",

@@ -8,19 +8,11 @@ from numbers import Number
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
-from dtreeviz.models.shadow_decision_tree import ShadowDecTree
-from dtreeviz.models.shadow_decision_tree import ShadowDecTreeNode
-from dtreeviz.models.sklearn_decision_trees import ShadowSKDTree
-
-from dtreeviz.colors import adjust_colors
-from dtreeviz.utils import myround
-
-from dtreeviz.trees import DTreeViz
-
 """
     Class to handle linear models for visualization
 """
-class LinearShadowTree(ABC):
+
+class LinearTree(ABC):
 
     def __init__(self,
                  linear_model,
@@ -34,6 +26,13 @@ class LinearShadowTree(ABC):
         self.target_name = target_name
         self.class_names = class_names
 
+        self.build()
+
+
+
+    @abstractmethod
+    def build(self):
+        pass
 
 
     @abstractmethod
@@ -45,15 +44,16 @@ class LinearShadowTree(ABC):
     def leaves(self):
         pass
 
-
-    def to_dot( self,
-      scale=1,
-      colors: dict = None,
-      precision: int = 2,
-      orientation: ('TD', 'LR') = "TD"):
+    @abstractmethod
+    def model_type(self) -> str:
+        """returns model type (linear, logistic)"""
+        pass
 
 
-        def node_name(node: ShadowTreeNode) -> str:
+    def modelGraph(self, precision: int = 2):
+
+
+        def node_name(node) -> str:
             return f"node{node.id}"
 
 
@@ -69,39 +69,29 @@ class LinearShadowTree(ABC):
             return gr_node
 
 
-        #needs adjust colors
-        colors = adjust_colors(colors)
-
-        if orientation == "TD":
-            ranksep = ".2"
-            nodesep = "0.1"
-        else:
-            #ranksep = ".05"
-            #nodesep = "0.09"
-            ranksep = "2.45"
-            nodesep = "0.19"
-
-
         internal = []
         nname = node_name(self.root())
-        gr_node = node_label(
-          self.root().feature_name(),
-          nname,
-          param=myround(self.root().parameter(), precision), isroot=True)
+        gr_node = {
+          "id": nname,
+          "label": self.root().feature_name(),
+          "mean": format(self.root().parameter(), '.' + str(precision) + 'f')
+        }
+
+
         internal.append(gr_node)
-
-
-        leaf_min = min([leaf.parameter() for leaf in self.leaves()])
-        leaf_max = max([leaf.parameter() for leaf in self.leaves()])
 
 
         tree_leaves = []
         for leaf in self.leaves():
 
             nname_leaf = 'leaf%d' % leaf.id
-            leaf_node = node_label(leaf.feature_name(), nname_leaf,
-              param=myround(leaf.parameter(), precision),
-              minmax=(leaf_min, leaf_max))
+            leaf_node = {
+              "id": nname_leaf,
+              "label": leaf.feature_name(),
+              "mean": format(self.root().parameter(), '.' + str(precision) + 'f'),
+              "leaf": True
+            }
+
             tree_leaves.append(leaf_node)
 
 
@@ -110,54 +100,37 @@ class LinearShadowTree(ABC):
         nname = node_name(self.root())
         prev_child_name = None
         for i, child in enumerate(self.leaves()):
-            if child.isleaf():
-                child_node_name = 'leaf%d' % child.id
 
+            child_node_name = 'leaf%d' % child.id
 
-            child_color = "#ffc9ad"
-            child_pw = str(0.3 + (15 * (child.parameter() - leaf_min / ((leaf_max - leaf_min) or 1))))
-
-            child_label = ""
-
-            edges.append(f'{child_node_name} -> {nname} [penwidth={child_pw} arrowType="odot" color="{child_color}" label=<{child_label}>]')
-            # don't know if this is needed in dot
-            if prev_child_name:
-                edges.append(f"""
-                {{
-                    rank=same;
-                    {prev_child_name} -> {child_node_name} [style=invis]
-                }}
-                """)
-
-            prev_child_name = child_node_name
+            edges.append({
+              "start": child_node_name,
+              "end": nname,
+              "label": child.parameter()
+            })
 
 
 
+        all_nodes = internal
+        all_nodes.extend(tree_leaves)
 
-        newline = "\n\t"
-        dot = f"""
-digraph G {{
-    splines=curved;
-    nodesep={nodesep};
-    ranksep={ranksep};
-    rankdir={orientation};
-    margin=0.0;
-    node [margin="0.03" penwidth="0.5" width=.1, height=.1];
-    edge [arrowType="odot" arrowsize=.1 penwidth="0.3"]
-    {newline.join(internal)}
-    {newline.join(edges)}
-    {newline.join(tree_leaves)}
-}}
-        """
+        vizGraph = {
+           "nodes": all_nodes,
+           "edges": edges
+        }
 
 
-        return DTreeViz(dot, scale)
+        if self.model_type():
+            vizGraph["model_type"] = self.model_type()
+
+
+        return vizGraph
 
 
 
 
 
-class LinearSKShadowTree(LinearShadowTree):
+class LinearSKTree(LinearTree):
 
 
     def __init__(self,
@@ -171,16 +144,22 @@ class LinearSKShadowTree(LinearShadowTree):
             target_name=target_name,
             class_names=class_names)
 
-        self.linear_model = linear_model
 
-        self.linear_root = ShadowTreeNode(0, feature_name="+", parameter=1, is_root=True)
 
+    def build(self):
+        self.linear_root = TreeNode(0, feature_name="+", parameter=1, is_root=True)
+
+        # this is the SK specific part
         index = 0
-        for child in linear_model.coef_:
-            child = ShadowTreeNode( index + 1, feature_name=feature_names[index], parameter=child)
+        for child in self.linear_model.coef_:
+            child = TreeNode( index + 1, feature_name=self.feature_names[index], parameter=child)
             self.linear_root.add_child(child)
             index = index + 1
 
+
+    # extract also logistic type
+    def model_type(self) -> str:
+        return "linear"
 
 
     def root(self):
@@ -193,7 +172,7 @@ class LinearSKShadowTree(LinearShadowTree):
 
 
 
-class ShadowTreeNode():
+class TreeNode():
 
     def __init__(self, id:int, feature_name:str, parameter:float, is_root:bool = False):
 

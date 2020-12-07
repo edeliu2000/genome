@@ -48,6 +48,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
       xLabelOptions: [
         "effect similarity",
         "output similarity",
+        "feature similarity",
         "output value",
         "original ordering"
       ]
@@ -228,6 +229,13 @@ class AdditiveForceArrayVisualizer extends React.Component {
       return x.outValue;
     });
 
+
+    var featValueClusters = this.props.explanations.map( x => {
+      return Object.entries(x.features).map(e => {
+        return e[1].value;
+      })
+    });
+
     var res = skmeans(effectClusters, this.props.numClusters || 5,
       "kmpp", this.clusteringIterations);
     if(this.effectCentroids){
@@ -244,6 +252,19 @@ class AdditiveForceArrayVisualizer extends React.Component {
     }else{
       this.outValueCentroids = {};
       this.outValueCentroids[lengthInd] = resOut.idxs;
+    }
+
+    // check if features are strictly numeric
+    if(featValueClusters && !featValueClusters[featValueClusters.length - 1].some(isNaN)){
+      console.log("calculating similarity for feature clusters:")
+      var featOut = skmeans(featValueClusters, this.props.numClusters || 5,
+        "kmpp", this.clusteringIterations);
+      if(this.featValueCentroids){
+        this.featValueCentroids[lengthInd] = featOut.idxs;
+      }else{
+        this.featValueCentroids = {};
+        this.featValueCentroids[lengthInd] = featOut.idxs;
+      }
     }
 
     if(!prevState.explanationsGenerated){
@@ -457,6 +478,10 @@ class AdditiveForceArrayVisualizer extends React.Component {
     each(this.props.explanations, (x, i) =>
     (x.outCentroid = this.outValueCentroids && this.outValueCentroids[lengthInd] ? this.outValueCentroids[lengthInd][i] : 0));
 
+    // cluster feature points via centroids from kmean
+    each(this.props.explanations, (x, i) =>
+    (x.featureCentroid = this.featValueCentroids && this.featValueCentroids[lengthInd] ? this.featValueCentroids[lengthInd][i] : 0));
+
     // Find what features are actually used
     let posDefinedFeatures = {};
     let negDefinedFeatures = {};
@@ -501,6 +526,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
     let options = [
       "effect similarity",
       "output similarity",
+      "feature similarity",
       "output value",
       "original ordering"
     ].concat(this.singleValueFeatures.map(i => this.props.featureNames[i]));
@@ -573,6 +599,9 @@ class AdditiveForceArrayVisualizer extends React.Component {
       each(explanations, (e, i) => (e.xmap = i));
     } else if (xsort === "output similarity") {
       explanations = sortBy(this.props.explanations, x => x.outCentroid);
+      each(explanations, (e, i) => (e.xmap = i));
+    } else if (xsort === "feature similarity") {
+      explanations = sortBy(this.props.explanations, x => x.featureCentroid);
       each(explanations, (e, i) => (e.xmap = i));
     } else if (xsort === "output value") {
       explanations = sortBy(this.props.explanations, x => -x.outValue);

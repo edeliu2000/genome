@@ -35,27 +35,20 @@ from sklearn.svm import SVC
 from sklearn.decomposition import TruncatedSVD
 from sklearn.pipeline import Pipeline, make_pipeline
 
-from dtreeviz import trees
-from .sampled_tree import _regr_leaf_viz
-from .sampled_tree import _class_leaf_viz
-from .sampled_tree import dtreeviz
+from .sampled_sk_tree import SampledSKDecisionTree
+from .sampled_xgb_tree import SampledXGBDecisionTree
+from .sampled_spark_tree import SampledSparkDecisionTree
 
-# overriding the class/regr_leaf_viz methods to display sampled trees
-# trees.regr_leaf_viz = _regr_leaf_viz
-# trees.class_leaf_viz = _class_leaf_viz
+from .linear_model_tree import LinearSKTree
+from .pipeline_model import PipelineSKTree
 
-
-from .sampled_tree import ShadowSampledSKDTree
-from .sampled_tree import ShadowSampledXGBDTree
-
-from .linear_model_tree import LinearSKShadowTree
-from .pipeline_model import PipelineSKShadowTree
 
 from .modelstore.client import ModelStore
 from .modelstore.estimator import GenomeEstimator
 
-# needs to be used for deserializing explainers :)
-import shap
+from .modelstore.meta_extractor import SparkMetaExtractor
+from .modelstore.meta_extractor import SKMetaExtractor
+
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -70,26 +63,16 @@ from sklearn.feature_extraction.text import CountVectorizer
 modelStore = ModelStore()
 
 
-dataset_train=fetch_california_housing()
-
-forest_model = RandomForestRegressor(n_estimators=25,max_depth=5)
-forest_model = forest_model.fit(dataset_train.data, dataset_train.target)
-
-
-linear_model = LinearRegression()
-linear_model = linear_model.fit(dataset_train.data, dataset_train.target)
-
-
 class VisualizationNotSupported(Exception):
     pass
 
 
-def get_shadow_visualizer( model, category,
+def model_visualizer( model, category,
          feature_names=None, target_classes=None):
 
     if "ensemble" == category or "tree" == category:
 
-        shadow_tree = ShadowSampledSKDTree(
+        shadow_tree = SampledSKDecisionTree(
             model,
             np.array([[1.0 for i in range(model.n_features_)]]),
             np.array([1.0]),
@@ -103,13 +86,14 @@ def get_shadow_visualizer( model, category,
 
     elif "linear" == category :
 
-        linear_shadow_tree = LinearSKShadowTree(
+        linear_shadow_tree = LinearSKTree(
                model,
                feature_names=feature_names,
                target_name=target_classes[0] if target_classes else None,
                class_names=target_classes)
 
-        return shadow_tree
+
+        return linear_shadow_tree
 
 
 
@@ -141,11 +125,16 @@ def visualization():
     #boston = load_boston()
     #regr.fit(boston.data, boston.target)
 
+    start_milli = int(round(time.time() * 1000))
+    logging.info("started loading model from model store:" + str(start_milli))
+
     model, modelMeta = modelStore.loadModel({
       "canonicalName":canonicalName,
       "application": application}, withMeta=True)
 
-    viz = None
+    logging.info("finished loading spark tree from model store:" + str(int(round(time.time() * 1000)) - start_milli) )
+
+    vizGraph = None
 
     estimator = model.estimator if isinstance(model, GenomeEstimator) else model
     modelToVisualize = estimator[-1] if "pipeline" in type(estimator).__name__.lower() else estimator
@@ -162,15 +151,15 @@ def visualization():
         target_classes = model.target_classes
 
 
-    # only sklearn models can be visualized for now
+    # sklearn models can be visualized for now
     if "framework" in modelMeta and modelMeta["framework"] == "sklearn":
 
         if "ensemble" == estimatorCategory:
-            modelToVisualize = modelToVisualize.estimators_[tree_index]
-
+            extractor = SKMetaExtractor()
+            modelToVisualize = extractor.getTreeFromEnsemble(modelToVisualize, tree_index)
 
         # create visualizer trees
-        shadow_tree = get_shadow_visualizer(
+        shadow_tree = model_visualizer(
                 modelToVisualize,
                 estimatorCategory,
                 feature_names=feature_names,
@@ -181,21 +170,14 @@ def visualization():
 
 
         # use dummy data, instead sample data from tree node stats
-        viz = dtreeviz(shadow_tree,
-               fake_input,
-               np.array([1.0]),
-               feature_names= feature_names,
-               target_name= target_classes[0] if target_classes else None,
-               class_names= target_classes,
-               fancy=False,
-               scale=scale)
+        vizGraph = shadow_tree.modelGraph(precision=2)
 
 
         # if model is actually a pipline retrieve the last pipline transform
         if "pipeline" in type(estimator).__name__.lower():
-            pipeline_viz = PipelineSKShadowTree(estimator, target_name="price_avg")
-            full_dot = viz.dot[:viz.dot.rindex("}")] + pipeline_viz.to_dot().dot + "}"
-            viz.dot = full_dot
+            pipelineTree = PipelineSKTree(estimator, target_name="price_avg")
+            pipeGraph = pipelineTree.modelGraph(precision=2)
+            vizGraph["pipeline"] = pipeGraph
 
 
 
@@ -204,10 +186,7 @@ def visualization():
 
         fake_input = np.array([[1.0 for i in range(14)]])
 
-        start_milli = int(round(time.time() * 1000))
-        logging.info("started creating shadow tree:" + str(start_milli))
-
-        shadow_tree = ShadowSampledXGBDTree(
+        shadow_tree = SampledXGBDecisionTree(
             modelToVisualize,
             tree_index,
             fake_input,
@@ -216,20 +195,40 @@ def visualization():
             target_name=target_classes[0] if target_classes else None,
             class_names=target_classes)
 
-        logging.info("finished creating shadow tree:" + str(int(round(time.time() * 1000)) - start_milli) )
+        # use dummy data, instead sample data from tree node stats
+        vizGraph = shadow_tree.modelGraph()
+
+
+
+
+    elif "framework" in modelMeta and modelMeta["framework"] == "spark":
+
+        fake_input = np.array([[1.0 for i in range(14)]])
 
         start_milli = int(round(time.time() * 1000))
-        logging.info("started visualizing shadow tree:" + str(start_milli))
-        # use dummy data, instead sample data from tree node stats
-        viz = dtreeviz(shadow_tree,
-               fake_input,
-               np.array([1.0]),
-               feature_names= feature_names,
-               target_name= target_classes[0] if target_classes else None,
-               class_names= target_classes,
-               fancy=False,
-               scale=scale)
-        logging.info("finished visualizing shadow tree:" + str(int(round(time.time() * 1000)) - start_milli) )
+        logging.info("started creating shadow tree:" + str(start_milli))
+
+        if "ensemble" == estimatorCategory:
+            extractor = SparkMetaExtractor()
+            modelToVisualize = extractor.getTreeFromEnsemble(modelToVisualize, tree_index)
+
+
+        shadow_tree = SampledSparkDecisionTree(
+            modelToVisualize,
+            fake_input,
+            np.array([1.0]),
+            feature_names=feature_names,
+            target_name=target_classes[0] if target_classes else None,
+            class_names=target_classes)
+
+        logging.info("finished creating shadow spark tree:" + str(int(round(time.time() * 1000)) - start_milli) )
+
+        start_milli = int(round(time.time() * 1000))
+        logging.info("started visualizing shadow spark tree:" + str(start_milli))
+
+        vizGraph = shadow_tree.modelGraph()
+
+        logging.info("finished visualizing shadow spark tree:" + str(int(round(time.time() * 1000)) - start_milli) )
 
 
 
@@ -252,13 +251,11 @@ def visualization():
 
 
 
-
-
-    resp = Response(viz.svg())
+    resp = jsonify(vizGraph)
     originHeader = request.headers.get('Origin')
     resp.headers.add('Access-Control-Allow-Origin', originHeader)
     resp.headers['Access-Control-Allow-Credentials'] = 'true'
-    resp.headers['Content-type'] = 'image/svg+xml'
+    resp.headers['Content-type'] = 'application/json'
     resp.headers['Access-Control-Allow-Headers'] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
 
     return resp

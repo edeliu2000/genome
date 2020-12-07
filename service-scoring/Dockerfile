@@ -1,4 +1,5 @@
-FROM python:3.6
+FROM openjdk:8-jdk-slim
+COPY --from=python:3.6 / /
 
 #update
 RUN apt-get update

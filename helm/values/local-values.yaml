@@ -20,7 +20,7 @@ modelstore:
   name: modelstore
   image:
     repository: genome-modelstore
-    tag: local.1.1.200
+    tag: local.1
     pullPolicy: IfNotPresent
 
 routing:
@@ -41,14 +41,14 @@ scoring:
   name: scoring
   image:
     repository: genome-scoring
-    tag: local.56
+    tag: local.1
     pullPolicy: IfNotPresent
 
 visualizer:
   name: visualizer
   image:
     repository: genome-visualizer
-    tag: local.212
+    tag: local.1
     pullPolicy: IfNotPresent
 
 elastic:

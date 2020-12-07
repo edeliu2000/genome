@@ -7,20 +7,10 @@ from numbers import Number
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-
-from dtreeviz.models.shadow_decision_tree import ShadowDecTree
-from dtreeviz.models.shadow_decision_tree import ShadowDecTreeNode
-from dtreeviz.models.sklearn_decision_trees import ShadowSKDTree
-
-from dtreeviz.colors import adjust_colors
-from dtreeviz.utils import myround
-
-from dtreeviz.trees import DTreeViz
-
 """
     Class to handle pipeline models from sklearn for visualization
 """
-class PipelineShadowTree(ABC):
+class PipelineTree(ABC):
 
     def __init__(self,
                  pipeline_model,
@@ -44,11 +34,7 @@ class PipelineShadowTree(ABC):
         pass
 
 
-    def to_dot( self,
-      scale=1,
-      colors: dict = None,
-      precision: int = 2,
-      orientation: ('TD', 'LR') = "LR"):
+    def modelGraph( self, precision: int = 2):
 
 
         def node_name(node: PipelineNode) -> str:
@@ -56,50 +42,36 @@ class PipelineShadowTree(ABC):
 
 
         def node_label(name, node_name, param, minmax=(0,0), isroot=False):
-            html = f"""<font face="Helvetica" color="#444443" point-size="12">{name}</font>"""
-            htmlTool = f"""{param}"""
-
-            if isroot:
-                gr_node = f'{node_name} [margin="0.2, 0.2" shape=none label=<{html}>]'
-            else:
-                gr_node = f'{node_name} [margin="0.1, 0.1" shape=none tooltip=<{htmlTool}> label=<{html}>]'
-
-            return gr_node
-
-
-        #needs adjust colors
-        colors = adjust_colors(colors)
-
-        if orientation == "TD":
-            ranksep = ".2"
-            nodesep = "0.1"
-        else:
-            #ranksep = ".05"
-            #nodesep = "0.09"
-            ranksep = "2.45"
-            nodesep = "0.19"
+            return f'{node_name}'
 
 
         internal = []
         nname = node_name(self.root())
-        gr_node = node_label(
-          self.root().name(),
-          nname,
-          param=myround(self.root().parameter(), precision), isroot=True)
+        gr_node = {
+          "id": nname,
+          "label":  node_label(
+                        self.root().name(),
+                        nname,
+                        param = format(self.root().parameter(), '.' + str(precision) + 'f'),
+                        isroot = True),
+          "mean": self.root().parameter()
+        }
+
         internal.append(gr_node)
-
-
-        leaf_min = min([leaf.parameter() for leaf in self.leaves()])
-        leaf_max = max([leaf.parameter() for leaf in self.leaves()])
 
 
         tree_leaves = []
         for leaf in self.leaves():
 
             nname_leaf = 'transform%d' % leaf.id
-            leaf_node = node_label(leaf.name(), nname_leaf,
-              param=myround(leaf.parameter(), precision),
-              minmax=(leaf_min, leaf_max))
+            leaf_label = node_label(nname_leaf, leaf.name(),
+              param = format(leaf.parameter(), '.' + str(precision) + 'f'))
+            leaf_node = {
+              "id": nname_leaf,
+              "label": leaf_label,
+              "mean": leaf.parameter(),
+              "leaf":True
+            }
             tree_leaves.append(leaf_node)
 
 
@@ -112,55 +84,35 @@ class PipelineShadowTree(ABC):
                 child_node_name = 'transform%d' % child.id
 
 
-            child_color = "#ffc9ad"
-            child_pw = str(1.2 + (15 * (child.parameter() - leaf_min / ((leaf_max - leaf_min) or 1))))
-            child_as = str(2.2)
-
             child_label = ""
 
             # no connections from leafs to root
             # edges.append(f'{child_node_name} -> {nname} [penwidth={child_pw} arrowType="odot" color="{child_color}" label=<{child_label}>]')
             # don't know if this is needed in dot
             if prev_child_name:
-                edges.append(f"""
-                {{
-                    rank=same;
-                    {prev_child_name} -> {child_node_name} [penwidth={child_pw} arrowSize="{child_as}" color="{child_color}" label=<{child_label}>]
-                }}
-                """)
+                edges.append({
+                  "start": f'{prev_child_name}',
+                  "end": f'{child_node_name}',
+                  "label": format(child.parameter(), '.' + str(precision) + 'f')
+                })
 
             prev_child_name = child_node_name
 
 
+        all_nodes = tree_leaves
 
+        vizGraph = {
+          "nodes": all_nodes,
+          "edges": edges
+        }
 
-        newline = "\n\t"
-        dot = f"""
-subgraph cluster_pipeline {{
-
-    label = "Model Pipeline";
-    labelloc = "t";
-    color="#ffc9ad";
-    splines=curved;
-    nodesep={nodesep};
-    ranksep={ranksep};
-    rankdir={orientation};
-    margin=0.0;
-    node [margin="0.03" penwidth="0.5" width=.1, height=.1];
-    edge [arrowsize=.4 penwidth="0.3"]
-    {newline.join(edges)}
-    {newline.join(tree_leaves)}
-}}
-        """
-
-
-        return DTreeViz(dot, scale)
+        return vizGraph
 
 
 
 
 
-class PipelineSKShadowTree(PipelineShadowTree):
+class PipelineSKTree(PipelineTree):
 
 
     def __init__(self,

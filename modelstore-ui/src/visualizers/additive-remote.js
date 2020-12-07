@@ -125,7 +125,7 @@ class AdditiveRemoteVisualizer extends React.Component {
        }
 
        var base = explanations.expected_value instanceof Array ? explanations.expected_value[0] :explanations.expected_value;
-       var shapley = explanations.shap_values;
+       var shapley = explanations && explanations.shap_values ? explanations.shap_values : [];
        var featureValues = explanations.feature_values;
        var num_labels = explanations.number_labels;
        var explanations = [];
@@ -194,7 +194,7 @@ class AdditiveRemoteVisualizer extends React.Component {
          force: true
        })
 
-       if(self.state.explanations){
+       if(self.state.explanations && self.state.explanations.length){
          self.setState(prevState => ({
            explanations: [{features:features, outValue: outVal}, ...prevState.explanations],
            shownExplanations: [

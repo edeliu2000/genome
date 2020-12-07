@@ -27,6 +27,7 @@ import TextField from '@material-ui/core/TextField'
 import EditIcon from '@material-ui/icons/Edit';
 
 import ModelEditPicker from './model-edit-dialog'
+import ModelLearningCurve from './model-learn-curve'
 
 
 const styles = theme => ({
@@ -115,11 +116,7 @@ const columns = [
           return (
             <div style={{"float":"left", width:"8em"}}>
             <ModelEditPicker meta={value} />
-            <div style={{"float":"left", "width":"45%", marginLeft:"-1em"}}>
-            <Button variant="fab" mini color="primary" target="_blank" href={value["url"]} className={styles.button}>
-              <Icon>poll</Icon>
-            </Button>
-            </div>
+            <ModelLearningCurve meta={value} />
             </div>
           );
         }

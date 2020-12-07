@@ -3,7 +3,7 @@ gunicorn
 tensorflow==2.2.0
 xgboost==1.0.0
 shap
-matplotlib
+pyspark
 singledispatch >= 3.4.0.3
 attrs > 16.0.0
 Pillow
