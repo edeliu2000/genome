@@ -171,20 +171,31 @@ For models working on images we support explanations of classification use cases
 Again, the code to train our image classification model or even the code to use a popular pretrained model (VGG, ResNet50 etc.) needs to be provided and then built as a docker image. An example code below:
 
 ```python
+
+from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
+
 canonicalName = "/classifier/mobilenet/v2"
 
 # load keras pre-trained MobileNetV2 model
 model = MobileNetV2(weights='imagenet', include_top=True)
 
+
+genome = GenomeEstimator(model,
+    data_preprocessor = preprocess_input, # function for preprocessing image input
+    modality = "image")
+
+
 # save model to model store
-modelStore.saveModel(model, {
+modelStore.saveModel(genome, {
     "canonicalName": canonicalName,
     "application": "search",
     "pipelineName": "pipeline-keras-test",
-    "pipelineRunId": "run-id", //or use the env variable to get the run id from the sequencer
+    "pipelineRunId": "run-id", # or use the env variable to get the run id from the sequencer
     "pipelineStage": "image-class-step",
     "framework": "keras",
-    "inputModality": "image", // note here the ddifference with the example with tabular data.
+    "inputModality": "image", # note here the difference with the example with tabular data.
     "versionName": "test.1.2",
     "predictionType": "classification"
 })
@@ -484,7 +495,6 @@ To run tests only for specific components disable undesired components in the sc
 ## Built with
 -  SHAP
 -  LIME
--  dtreeviz
 -  React
 -  NodeJS
 -  ElasticSearch
