@@ -14,12 +14,13 @@ Genome is a cloud native (K8) platform for model explanations and tests, geared 
 8. [Testing](#testing)
 
 ## Vision
-Scalable realtime ML platform for demystifying, dissecting, validating and enhancing trust on increasingly complex production AI. We plan to achieve this via:
+Scalable Realtime ML Platform for _demystifying_, _dissecting_, _validating_ and _enhancing_ *trust* on increasingly complex production AI. We plan to achieve this via:
 
--  Scalable Realtime Explanations of ML model predictions
+-  Scalable *Realtime Explanations* of ML model predictions
     -  on all types of data (tabular, image, text based)
--  Production grade Tracking and Versioning ML Models and Pipelines
--  Robust test pipelines and flagging of problematic models
+-  Realtime Model and *Prediction Visualizations*
+-  Production grade *Tracking and Versioning* ML Models and Pipelines
+-  Robust *test* pipelines and flagging of problematic models
 
 #### Why Realtime?
 Providing realtime explanations for models is at the core of our vision. Why realtime plays a big role is because we want _auditors_ (yes, we believe ML should increasingly be audited and regulated, especially if it drives actions and decisions) along with ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
