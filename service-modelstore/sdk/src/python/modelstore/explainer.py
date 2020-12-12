@@ -77,7 +77,7 @@ class GenomeExplainer():
                 predict_func = getattr(estimator, self.estimator_predict)
                 self.explainer.fit(input, predict_func)
             else:
-                self.explainer.fit(input, self.estimator)
+                self.explainer.fit(input, estimator)
 
 
 

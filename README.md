@@ -22,7 +22,7 @@ Scalable realtime ML platform for demystifying, dissecting, validating and enhan
 -  Robust test pipelines and flagging of problematic models
 
 #### Why Realtime?
-Providing realtime explanations for models is at the core of our vision. Why realtime plays a big role is because we want _auditors_ (yes, we believe ML should increasingly be audited and regulated) and ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
+Providing realtime explanations for models is at the core of our vision. Why realtime plays a big role is because we want _auditors_ (yes, we believe ML should increasingly be audited and regulated, especially if it drives actions and decisions) along with ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
 
 Considering that especially explanations derived from model-agnostic/blackbox approaches are expensive, getting explanations *on-demand* and on a per need basis, rather than doing it on blanket for all training data, drops the cost and hence accessibility of model explanations in general for any particular prediction, which is critical and increasingly important. The current and future realtime capabilities of Genome are well positioned to service this need.
 
@@ -35,7 +35,7 @@ Considering that especially explanations derived from model-agnostic/blackbox ap
     -  image based models (CNN architectures) via GradCAM
     -  text based models operating on documents via LIME
 
--  Visualize model architecture and internals. This is helpful for explainable model types, especially in teh case of trees, to help interpret their decisions.
+-  Visualize model architecture and internals. This is helpful for explainable model types, especially in the case of tree based models, to help interpret their decisions.
     -  trees, forests, ensembles (sklearn, XGBoost, Spark ML)
     -  linear, logistic model types
 
@@ -45,14 +45,14 @@ Considering that especially explanations derived from model-agnostic/blackbox ap
 -  Compute and Sequencer - API-s to create pipeline runs/schedules
 -  Realtime Explainer - API-s to explain models from Model Store
 -  Realtime Visualizer - API-s to visualize Models from Model Store
--  Routing - Routes to correct explainer or visualizer
+-  Routing - Routes to correct explainer or visualizer type
 -  Auth - Auth[n|z] for external facing API-s
 -  UI - UI for pipelines and models
 -  Gateway
 
 
 ## Explaining Model Predictions - Examples
-### Explaining Models on tabular data
+### Explaining Models on Tabular Data
 In this example we'll be creating and training a tree based model, specifically a random forest regressor that predicts on the CA housing dataset. Then the model will be stored in the model store to get realtime explanations out of it.
 
 ```python
@@ -63,20 +63,28 @@ dataset_train=fetch_california_housing()
 forest_model = RandomForestRegressor(n_estimators=120,max_depth=5)
 forest_model = forest_model.fit(dataset_train.data, dataset_train.target)
 
-# creating the explainer, a shap tree explainer
-explainer = shap.TreeExplainer(forest_model)
 
-# creating a genome model with the explainer and with sample explanations
-# the explanations parameter captures a sample set of precalculated shapley explanations to store and display along with the model
+
+
+
+# creating a genome model
+# an explainer will be chosen based on modality and model type
 genome_model = GenomeEstimator(forest_model,
       target_classes=["price"],
       feature_names=dataset_train.feature_names,
-      explainer=explainer, # the explinaer we created before
-      explanations={
-          "expected_value": expected_value,
-          "shap_values": shap_values,
-          "number_labels": number_labels
-      })
+      modality="tabular")
+
+
+
+# creating global model explanations via invoking sampleExplanations of the model
+# for a representative data sample (sample sizes in the range of 1-3k work well)
+data_to_explain = dataset_train.data[ np.random.choice( dataset_train.data.shape[0], 1200, replace=False), : ]
+
+# generating and storing explanations in the genome model on a sample dataset
+# a global view of model explanations is derived from the sample dataset
+# the global model explanations are served in realtime via our realtime explainer  
+genome_model.explainer.sampleExplanations(data_to_explain)
+
 
 # save the genome model in model store
 modelStore.saveModel(genome_model, {
@@ -223,7 +231,7 @@ TODO
 
 ## Model Visualizations
 
-To dissect and debug model decisions on tabular data we provide visualizations of linear, logistic and tree based models (or ensembles) for _sklearn_ and _xgboost_. Visualizing models internals, especially decision trees, can be helpful in understanding the path in the tree that the prediction took and dissecting the role of each feature value in the prediction, in addition to understanding distribution of the data points in the leaves. In the Model Store UI the model detail page provides a model visualizer. We do not have an API defined for this (yet).
+To dissect and debug model decisions on tabular data we provide visualizations of linear, logistic and tree based models (including ensembles) for _sklearn_, _xgboost_ and _Spark ML_. Visualizing models internals, especially decision trees, can be helpful in understanding the path in the tree that the prediction took and dissecting the role of each feature value in the prediction, in addition to understanding distribution of the data points in the leaves. In the Model Store UI the model detail page provides a model visualizer. We do not have an API defined for this (yet).
 
 
 The example below shows the first tree visualization of the random forest we trained in the tabular data example:

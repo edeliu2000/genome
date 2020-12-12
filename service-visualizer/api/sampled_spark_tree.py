@@ -25,13 +25,13 @@ class SampledSparkDecisionTree(SampledDecisionTree):
                  class_names: (List[str], Mapping[int, str]) = None):
 
         self.numNodes = tree_model.numNodes
-        self.numClasses = tree_model.numClasses
+        self.numClasses = tree_model.numClasses if self._is_classifier(tree_model) else 1
         self._pyspark_version = SampledSparkDecisionTree._get_pyspark_major_version()
         self.is_fit_ = self._is_fit(tree_model)
         self.is_classifier_ = self._is_classifier(tree_model)
-        self.impurity_ = _get_tree_model_parameter_value("impurity", tree_model, self._pyspark_version)
-        self.maxDepth_ = _get_tree_model_parameter_value("maxDepth", tree_model, self._pyspark_version)
-        self.minInstancesPerNode_ = _get_tree_model_parameter_value("minInstancesPerNode", tree_model, self._pyspark_version)
+        self.impurity_ = self._get_tree_model_parameter_value("impurity", tree_model, self._pyspark_version)
+        self.maxDepth_ = self._get_tree_model_parameter_value("maxDepth", tree_model, self._pyspark_version)
+        self.minInstancesPerNode_ = self._get_tree_model_parameter_value("minInstancesPerNode", tree_model, self._pyspark_version)
         self.tree_nodes, self.children_left, self.children_right = self._get_nodes_info(tree_model, self._pyspark_version)
 
         self.features_ = self._get_features()
