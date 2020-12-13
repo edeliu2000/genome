@@ -381,7 +381,7 @@ class ModelVisualizer extends React.Component {
       if(!jsonGraph.pipeline) return;
 
       var g = new dagreD3.graphlib.Graph().setGraph({
-          rankdir: "TB",
+          rankdir: "LR",
           edgesep: 13,
           ranksep: 40,
           nodesep: 35,
@@ -392,7 +392,9 @@ class ModelVisualizer extends React.Component {
         jsonGraph.pipeline.nodes.forEach((n, i) => {
           g.setNode(n.id, {
             label: n.label,
-            shape: "circle"
+            shape: "circle",
+            width: 130,
+            height:30
           })
         });
 
@@ -603,22 +605,28 @@ class ModelVisualizer extends React.Component {
                           }`
                         }} />
                       <div class="tree-graph-cont">
+                      <div style={{width:"650px", float:"left"}}>
                       <svg width="650" className={"tree-graph"}>
                       </svg>
+
+                      { this.state.vizGraph && this.state.vizGraph.pipeline &&
+                      <div style={{width:"100%", marginLeft:"1em"}}>
+                      <Chip
+                        style={{marginLeft:"auto", marginRight:"auto"}}
+                        avatar={<Avatar>P</Avatar>}
+                        label={"Pipeline"}
+                        variant="outlined"
+                      />
+                      <svg width="650" className={"pipeline-graph"}></svg>
+                      </div>
+                      }
+                      </div>
+
+
+
                       <div class="side-graph-cont">
                         <svg className={"graph-legend"}></svg>
 
-                        { this.state.vizGraph && this.state.vizGraph.pipeline &&
-                        <div style={{width:"100%"}}>
-                        <Chip
-                          style={{marginLeft:"auto", marginRight:"auto"}}
-                          avatar={<Avatar>P</Avatar>}
-                          label={"Pipeline"}
-                          variant="outlined"
-                        />
-                        <svg className={"pipeline-graph"}></svg>
-                        </div>
-                        }
                       </div>
                       </div>
 

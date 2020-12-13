@@ -128,7 +128,7 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequencer/run
 }
 ```
 
-After running this sequencer pipeline the trained model and the explainer will be available in the UI. We can than get realtime explanations via wither the UI or programmatically via the API.
+After running this sequencer pipeline the trained model and the explainer will be available in the UI. We can than get realtime explanations via either the UI or programmatically via the API.
 
 Explanations from UI - both the precomputed set from the example above and new explanations via a json entry can be obtained:
 ![Explanations UI](resources/img/explanations-ui.png)
@@ -237,8 +237,67 @@ RESPONSE:
 
 The base64 encoded image response can be directly attached in the _src_ attribute of an _img_ tag in html.
 
-### Models on text and explanation
-TODO
+
+### Explaining Models for text
+For models working on text we support explanations of classification via LIME. The intuition behind explanations on text models is that we train a surrogate (simpler explainable model) in realtime with generated synthetic data points _similar_ to the original input to be scored. The surrogate model then provides its weights for all the tokens or words to explain the original input, which is the real target of our explanation. An example would be to have a surrogate model be a simple linear model to approximate and explain a much more complex model (i.e transformer based) for a single data point.
+
+
+The example below uses a text classification pipeline with a tokenization and tf/idf phase and a random forest classifier as the primary model/pipeline to train and classify on the 20_newsgroup dataset. After training the primary model it is passed to a genome estimator along with its prediction method and saved.
+
+
+```python
+
+    canonicalName = "/classifier/text/randomforest"
+
+    categories = ['alt.atheism', 'soc.religion.christian',
+              'comp.graphics', 'sci.med']
+
+    twenty_train = fetch_20newsgroups(
+      subset='train',
+      categories=categories,
+      shuffle=True,
+      random_state=42,
+      remove=('headers', 'footers'),
+    )
+
+    #text classification pipeline is composed out of tfid + LSA + a final random forest
+    vec = TfidfVectorizer(min_df=3, stop_words='english',
+                      ngram_range=(1, 2))
+    svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
+    lsa = make_pipeline(vec, svd)
+    forest_model = RandomForestClassifier(n_estimators=205,max_depth=5)
+    pipe = make_pipeline(lsa, forest_model)
+
+    # fit the primary text model
+    pipe.fit(twenty_train.data, twenty_train.target)
+
+
+
+    model = GenomeEstimator(pipe, # passing the model to genome estimator
+        estimator_predict = "predict_proba", # provide prediction function name of the pipeline/estimator to use for training the surrogate model
+        target_classes = twenty_train.target_names,
+        modality = "text")
+
+
+    # save genome estimator to model store
+    modelStore.saveModel(model, {
+      "canonicalName": canonicalName,
+      "application": "search",
+      "pipelineName": "pipeline-text-test",
+      "pipelineRunId": "run-1-text",
+      "pipelineStage": "model",
+      "framework": "sklearn",
+      "inputModality": "text",
+      "versionName": "sklearn-text.1.2.2",
+      "predictionType": "classification"
+    })
+
+```
+
+The code above needs to be built into an image and run as a simple single-step pipeline via the sequencer API very similar to the other examples we have provided above for the tabular or image explanation use cases. After that the trained text model/pipeline will show up in our Model Store UI and the model detail page will contain a form for getting the explanation given a text input document like below:  
+
+![Text Explanations UI](resources/img/text-explanations-ui.png)
+
 
 
 ## Model Visualizations
