@@ -300,6 +300,46 @@ The code above needs to be built into an image and run as a simple single-step p
 
 
 
+Getting explanations for text documents can also be performed programmatically via the explanation API similar to the tabular and image use cases:
+
+```
+POST http://127.0.0.1:8080/v1.0/genome/routing/explain
+```
+
+```javascript
+{
+  "application": "your-app",
+  "canonicalName": "model-canonical-name",
+  "text": "your text document as string..."
+}
+```
+
+RESPONSE:
+```javascript
+{
+  "metrics": {"score": 0.523, "mean_KL_divergence": 0.0232},
+  "textExplanation": {
+    "estimator": "SGDClassifier", // surrogate sklearn model used
+    "method": "linear model",
+    "targets": [ // each prediction class gets a target object with its score
+      {
+        "proba": 0.07,
+        "score": -1.45,
+        "target": "class-name-1",
+        "weighted_spans": { // the words associated with their weight for this target's class
+          "spans": [["the", [[0, 3]], -0.22912537016629908], [...], ...]
+        }
+      },
+    ]
+  }
+}
+```
+
+Significant effort has gone into the visualizer implementation for text explanations to adjust it to a pure javascript/react version as opposed to its original lime/eli5 implementation so we recommend using that UI for visualizing the API results.
+
+
+
+
 ## Model Visualizations
 
 To dissect and debug model decisions on tabular data we provide visualizations of linear, logistic and tree based models (including ensembles) for _sklearn_, _xgboost_ and _Spark ML_. Visualizing models internals, especially decision trees, can be helpful in understanding the path in the tree that the prediction took and dissecting the role of each feature value in the prediction, in addition to understanding distribution of the data points in the leaves. In the Model Store UI the model detail page provides a model visualizer. We do not have an API defined for this (yet).
