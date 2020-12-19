@@ -3,8 +3,14 @@ FROM python:3.6
 #update
 RUN apt-get update
 
+#install requirements
+COPY ./service-modelstore/sdk/src/python/requirements.txt /tmp/requirements.txt
+WORKDIR /tmp
+RUN pip3 install -r requirements.txt
+
+
 #copy app
-COPY ./modelstore/sdk/src/python /app
+COPY ./service-modelstore/sdk/src/python /app
 WORKDIR /
 
 ENV MODELSTORE http://genome.ai
