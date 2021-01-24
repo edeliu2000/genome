@@ -1,6 +1,7 @@
 from typing import Mapping, List, Tuple
 
 from .explainer import GenomeExplainer
+from .visualizer import Viz3Model
 
 class GenomeEstimator():
 
@@ -29,9 +30,23 @@ class GenomeEstimator():
 
 
 
+
+
     def explain(self, input):
         processed = input
         if self.data_preprocessor:
             processed = self.data_preprocessor(input)
 
         return self.explainer.explain(processed, self.estimator)
+
+
+
+
+
+    def viz3Graph(self, estimator, tree_index=0):
+
+        viz3Model = Viz3Model(estimator,
+                      feature_names = self.feature_names,
+                      target_classes = self.target_classes)
+
+        return viz3Model.viz3Graph(estimator, tree_index=tree_index)

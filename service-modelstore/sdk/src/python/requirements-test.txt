@@ -1,0 +1,10 @@
+numpy
+joblib
+
+shap
+scikit-learn
+xgboost==1.0.0
+pyspark
+singledispatch >= 3.4.0.3
+attrs > 16.0.0
+Pillow

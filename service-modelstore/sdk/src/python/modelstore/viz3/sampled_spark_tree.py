@@ -12,10 +12,10 @@ except ImportError:
     warnings.warn('pyspark could not be imported', ImportWarning)
 
 
-from .sampled_tree import SampledDecisionTree
+from .sampled_tree import SampledModelTree
 
 
-class SampledSparkDecisionTree(SampledDecisionTree):
+class SampledSparkDecisionTree(SampledModelTree):
 
     def __init__(self, tree_model,
                  x_data,

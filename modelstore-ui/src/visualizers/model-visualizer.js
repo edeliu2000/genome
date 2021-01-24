@@ -246,7 +246,13 @@ class ModelVisualizer extends React.Component {
 
         // Add X axis
         const minMax = [Math.min(...data.map(d => {return d.x})), Math.max(...data.map(d => {return d.x}))];
+        const mxRange = w - (margin.right + margin.left);
+
         var x = d3.scaleLinear()
+                .domain(minMax)
+                .range([margin.left + (0.27 * mxRange), w - margin.right - (0.27 * mxRange)]);
+
+        var xScaled = d3.scaleLinear()
                 .domain(minMax)
                 .range([margin.left, w - margin.right]);
 
@@ -263,19 +269,19 @@ class ModelVisualizer extends React.Component {
         // x axis line, first tick is used as y axis
         shapeSvg.append("g")
             .attr("class", "regr-axis-x")
-            .attr("transform", "translate(" + margin.left + ", "+ margin.top +")")
-            .call(d3.axisBottom(x)
+            .attr("transform", "translate(" + (margin.left - 1) + ", "+ margin.top +")")
+            .call(d3.axisBottom(xScaled)
               .tickSize(h - margin.top - margin.bottom)
               .tickValues([minMax[0]]))
             .call(g => g.select(".domain").remove());
 
         shapeSvg.append("g")
           .attr("class", "mean-axis")
-          .attr("transform", "translate(" + (margin.left - 2) + ", "+ 0 +")")
+          .attr("transform", "translate(" + (margin.left - 1) + ", "+ 0 +")")
           .append("line")
           .attr("stroke", "#333")
           .attr("stroke-dasharray", "4,4")
-          .attr("x1", x(minMax[0])).attr("x2", x(minMax[1]))
+          .attr("x1", xScaled(minMax[0])).attr("x2", xScaled(minMax[1]))
           .attr("y1", y(node.mean)).attr("y2", y(node.mean));
 
 
@@ -297,9 +303,8 @@ class ModelVisualizer extends React.Component {
           .append("circle")
           .attr("cx", function(d) { return x(d.x); })
           .attr("cy", function(d) { return y(d.y); })
-          .attr("class", function(d,i) { return "pt" + i; })
+          .attr("class", function(d,i) { return "regr_pt pt" + i; })
           .attr("r", 1.85)
-          .attr("fill", "#60a2d1")
 
         node.intersect = function(point) {
           return dagreD3.intersect.rect({
@@ -576,6 +581,7 @@ class ModelVisualizer extends React.Component {
 
                           .regr-axis-y{
                             font: 7px sans-serif;
+                            text-anchor:middle;
                           }
 
                           .regr-axis-y .tick text{
@@ -596,6 +602,10 @@ class ModelVisualizer extends React.Component {
 
                           .regr-axis-y .tick line{
                             opacity: 0;
+                          }
+
+                          .regr_pt{
+                            fill: rgba(33, 136, 191, 0.8);
                           }
 
                           .edgePath path {

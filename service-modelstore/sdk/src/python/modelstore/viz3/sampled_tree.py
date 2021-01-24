@@ -16,7 +16,7 @@ from numbers import Number
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
-class SampledDecisionTree(ABC):
+class SampledModelTree(ABC):
 
 
     def __init__(self,
@@ -325,13 +325,13 @@ class SampledDecisionTree(ABC):
 
         def walk(node_id):
             if children_left[node_id] == -1 and children_right[node_id] == -1:  # leaf
-                t = TreeNode(self, node_id)
+                t = ModelTreeNode(self, node_id)
                 leaves.append(t)
                 return t
             else:  # decision node
                 left = walk(children_left[node_id])
                 right = walk(children_right[node_id])
-                t = TreeNode(self, node_id, left, right)
+                t = ModelTreeNode(self, node_id, left, right)
                 internal.append(t)
                 return t
 
@@ -344,47 +344,15 @@ class SampledDecisionTree(ABC):
 
     def modelGraph(self,
                  precision: int = 2,
-                 show_root_edge_labels: bool = True,
-                 show_node_labels: bool = False,
-                 show_just_path: bool = False,
-                 fancy: bool = True,
-                 histtype: ('bar', 'barstacked', 'strip') = 'barstacked',
-                 highlight_path: List[int] = [],
                  X: np.ndarray = None):
 
         """
-        Given a decision tree regressor or classifier, create and return a tree visualization
-        using the graphviz (DOT) language.
-        We can call this function in two ways :
-        1. by using shadow tree
-            ex. dtreeviz(shadow_dtree)
-            - we need to initialize shadow_tree before this call
-                - ex. shadow_dtree = ShadowSKDTree(tree_model, dataset[features], dataset[target], features, target, [0, 1]))
-            - the main advantage is that we can use the shadow_tree for other visualisations methods as well
-        2. by using sklearn, xgboost tree
-            ex. dtreeviz(tree_model, dataset[features], dataset[target], features, target, class_names=[0, 1])
-            - maintain backward compatibility
-        :param tree_model: A DecisionTreeRegressor or DecisionTreeClassifier that has been
-                           fit to X_train, y_data.
-        :param X_train: A data frame or 2-D matrix of feature vectors used to train the model.
-        :param y_data: A pandas Series or 1-D vector with target values or classes.
-        :param feature_names: A list of the feature names.
-        :param target_name: The name of the target variable.
-        :param class_names: [For classifiers] A dictionary or list of strings mapping class
-                            value to class name.
+        Given a decision tree regressor or classifier, create and return a common graph representation
+        for visualizing the tree via listing all the nodes and edges with a consistent node and edge id.
         :param precision: When displaying floating-point numbers, how many digits to display
                           after the decimal point. Default is 2.
-        :param show_root_edge_labels: Include < and >= on the edges emanating from the root?
-        :param show_node_labels: Add "Node id" to top of each node in graph for educational purposes
-        :param show_just_path: If True, it shows only the sample(X) prediction path
-        :param fancy:
-        :param highlight_path: A list of node IDs to highlight, default is [].
-                               Useful for emphasizing node(s) in tree for discussion.
-                               If X argument given then this is ignored.
-        :type highlight_path: List[int]
-        :param X: Instance to run down the tree; derived path to highlight from this vector.
-                  Show feature vector with labels underneath leaf reached. highlight_path
-                  is ignored if X is not None.
+        :param X: Vector to use for generating and visualizing a prediction
+                  The prediction is run down the tree.
         :type X: np.ndarray
         :return: An object with nodes and edges that describes the decision tree.
         """
@@ -437,7 +405,7 @@ class SampledDecisionTree(ABC):
 
 
         def get_internal_nodes():
-            if show_just_path and X is not None:
+            if X is not None:
                 _internal = []
                 for _node in self.internal:
                     if _node.id in highlight_path:
@@ -449,7 +417,7 @@ class SampledDecisionTree(ABC):
 
 
         def get_leaves():
-            if show_just_path and X is not None:
+            if X is not None:
                 _leaves = []
                 for _node in self.leaves:
                     if _node.id in highlight_path:
@@ -460,6 +428,7 @@ class SampledDecisionTree(ABC):
                 return self.leaves
 
 
+        highlight_path = []
         if X is not None:
             pred, path = self.predict(X)
             highlight_path = [n.id for n in path]
@@ -493,13 +462,10 @@ class SampledDecisionTree(ABC):
         logging.info("setting up leaf nodes " + str(end_milli - start_milli))
 
 
-        if show_just_path:
-            show_root_edge_labels = False
-        show_edge_labels = False
-        all_llabel = '&lt;' if show_edge_labels else ''
-        all_rlabel = '&ge;' if show_edge_labels else ''
-        root_llabel = '&lt;' if show_root_edge_labels else ''
-        root_rlabel = '&ge;' if show_root_edge_labels else ''
+        all_llabel = '&lt;'
+        all_rlabel = '&ge;'
+        root_llabel = '&lt;'
+        root_rlabel = '&ge;'
 
 
         start_milli = int(round(time.time() * 1000))
@@ -566,12 +532,12 @@ class SampledDecisionTree(ABC):
 
 
 
-class TreeNode():
+class ModelTreeNode():
     """
-    A node in a SampledDecisionTree. Each node has left and right pointers to child nodes.
+    A node in a SampledModelTree. Each node has left and right pointers to child nodes.
     """
 
-    def __init__(self, decision_tree: SampledDecisionTree, id: int, left=None, right=None):
+    def __init__(self, decision_tree: SampledModelTree, id: int, left=None, right=None):
         self.decision_tree = decision_tree
         self.id = id
         self.left = left

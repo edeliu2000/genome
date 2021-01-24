@@ -599,3 +599,5 @@ To run tests only for specific components disable undesired components in the sc
 -  NodeJS
 -  ElasticSearch
 -  K8
+
+Our visualizations borrow heavily from the dtreeviz project, but with significant changes in stack and serving philosophy.

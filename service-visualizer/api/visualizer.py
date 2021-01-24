@@ -16,41 +16,15 @@ import glob
 import tempfile
 import zipfile
 import shutil
-from PIL import Image
 
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as pl
-
-
-from sklearn.datasets import *
-from sklearn import tree
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LinearRegression
-from sklearn.base import BaseEstimator
-
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.svm import SVC
-from sklearn.decomposition import TruncatedSVD
-from sklearn.pipeline import Pipeline, make_pipeline
-
-from .sampled_sk_tree import SampledSKDecisionTree
-from .sampled_xgb_tree import SampledXGBDecisionTree
-from .sampled_spark_tree import SampledSparkDecisionTree
-
-from .linear_model_tree import LinearSKTree
-from .pipeline_model import PipelineSKTree
-
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 from .modelstore.client import ModelStore
 from .modelstore.estimator import GenomeEstimator
 
-from .modelstore.meta_extractor import SparkMetaExtractor
-from .modelstore.meta_extractor import SKMetaExtractor
+from .modelstore.visualizer import Viz3Model
+from .modelstore.visualizer import VisualizationNotSupported
 
-
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 # routes
 visualization_api = Blueprint('visualization_api', __name__)
@@ -61,45 +35,6 @@ modelstore_api = os.environ['MODELSTORE']
 from sklearn.feature_extraction.text import CountVectorizer
 
 modelStore = ModelStore()
-
-
-class VisualizationNotSupported(Exception):
-    pass
-
-
-def model_visualizer( model, category,
-         feature_names=None, target_classes=None):
-
-    if "ensemble" == category or "tree" == category:
-
-        shadow_tree = SampledSKDecisionTree(
-            model,
-            np.array([[1.0 for i in range(model.n_features_)]]),
-            np.array([1.0]),
-            feature_names=feature_names,
-            target_name=target_classes[0] if target_classes else None,
-            class_names=target_classes)
-
-        return shadow_tree
-
-
-
-    elif "linear" == category :
-
-        linear_shadow_tree = LinearSKTree(
-               model,
-               feature_names=feature_names,
-               target_name=target_classes[0] if target_classes else None,
-               class_names=target_classes)
-
-
-        return linear_shadow_tree
-
-
-
-    raise VisualizationNotSupported("Visualization not supported: ", category)
-
-
 
 
 # API-s
@@ -136,103 +71,27 @@ def visualization():
 
     vizGraph = None
 
-    estimator = model.estimator if isinstance(model, GenomeEstimator) else model
-    modelToVisualize = estimator[-1] if "pipeline" in type(estimator).__name__.lower() else estimator
+    try:
+        if isinstance(model, GenomeEstimator):
+            vizGraph = model.viz3Graph(model.estimator, tree_index)
 
-    feature_names = None
-    target_classes = None
-    estimatorCategory = None
+        else:
+            viz3Model = Viz3Model(model,
+                          feature_names = None,
+                          target_classes = None)
 
-    if "parameters" in modelMeta and modelMeta["parameters"]["__estimator_category__"]:
-        estimatorCategory = modelMeta["parameters"]["__estimator_category__"]
+            vizGraph = viz3Model.viz3Graph(model, tree_index=tree_index)
 
-    if isinstance(model, GenomeEstimator):
-        feature_names = model.feature_names
-        target_classes = model.target_classes
-
-
-    # sklearn models can be visualized for now
-    if "framework" in modelMeta and modelMeta["framework"] == "sklearn":
-
-        if "ensemble" == estimatorCategory:
-            extractor = SKMetaExtractor()
-            modelToVisualize = extractor.getTreeFromEnsemble(modelToVisualize, tree_index)
-
-        # create visualizer trees
-        shadow_tree = model_visualizer(
-                modelToVisualize,
-                estimatorCategory,
-                feature_names=feature_names,
-                target_classes=target_classes)
-
-
-        fake_input = np.array([[1.0 for i in range(shadow_tree.tree_model.n_features_)]]),
-
-
-        # use dummy data, instead sample data from tree node stats
-        vizGraph = shadow_tree.modelGraph(precision=2)
-
-
-        # if model is actually a pipline retrieve the last pipline transform
-        if "pipeline" in type(estimator).__name__.lower():
-            pipelineTree = PipelineSKTree(estimator, target_name="price_avg")
-            pipeGraph = pipelineTree.modelGraph(precision=2)
-            vizGraph["pipeline"] = pipeGraph
+    except VisualizationNotSupported:
+        logging.info("Visualization not supported error on model: " + canonicalName)
 
 
 
 
-    elif "framework" in modelMeta and modelMeta["framework"] == "xgboost":
-
-        fake_input = np.array([[1.0 for i in range(14)]])
-
-        shadow_tree = SampledXGBDecisionTree(
-            modelToVisualize,
-            tree_index,
-            fake_input,
-            np.array([1.0]),
-            feature_names=feature_names,
-            target_name=target_classes[0] if target_classes else None,
-            class_names=target_classes)
-
-        # use dummy data, instead sample data from tree node stats
-        vizGraph = shadow_tree.modelGraph()
 
 
-
-
-    elif "framework" in modelMeta and modelMeta["framework"] == "spark":
-
-        fake_input = np.array([[1.0 for i in range(14)]])
-
-        start_milli = int(round(time.time() * 1000))
-        logging.info("started creating shadow tree:" + str(start_milli))
-
-        if "ensemble" == estimatorCategory:
-            extractor = SparkMetaExtractor()
-            modelToVisualize = extractor.getTreeFromEnsemble(modelToVisualize, tree_index)
-
-
-        shadow_tree = SampledSparkDecisionTree(
-            modelToVisualize,
-            fake_input,
-            np.array([1.0]),
-            feature_names=feature_names,
-            target_name=target_classes[0] if target_classes else None,
-            class_names=target_classes)
-
-        logging.info("finished creating shadow spark tree:" + str(int(round(time.time() * 1000)) - start_milli) )
-
-        start_milli = int(round(time.time() * 1000))
-        logging.info("started visualizing shadow spark tree:" + str(start_milli))
-
-        vizGraph = shadow_tree.modelGraph()
-
-        logging.info("finished visualizing shadow spark tree:" + str(int(round(time.time() * 1000)) - start_milli) )
-
-
-
-    else:
+    if vizGraph == None:
+        logging.info("Visualization not supported: no graph - error on model: " + canonicalName)
         originHeader = request.headers.get('Origin')
         respHeaders = {
             'Access-Control-Allow-Origin': originHeader,

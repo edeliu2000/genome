@@ -4,11 +4,13 @@ from collections import defaultdict
 from typing import List, Mapping
 
 import numpy as np
+import warnings
 
-from .sampled_tree import SampledDecisionTree
+from .sampled_tree import SampledModelTree
 from .sampled_tree import VisualisationNotSupported
 
 from xgboost.core import Booster
+
 
 
 # XGBoost Booster to dataframe output format
@@ -35,7 +37,7 @@ from xgboost.core import Booster
 #19     0    19  0-19                             Leaf    NaN   NaN   NaN     NaN    0.161464    63.875
 
 
-class SampledXGBDecisionTree(SampledDecisionTree):
+class SampledXGBDecisionTree(SampledModelTree):
     LEFT_CHILDREN_COLUMN = "Yes"
     RIGHT_CHILDREN_COLUMN = "No"
     NO_CHILDREN = -1
@@ -171,11 +173,8 @@ class SampledXGBDecisionTree(SampledDecisionTree):
 
     def get_prediction(self, id):
         if self.is_classifier():
-            node_gain = self._get_column_value("Gain")[id]
-            class_probability = 1 / (1 + np.exp(-node_gain))
-            node_cover = self._get_column_value("Cover")[id]
-
-            return class_probability * node_cover, (1 - class_probability) * node_cover
+            class_nsamples = [np.round(a) for a in self.get_node_nsamples_by_class(id)]
+            return np.argmax(class_nsamples)
 
         else:
             # regression case
@@ -190,7 +189,13 @@ class SampledXGBDecisionTree(SampledDecisionTree):
 
     def get_node_nsamples_by_class(self, id):
         if self.is_classifier():
-            return np.array(self.get_prediction(id))
+            node_gain = self._get_column_value("Gain")[id]
+            class_probability = 1 / (1 + np.exp(-node_gain))
+            node_cover = self._get_column_value("Cover")[id]
+
+            class_nsamples = class_probability * node_cover, (1 - class_probability) * node_cover
+
+            return np.array(class_nsamples)
 
 
     def is_classifier(self):

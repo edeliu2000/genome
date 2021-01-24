@@ -5,8 +5,14 @@ import sys
 import io
 import json
 import pickle
+import logging
 
 import numpy as np
+import joblib
+from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
 
 mock_tfload = MagicMock()
 mock_keras = MagicMock()
@@ -22,14 +28,14 @@ sys.modules["tensorflow.keras.models"] = mock_models
 sys.modules["tensorflow.keras.layers"] = mock_layers
 sys.modules["tensorflow.keras.preprocessing.image"] = mock_preprocessors
 
-sys.modules["six"] = MagicMock()
-sys.modules["attr"] = MagicMock()
+#sys.modules["six"] = MagicMock()
+#sys.modules["attr"] = MagicMock()
 
 
 mock_numpy = MagicMock()
 mock_numpy.saved_model = MagicMock()
 mock_numpy.saved_model.load.return_value = {"id": "blob-123"}
-sys.modules["numpy"] = mock_numpy
+#sys.modules["numpy"] = mock_numpy
 
 
 mock_shap = MagicMock()
@@ -49,6 +55,7 @@ from ..modelstore.meta_extractor import XGMetaExtractor
 from ..modelstore.meta_extractor import TFMetaExtractor
 from ..modelstore.meta_extractor import LightGBMMetaExtractor
 from ..modelstore.meta_extractor import CatBoostMetaExtractor
+
 
 
 class TestGenomeExplainer(TestCase):

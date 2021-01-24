@@ -3,10 +3,10 @@ from typing import List, Mapping
 
 import numpy as np
 
-from .sampled_tree import SampledDecisionTree
+from .sampled_tree import SampledModelTree
 
 
-class SampledSKDecisionTree(SampledDecisionTree):
+class SampledSKDecisionTree(SampledModelTree):
     def __init__(self, tree_model,
                  x_data,
                  y_data,
