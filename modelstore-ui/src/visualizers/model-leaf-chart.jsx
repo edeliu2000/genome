@@ -70,7 +70,11 @@ class TreeLeafChart extends React.Component {
             <CartesianGrid strokeDasharray="2 2"/>
             <XAxis name="id" dataKey="name" fill="#888" />
             <YAxis label={{ value: 'counts', angle: -90, position: 'insideLeft' }}/>
-            <Tooltip/>
+            <Tooltip
+                labelFormatter={function (label) {
+                    return "leaf: " + label;
+                }}
+            />
             <Bar name="count" dataKey="count" fill="#3f51b5" fillOpacity="0.85"/>
 
           </BarChart> || ""
@@ -85,7 +89,11 @@ class TreeLeafChart extends React.Component {
             <CartesianGrid strokeDasharray="2 2"/>
             <XAxis name="id" dataKey="name" fill="#888" />
             <YAxis label={{ value: 'std.', angle: -90, position: 'insideLeft' }}/>
-            <Tooltip/>
+            <Tooltip
+                labelFormatter={function (label) {
+                    return "leaf: " + label;
+                }}
+            />
             <Bar name="std" dataKey="std" fill="#3f51b5" fillOpacity="0.85"/>
 
           </BarChart> || ""
@@ -100,7 +108,11 @@ class TreeLeafChart extends React.Component {
             <CartesianGrid strokeDasharray="2 2"/>
             <XAxis name="id" dataKey="name" fill="#888" />
             <YAxis label={{ value: 'counts', angle: -90, position: 'insideLeft' }}/>
-            <Tooltip/>
+            <Tooltip
+                labelFormatter={function (label) {
+                    return "leaf: " + label;
+                }}
+            />
             { chartData.classes.map((entry, i) => <Bar key={entry} dataKey={entry.replace(" ", "")} stackId="a" fill={color(entry)} fillOpacity="0.85"/>) }
 
           </BarChart> || ""
