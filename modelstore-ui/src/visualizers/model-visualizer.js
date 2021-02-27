@@ -27,8 +27,13 @@ import ShareIcon from '@material-ui/icons/Share';
 import Avatar from '@material-ui/core/Avatar';
 import {Tooltip as TooltipReact} from '@material-ui/core/Tooltip';
 
+import TreeLeafChart from './model-leaf-chart'
+
+
 import dagreD3 from 'dagre-d3';
 import * as d3 from 'd3'
+
+
 
 
 class ModelVisualizer extends React.Component {
@@ -398,7 +403,7 @@ class ModelVisualizer extends React.Component {
           g.setNode(n.id, {
             label: n.label,
             shape: "circle",
-            width: 130,
+            width: 150,
             height:30
           })
         });
@@ -480,6 +485,7 @@ class ModelVisualizer extends React.Component {
 
     }
 
+
     render() {
       var self = this;
 
@@ -547,7 +553,7 @@ class ModelVisualizer extends React.Component {
                           }
 
                           .side-graph-cont{
-                            width: 150px;
+                            width: 290px;
                             min-height: 180px;
                             float:left;
                             margin-left:2em;
@@ -635,6 +641,7 @@ class ModelVisualizer extends React.Component {
 
 
                       <div class="side-graph-cont">
+                        <TreeLeafChart data={this.state.vizGraph} />
                         <svg className={"graph-legend"}></svg>
 
                       </div>

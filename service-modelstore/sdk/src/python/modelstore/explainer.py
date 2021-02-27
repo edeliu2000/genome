@@ -24,14 +24,17 @@ except ImportError:
 
 
 
-# Wrapper to standardize interfaces of eplainer libraries
 class GenomeExplainer():
+    """
+        Wrapper to standardize interfaces of eplainer libraries
+    """
 
     def __init__(self,
       estimator,
       modality,
       estimator_predict = None,
       feature_names: List[str] = None,
+      target_name: str = None,
       target_classes: List[str] = None):
 
         self.estimator_predict = estimator_predict
@@ -42,6 +45,7 @@ class GenomeExplainer():
         self.modality = modality
 
         self.feature_names = feature_names
+        self.target_name = target_name
         self.target_classes = target_classes
 
         self.metrics_ = None

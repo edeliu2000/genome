@@ -293,6 +293,7 @@ def trainCaliforniaHousing(modelMeta):
 
     genome_model = GenomeEstimator(forest_model,
         target_classes=["price"],
+        target_name="price",
         feature_names=dataset_train.feature_names,
         modality="tabular")
 

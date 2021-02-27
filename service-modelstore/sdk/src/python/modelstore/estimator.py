@@ -11,12 +11,14 @@ class GenomeEstimator():
       explainer = None,
       feature_names: List[str] = None,
       target_classes: List[str] = None,
+      target_name: str = None,
       modality: ('tabular', 'image', 'text') = "tabular"):
 
         self.estimator = estimator
         self.data_preprocessor = data_preprocessor
         self.estimator_predict = estimator_predict
         self.feature_names = feature_names
+        self.target_name = target_name
         self.target_classes = target_classes
         self.explainer = explainer
 
@@ -26,6 +28,7 @@ class GenomeEstimator():
                 modality,
                 estimator_predict=estimator_predict,
                 feature_names=feature_names,
+                target_name=target_name,
                 target_classes=target_classes)
 
 
@@ -47,6 +50,7 @@ class GenomeEstimator():
 
         viz3Model = Viz3Model(estimator,
                       feature_names = self.feature_names,
+                      target_name = self.target_name,
                       target_classes = self.target_classes)
 
         return viz3Model.viz3Graph(estimator, tree_index=tree_index)
