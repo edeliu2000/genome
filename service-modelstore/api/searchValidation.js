@@ -22,79 +22,25 @@ const createError = (status, message, err) => {
 
 
 
-const queryPipelinesToRun = function(req, res, next){
-
-  if(!req.body.nextRun){
-    return next(createError(400, 'nextRun field missing'));
-  }
-
-  var artifactTypeProperty = "pipeline";
-  var sortPropertyDesc = "nextRun";
-  var sortProperty = {};
-  var sortList = [];
-
-
-  sortProperty[sortPropertyDesc] = {"order":"desc"}
-  sortList.push(sortProperty)
-
-
-  var shard = req.body.shard || "shard-1";
-
-  var query = {
-    index: 'model-artifacts',
-    body: {
-      from : 0,
-      size: 10,
-      sort: sortList,
-      query: { bool: { must: [
-        {term: {"artifactType": artifactTypeProperty}},
-        {term: {"shard": shard}},
-        {range : {
-          nextRun : {
-            lte : Number(req.body.nextRun)
-          }
-        }}
-        ]}
-      }}
-  };
-
-
-  client.search(query, (err, result) => {
-      if (err) {
-        console.log(JSON.stringify(err, null, 4));
-        return next(createError(500, 'error during storing of ' + artifactTypeProperty + ': ', err));
-      }
-
-      var arr = [];
-      if(result.body.hits && result.body.hits.hits){
-        result.body.hits.hits.forEach((item, i) => {
-          item._source.id = item._id;
-          arr.push(item._source);
-        });
-      }
-      return res.json(arr);
-  })
-};
-
-
-
 const searchByKeywords = function(req, res, next){
 
   if(!req.body.query){
     return next(createError(400, 'query field missing'));
   }
 
-  var artifactTypeProperty = req.query.artifactType || "model";
+  var artifactTypeProperty = req.body.artifactType || "testRun";
   var sortPropertyDesc = req.query.sortDesc || "created";
   var sortProperty = {};
   var sortList = [];
-  var fieldsToSearch = ["canonicalName", "pipelineName", "pipelineRunId", "versionName", "framework" , "_id"];
+  var fieldsToSearch = ["canonicalName", "versionName", "framework" , "_id"];
 
   sortProperty[sortPropertyDesc] = {"order":"desc"}
   sortList.push(sortProperty)
 
-  if(artifactTypeProperty === "model"){
+  if(artifactTypeProperty === "testRun" || artifactTypeProperty === "evaluationRun" ){
     fieldsToSearch.push("pipelineStage")
+    fieldsToSearch.push("pipelineName")
+    fieldsToSearch.push("pipelineRunId")
   }
 
   var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 7));
@@ -103,7 +49,7 @@ const searchByKeywords = function(req, res, next){
   console.log("date range:", fromDate, toDate)
 
   var query = {
-    index: 'model-artifacts',
+    index: 'validation-artifacts',
     body: {
       from : 0,
       size: 10,
@@ -151,7 +97,6 @@ const searchByKeywords = function(req, res, next){
 const search = function(req, res, next){
 
 
-  var artifactTypeProperty = req.query.artifactType || "model";
   var sortPropertyDesc = req.query.sortDesc || "created";
   var sortProperty = {};
   var sortList = [];
@@ -167,35 +112,25 @@ const search = function(req, res, next){
 
   console.log("query for search", req.body, fromDate, toDate);
 
-  var indexName = artifactTypeProperty === "deployment" ? 'deployments' : 'model-artifacts';
-  var excludeTypeFilter = artifactTypeProperty === "deployment"
-  var excludeTimeFilter = req.body.deployment && (artifactTypeProperty in {"pipeline":1, "deployment":1})
-
+  var artifactTypeProperty = req.body.artifactType || "testRun";
 
   var query = {
-    index: indexName,
+    index: 'validation-artifacts',
     body: {
       from : 0,
       size: 10,
       sort: sortList,
       query: { bool: {
         filter: [
+          {term: {"artifactType": artifactTypeProperty}},
           {term: {"application": req.body.application}}
         ]},
     }}
   };
 
-
-  if(!excludeTypeFilter){
+  if(req.body.validationTarget && req.body.validationTarget.ref){
     query.body.query.bool.filter.push({
-      term: {"artifactType": artifactTypeProperty}
-    });
-  }
-
-  if(req.body.deployment){
-    const deploymentTerm = artifactTypeProperty === "deployment" ? {'_id':req.body.deployment} : {'deployment':req.body.deployment}
-    query.body.query.bool.filter.push({
-      term: deploymentTerm
+      term: {"validationTarget.ref": req.body.validationTarget.ref}
     });
   }
 
@@ -223,20 +158,20 @@ const search = function(req, res, next){
     });
   }
 
-  if(artifactTypeProperty === "model" && req.body.pipelineStage){
+  if(artifactTypeProperty.toLowerCase().indexOf("run") && req.body.pipelineStage){
     query.body.query.bool.filter.push({
       term: {"pipelineStage": req.body.pipelineStage}
     });
   }
 
-  if(artifactTypeProperty === "model" && req.body.pipelineRunId){
+  if(artifactTypeProperty.toLowerCase().indexOf("run") >= 0 && req.body.pipelineRunId){
     query.body.query.bool.filter.push({
       term: {"pipelineRunId": req.body.pipelineRunId}
     });
   }
 
   //add time range
-  !excludeTimeFilter && query.body.query.bool.filter.push({range : {
+  query.body.query.bool.filter.push({range : {
     created : {
       gte : fromDate,
       lte : toDate
@@ -246,8 +181,8 @@ const search = function(req, res, next){
   client.search(query, (err, result) => {
 
     if (err) {
-      console.log("error on searching", JSON.stringify(err, null, 4));
-      return next(createError(500, 'error during searching of ' + artifactTypeProperty + ': ', err));
+      console.log(JSON.stringify(err, null, 4));
+      return next(createError(500, 'error during storing of ' + artifactTypeProperty + ': ', err));
     }
 
     var arr = [];
@@ -258,7 +193,6 @@ const search = function(req, res, next){
       });
     }
 
-    console.log("search result: ", "query:", JSON.stringify(query, null, 4), "result:", JSON.stringify(arr, null, 4));
     return res.json(arr);
   })
 };
@@ -266,6 +200,5 @@ const search = function(req, res, next){
 
 module.exports = {
   search: search,
-  searchByKeywords: searchByKeywords,
-  queryPipelinesToRun: queryPipelinesToRun
+  searchByKeywords: searchByKeywords
 }

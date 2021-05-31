@@ -1,0 +1,54 @@
+{
+  "mappings": {
+
+    "properties": {
+
+      "deploymentType": {"type": "keyword"},
+
+      "canonicalName": {
+        "type": "keyword",
+        "fields": {
+          "text": {
+            "type":  "text"
+          }
+        }
+      },
+
+      "application": {"type": "keyword"},
+
+      "lifecycle": {
+        "dynamic": "strict",
+        "properties": {
+          "deploy": {"type": "keyword"},
+          "undeploy": {"type": "keyword"}
+        }
+      },
+
+
+      "parameters":{
+        "dynamic": false,
+
+        "properties": {
+          "__type__": {"type": "keyword"}
+        }
+      },
+
+      "status": {
+        "type": "short"
+      },
+
+      "user": {"type": "keyword"},
+
+      "tags": {
+        "properties": {
+          "__checkpoint__": {"type": "keyword"}
+        }
+      },
+
+      "context": {"type": "object", "enabled": false},
+      "created": {"type" : "date"},
+      "updated": {"type" : "date"}
+
+    }
+  }
+}

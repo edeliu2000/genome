@@ -432,6 +432,7 @@ class ModelStore():
             data = responseMeta.read()
             modelMetaResp = json.loads(data)
             logging.info("model-id: " + str(modelMetaResp["id"]))
+            return {"id": str(modelMetaResp["id"])}
         except URLError as e:
             if hasattr(e, 'reason'):
                 logging.info('We failed to reach a server.')

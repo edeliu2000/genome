@@ -156,3 +156,19 @@ resource "null_resource" "elastic_index_ready" {
 
   depends_on = [helm_release.genome_local]
 }
+
+resource "null_resource" "elastic_validation_index_ready" {
+  provisioner "local-exec" {
+    command = "minikube kubectl -- wait -n local --for=condition=complete job/initialize-validation-index --timeout=600s"
+  }
+
+  depends_on = [helm_release.genome_local]
+}
+
+resource "null_resource" "elastic_deployment_index_ready" {
+  provisioner "local-exec" {
+    command = "minikube kubectl -- wait -n local --for=condition=complete job/initialize-deployment-index --timeout=600s"
+  }
+
+  depends_on = [helm_release.genome_local]
+}

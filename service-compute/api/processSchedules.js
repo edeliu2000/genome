@@ -36,8 +36,14 @@ const processSchedules = (modelStoreLocation, sequencerLocation, shard) => {
         canonicalName: pipe.canonicalName,
         pipelineName: pipe.pipelineName,
         versionName: pipe.versionName,
+        deployment: pipe.deployment,
         steps: pipe.recipeRef ? JSON.parse(pipe.recipeRef.ref || "[]") : []
       };
+
+      if(pipe.context && pipe.context["__deploymentParameters__"]){
+        sequencerRun["deploymentParameters"] = pipe.context["__deploymentParameters__"]
+      }
+      
       return axios.post(sequencerLocation + "/v1.0/genome/sequencer/run", sequencerRun);
     })
 

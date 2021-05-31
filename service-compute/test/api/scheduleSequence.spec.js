@@ -29,6 +29,7 @@ describe('route functions', () => {
   test('test schedule success', async () => {
 
     const req = mockRequest({}, {
+        deployment: "aaa",
         application: 'app',
         canonicalName: 'canonical',
         pipelineName: "name",
@@ -48,8 +49,21 @@ describe('route functions', () => {
         ]
       })
 
+      const dataDeployments = {
+        data: [{
+          application: 'app',
+          canonicalName: 'canonical',
+          id: "aaa",
+          deploymentType: "pipelineDeployment",
+          parameters: {
+            param1: "s3:automl",
+          }
+        }]
+      }
+
     const data = {
       data: {
+        deployment: "aaa",
         application: 'app',
         canonicalName: 'canonical',
         pipelineName: "pipe",
@@ -67,20 +81,34 @@ describe('route functions', () => {
     const mockNext = jest.fn();
 
     axios.post
+       .mockImplementationOnce(() => Promise.resolve(dataDeployments))
        .mockImplementationOnce(() => Promise.resolve(data));
 
+    let testFunc = async () => {
+      await scheduleSequence(req, res, mockNext)
+    }
 
-    await scheduleSequence(req, res, mockNext)
+    testFunc()
+    .then(() => {
+      expect(axios.post).toHaveBeenCalledTimes(2)
+    })
+    .then(() => {
+      expect(axios.post).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({
+        canonicalName: 'canonical',
+        context: { "__deploymentParameters__": {
+            param1: "s3:automl",
+          }
+        }
+      }))
+    })
+    .then(() => {
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        id: "1234",
+        nextRun: expect.any(Number)
+      }));
+    })
 
-    expect(axios.post).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-      canonicalName: 'canonical'
-    }))
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      id: "1234",
-      nextRun: expect.any(Number)
-    }));
 
   });
 
@@ -88,6 +116,7 @@ describe('route functions', () => {
   test('test schedule 500 failure', async () => {
 
     const req = mockRequest({}, {
+      deployment: "aaa",
       application: 'app',
       canonicalName: 'canonical',
       pipelineName: "name",
@@ -109,6 +138,7 @@ describe('route functions', () => {
 
     const err = {
       data: {
+        deployment: "aaa",
         application: 'app',
         canonicalName: 'canonical',
         pipelineName: "pipe",

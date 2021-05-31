@@ -1,6 +1,7 @@
 
 const mock = {
   implementation : (o, callback) => {
+    console.log("search impl success")
 
     var length = o.body.query.bool.filter.length
     expect(o.body.query.bool.filter[length-1].range.created.lte).toEqual(expect.any(Number))
@@ -12,21 +13,8 @@ const mock = {
       }
     }})
   },
-  implementationDeployment : (o, callback) => {
-
-    var length = o.body.query.bool.filter.length
-    expect(length).toEqual(2)
-
-    callback(null, {body:{
-      hits:{
-        hits:[{_id:"1234", _source:{}}]
-      }
-    }})
-  },
-  implementationPipeline : (o, callback) => {
-
-    var length = o.body.query.bool.filter.length
-    expect(length).toEqual(3)
+  implementationByKeyword : (o, callback) => {
+    console.log("search impl success keyword")
 
     callback(null, {body:{
       hits:{
@@ -41,16 +29,18 @@ const mock = {
 };
 
 
-const { search } = require('../../api/search')
+const { search, searchByKeywords } = require('../../api/searchValidation')
 
 
 jest.mock( '@elastic/elasticsearch', () => ({
   Client: jest.fn(() => ({
     search: jest.fn(mock.implementation)
-             .mockImplementationOnce(mock.implementation)
-             .mockImplementationOnce(mock.implementationDeployment)
-             .mockImplementationOnce(mock.implementationPipeline)
-             .mockImplementationOnce(mock.implementationError)
+      .mockImplementationOnce(mock.implementation)
+      .mockImplementationOnce(mock.implementation)
+      .mockImplementationOnce(mock.implementationByKeyword)
+      .mockImplementationOnce(mock.implementationByKeyword)
+      .mockImplementationOnce(mock.implementationError)
+      .mockImplementationOnce(mock.implementationError)
   }))
 }))
 
@@ -63,25 +53,6 @@ const mockRequest = (headers, body) => ({
     pipelineId: "uuid-pipelineid-123"
   }
 });
-
-const mockRequestDeployment = (headers, body) => ({
-  headers: headers,
-  body: body,
-  query: { artifactType: "deployment" },
-  params: {
-    pipelineId: "uuid-pipelineid-123"
-  }
-});
-
-const mockRequestPipeline = (headers, body) => ({
-  headers: headers,
-  body: body,
-  query: { artifactType: "pipeline" },
-  params: {
-    pipelineId: "uuid-pipelineid-123"
-  }
-});
-
 
 const mockResponse = () => {
   const res = {};
@@ -102,13 +73,14 @@ describe('max function', () => {
 
 
 
-describe('test search model or pipeline or deployment', () => {
+describe('create validation functions', () => {
 
-  test('test search model success', () => {
+  test('test evaluationRun search success', () => {
 
     const req = mockRequest(
       {},
       {
+        artifactType: "evaluationRun",
         application: "search"
       }
     );
@@ -125,13 +97,14 @@ describe('test search model or pipeline or deployment', () => {
 
   });
 
-  test('test search deployment success', () => {
 
-    const req = mockRequestDeployment(
+  test('test evaluation search success', () => {
+
+    const req = mockRequest(
       {},
       {
-        application: "search",
-        deployment: "aaa"
+        artifactType: "evaluation",
+        application: "search"
       }
     );
 
@@ -148,13 +121,15 @@ describe('test search model or pipeline or deployment', () => {
   });
 
 
-  test('test search pipeline with deployment success', () => {
 
-    const req = mockRequestPipeline(
+  test('test evaluationRun search keyword success', () => {
+
+    const req = mockRequest(
       {},
       {
-        application: "search",
-        deployment: "aaa"
+        artifactType: "evaluationRun",
+        query: "yada",
+        application: "search"
       }
     );
 
@@ -162,7 +137,7 @@ describe('test search model or pipeline or deployment', () => {
     const mockNext = jest.fn();
 
 
-    search(req, res, mockNext)
+    searchByKeywords(req, res, mockNext)
 
     expect(res.json).toHaveBeenCalledWith(expect.arrayContaining([
       {id: "1234"}
@@ -170,6 +145,29 @@ describe('test search model or pipeline or deployment', () => {
 
   });
 
+
+  test('test evaluation search success', () => {
+
+    const req = mockRequest(
+      {},
+      {
+        artifactType: "evaluation",
+        query: "yada",
+        application: "search"
+      }
+    );
+
+    const res = mockResponse();
+    const mockNext = jest.fn();
+
+
+    searchByKeywords(req, res, mockNext)
+
+    expect(res.json).toHaveBeenCalledWith(expect.arrayContaining([
+      {id: "1234"}
+    ]));
+
+  });
 
 
   test('test pipeline creation 500', () => {
@@ -178,6 +176,7 @@ describe('test search model or pipeline or deployment', () => {
     const req = mockRequest(
       {},
       {
+        artifactType: "evaluationRun",
         application: "search"
       }
     );
@@ -187,6 +186,30 @@ describe('test search model or pipeline or deployment', () => {
 
 
     search(req, res, mockNext)
+
+    expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
+      status: 500
+    }));
+
+  });
+
+
+  test('test evaluation creation 500', () => {
+
+    const req = mockRequest(
+      {},
+      {
+        artifactType: "evaluationRun",
+        query: "yada",
+        application: "search"
+      }
+    );
+
+    const res = mockResponse();
+    const mockNext = jest.fn();
+
+
+    searchByKeywords(req, res, mockNext)
 
     expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
       status: 500
@@ -206,6 +229,24 @@ describe('test search model or pipeline or deployment', () => {
     const mockNext = jest.fn();
 
     search(req, res, mockNext)
+
+    expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
+      status: 400
+    }));
+  });
+
+
+  test('test evaluation creation 400', () => {
+
+    const req = mockRequest(
+      {},
+      {}
+    );
+
+    const res = mockResponse();
+    const mockNext = jest.fn();
+
+    searchByKeywords(req, res, mockNext)
 
     expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
       status: 400

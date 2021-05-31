@@ -76,6 +76,8 @@ import ModelVisualizer from './visualizers/model-visualizer'
 import AdditiveRemoteVisualizer from './visualizers/additive-remote'
 import PipelineVisualizer from './visualizers/pipeline'
 
+import ModelValidation from './model-validation'
+
 const _fetchData = require("./elastic-queries")._fetchData
 const _fetchDataRaw = require("./elastic-queries")._fetchDataRaw
 
@@ -758,6 +760,28 @@ export default class ModelEditPicker extends React.Component {
           </ListItem>
 
         </List>
+
+        <span class="model-tests">
+        <ModelValidation
+          canonicalName={ this.props.meta.canonicalName || ""}
+          artifactType="testRun"
+          validationTarget={{
+            ref:this.props.meta.mid,
+            refType: this.props.meta.artifactType || "model"}}
+          application={ this.props.meta.application || ""}
+        />
+        </span>
+
+        <span class="model-evaluations">
+        <ModelValidation
+          canonicalName={ this.props.meta.canonicalName || ""}
+          artifactType="evaluationRun"
+          validationTarget={{
+            ref:this.props.meta.mid,
+            refType: this.props.meta.artifactType || "model"}}
+          application={ this.props.meta.application || ""}
+        />
+        </span>
 
         { this.props.meta.artifactType === "model" &&
         <ModelVisualizer

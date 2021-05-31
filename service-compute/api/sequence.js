@@ -85,6 +85,15 @@ const calculateNextRun = (schedule, now) => {
 
 
 const scheduleSequence = (req, res, next) => {
+
+  if(!req.body.deployment){
+    return next(createError(400, 'deployment field missing'));
+  }
+
+  if(!req.body.application){
+    return next(createError(400, 'application field missing'));
+  }
+
   if(!req.body.pipelineName){
     return next(createError(400, 'pipelineName field missing'));
   }
@@ -96,7 +105,9 @@ const scheduleSequence = (req, res, next) => {
   console.log("request to create sequence")
   const maxShards = 1
 
+
   var pipelineMeta = {
+      "deployment": req.body.deployment,
       "canonicalName": req.body.canonicalName,
       "application": req.body.application,
       "pipelineName": req.body.pipelineName,
@@ -114,12 +125,25 @@ const scheduleSequence = (req, res, next) => {
     pipelineMeta["nextRun"] = calculateNextRun(req.body.schedule)
   }
 
+  var deploymentParams = null;
+
   // create a pipeline in ModelStore
-  var promise = axios.post( modelStoreLocation + "/v1.0/genome/pipeline", pipelineMeta)
-  .then(function(response){
+  var promise = axios.post( modelStoreLocation + "/v1.0/genome/search?artifactType=deployment", {
+    "deployment": req.body.deployment,
+    "application": req.body.application
+  }).then(function(response){
+    console.log("get deployment: ", response.data);
+    deploymentParams = response.data.length ? response.data[0].parameters : null;
+
+    if(deploymentParams){
+      pipelineMeta["context"] = {"__deploymentParameters__": deploymentParams}
+    }
+
+    return axios.post( modelStoreLocation + "/v1.0/genome/pipeline", pipelineMeta)
+  }).then(function(response){
     console.log("created pipeline: ", response.data);
     var pipelineId = response.data.id
-    return res.status(200).json({id:pipelineId, nextRun: pipelineMeta["nextRun"]})
+    return res.status(201).json({id:pipelineId, nextRun: pipelineMeta["nextRun"]})
   }).catch((err) => {
     console.log("err on pipeline creation:", err);
     var error = createError(500, 'error on pipeline creation', err);
@@ -131,6 +155,11 @@ const scheduleSequence = (req, res, next) => {
 
 
 const runSequence = (req, res, next) => {
+
+  if(!req.body.deployment){
+    return next(createError(400, 'deployment field missing'));
+  }
+
 
   if(!req.body.pipelineName){
     return next(createError(400, 'pipelineName field missing'));
@@ -148,6 +177,7 @@ const runSequence = (req, res, next) => {
       "pipelineName": req.body.pipelineName,
       "recipeRef": {"ref": JSON.stringify(req.body.steps), "refType": "inline-pipeline"},
       "versionName": req.body.versionName || "0.0.1",
+      "deployment": req.body.deployment,
   }
 
   if(req.body.parameters){
@@ -168,6 +198,8 @@ const runSequence = (req, res, next) => {
 
     const pipelineSteps = req.body.steps || []
     const convertedSteps = [];
+    const deploymentParams = req.body.deploymentParamters || null;
+    const deployment = req.body.deployment || null;
 
     try{
 
@@ -199,7 +231,12 @@ const runSequence = (req, res, next) => {
       return next(e)
     }
 
-    return {steps: convertedSteps, runId: pipelineRunId};
+    return {
+      steps: convertedSteps,
+      runId: pipelineRunId,
+      deployment: deployment,
+      deploymentParams: deploymentParams
+    };
 
   }).then(function(pipeline){
 
@@ -263,6 +300,12 @@ const runSequence = (req, res, next) => {
               "name": "MODELSTORE",
               "value": modelStoreLocation
             },{
+              "name": "DEPLOYMENT",
+              "value": pipeline.deployment
+            },{
+              "name": "DEPLOYMENT_PARAMETERS",
+              "value": JSON.stringify(pipeline.deploymentParameters)
+            },{
               "name": "APPLICATION",
               "value": "{{inputs.parameters.APPLICATION}}"
             },{
@@ -283,19 +326,24 @@ const runSequence = (req, res, next) => {
             },{
               "name": "PARAMETERS",
               "value": "{{inputs.parameters.PARAMETERS}}"
+            },{
+              "name": "CODE",
+              "value": "{{inputs.parameters.image}}"
             }]
           }
         }]
       }
     };
 
+    console.log("created workflow: ", workflow);
+
     return axios.post( "http://localhost:8001/" + "apis/argoproj.io/v1alpha1/namespaces/argo/workflows", workflow);
 
   }).then(function(response){
     console.log("created pipeline: ", response.data);
-    return res.status(200).json(response.data)
+    return res.status(201).json({id: pipelineRunId})
   }).catch((err) => {
-    console.log("err on pipelineRun creation:", err)
+    console.log("err on pipelineRun creation:", JSON.stringify(err, null, 4))
     return next(err);
   });
 };

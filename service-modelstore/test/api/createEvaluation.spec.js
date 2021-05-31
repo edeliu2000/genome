@@ -11,12 +11,13 @@ const mock = {
 };
 
 
-const { createPipeline } = require('../../api/create')
+const { createEvaluation, createEvaluationRun } = require('../../api/createValidation')
 
 
 jest.mock( '@elastic/elasticsearch', () => ({
   Client: jest.fn(() => ({
     index: jest.fn(mock.implementation)
+             .mockImplementationOnce(mock.implementation)
              .mockImplementationOnce(mock.implementation)
              .mockImplementationOnce(mock.implementationError)
   }))
@@ -47,20 +48,22 @@ describe('max function', () => {
 
 
 
-describe('create pipeline functions', () => {
+describe('create model functions', () => {
 
-  test('test pipeline creation success', () => {
+  test('test evaluation creation success', () => {
+
 
     const req = mockRequest(
       {},
       {
-        deployment:"aaa",
         application: 'app',
         canonicalName: 'name',
         pipelineName: "pipe",
-        versionName: "dag1.1.3.4",
-        recipeRef: {
-          ref: "s3:automl/dag.1.3.3.jar",
+        pipelineStage: "stage",
+        versionName: "xgboost.1.3.4",
+        framework: "xgboost",
+        code: {
+          ref: "s3:automl/ai.1.3.3.jar",
           refType: "s3"
         }
       }
@@ -70,7 +73,7 @@ describe('create pipeline functions', () => {
     const mockNext = jest.fn();
 
 
-    createPipeline(req, res, mockNext)
+    createEvaluation(req, res, mockNext)
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -80,22 +83,26 @@ describe('create pipeline functions', () => {
   });
 
 
-
-  test('test pipeline creation 500', () => {
+  test('test evaluation creation success', () => {
 
 
     const req = mockRequest(
       {},
       {
-        deployment:"aaa",
         application: 'app',
         canonicalName: 'name',
         pipelineName: "pipe",
-        versionName: "dag1.1.3.4",
-        recipeRef: {
-          ref: "s3:automl/dag.1.3.3.jar",
+        pipelineStage: "stage",
+        pipelineRunId: "run-1",
+        versionName: "xgboost.1.3.4",
+        framework: "xgboost",
+        code: {
+          ref: "s3:automl/ai.1.3.3.jar",
           refType: "s3"
-        }
+        },
+        dataRefs:[{ref:"dataset-1", refType:"lake-1"}],
+        validationTarget: {ref:"model-proper", refType:"model"},
+        status: 1
       }
     );
 
@@ -103,16 +110,17 @@ describe('create pipeline functions', () => {
     const mockNext = jest.fn();
 
 
-    createPipeline(req, res, mockNext)
+    createEvaluationRun(req, res, mockNext)
 
-    expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-      status: 500
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      id: expect.any(String)
     }));
 
   });
 
 
-  test('test pipeline creation 400', () => {
+  test('test model creation 400', () => {
 
     const req = mockRequest(
       {},
@@ -125,7 +133,7 @@ describe('create pipeline functions', () => {
     const res = mockResponse();
     const mockNext = jest.fn();
 
-    createPipeline(req, res, mockNext)
+    createEvaluationRun(req, res, mockNext)
 
     expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
       status: 400
@@ -133,6 +141,34 @@ describe('create pipeline functions', () => {
   });
 
 
+  test('test model creation 500', () => {
+
+    const req = mockRequest(
+      {},
+      {
+        application: 'app',
+        canonicalName: 'name',
+        pipelineName: "pipe",
+        pipelineStage: "stage",
+        pipelineRunId: "run-id",
+        versionName: "xgboost.1.3.4",
+        framework: "xgboost",
+        code: {
+          ref: "s3:automl/ai.1.3.3.jar",
+          refType: "s3"
+        }
+      }
+    );
+
+    const res = mockResponse();
+    const mockNext = jest.fn();
+
+    createEvaluation(req, res, mockNext)
+
+    expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
+      status: 500
+    }));
+  });
 
 
 })

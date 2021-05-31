@@ -49,6 +49,7 @@ describe('route functions', () => {
 
     const data = {
       data: [{
+        deployment: "aaa",
         application: 'app',
         canonicalName: 'canonical',
         pipelineName: "pipe",
@@ -60,7 +61,8 @@ describe('route functions', () => {
         recipeRef: {
           ref: "[{}]",
           refType: "inline-pipeline"
-        }
+        },
+        context:{"__deploymentParameters__":{param1: 5}}
       }]
     }
 
@@ -97,7 +99,8 @@ describe('route functions', () => {
     })
     .then(() => {
       expect(axios.post).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
-        steps: expect.any(Array)
+        steps: expect.any(Array),
+        deploymentParameters: expect.any(Object)
       }))
     })
   });

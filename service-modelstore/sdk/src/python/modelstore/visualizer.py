@@ -129,7 +129,7 @@ class Viz3Model():
                fake_input,
                np.array([1.0]),
                feature_names = self.feature_names,
-               target_name = self.target_name,,
+               target_name = self.target_name,
                class_names = self.target_classes)
 
             logging.info("finished creating shadow spark tree:" + str(int(round(time.time() * 1000)) - start_milli) )

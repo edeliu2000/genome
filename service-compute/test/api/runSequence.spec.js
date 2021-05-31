@@ -29,6 +29,7 @@ describe('route functions', () => {
   test('test schedule success', async () => {
 
     const req = mockRequest({}, {
+        deployment: 'aaa',
         application: 'app',
         canonicalName: 'canonical',
         pipelineName: "name",
@@ -49,6 +50,7 @@ describe('route functions', () => {
 
     const data = {
       data: {
+        deployment: 'aaa',
         application: 'app',
         canonicalName: 'canonical',
         pipelineName: "pipe",
@@ -80,7 +82,7 @@ describe('route functions', () => {
       }))
     })
     .then(() => {
-      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
         id: "1234",
       }));
@@ -91,6 +93,7 @@ describe('route functions', () => {
   test('test schedule 500 failure', async () => {
 
     const req = mockRequest({}, {
+      deployment: 'aaa',
       application: 'app',
       canonicalName: 'canonical',
       pipelineName: "name",

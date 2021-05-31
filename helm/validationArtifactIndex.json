@@ -1,5 +1,6 @@
 {
   "mappings": {
+
     "properties": {
 
       "artifactType": {"type": "keyword"},
@@ -12,10 +13,8 @@
           }
         }
       },
+
       "application": {"type": "keyword"},
-
-      "deployment": {"type": "keyword"},
-
 
       "pipelineName": {"type": "keyword"},
       "pipelineRef": {
@@ -44,28 +43,13 @@
       },
 
       "parameters":{
-        "dynamic": true,
+        "dynamic": false,
 
         "properties": {
-          "__type__": {"type": "keyword"},
-          "__estimator_class_name__": {"type": "keyword"},
-          "__estimator_category__": {"type": "keyword"},
-          "__num_estimators__": {"type": "keyword"},
-          "__prediction_type__": {"type": "keyword"},
-          "__batchSize__": {"type": "integer"},
-          "__iteration__": {"type": "integer"},
-          "__optimizer__": {"type": "keyword"},
-          "__loss_function__": {"type": "keyword"}
+          "__type__": {"type": "keyword"}
         }
       },
 
-      "recipeRef": {
-        "dynamic": "strict",
-        "properties": {
-          "ref": {"type": "keyword"},
-          "refType": {"type": "keyword"}
-        }
-      },
 
       "artifactBlob": {
         "dynamic": "strict",
@@ -76,6 +60,7 @@
         }
       },
 
+
       "dataRefs": {
         "type": "nested",
         "dynamic": "strict",
@@ -85,27 +70,55 @@
         }
       },
 
-      "schedule": {"type": "keyword"},
-      "nextRun": {"type": "date"},
-      "shard": {"type": "keyword"},
-
       "status": {
         "type": "short"
       },
 
 
-      "checkpoint": {"type": "keyword"},
-      "epoch": {"type": "short"},
+      "tasks":{
+        "type": "object",
+        "dynamic": false,
 
-      "metrics": {"type": "object", "enabled": false},
+        "properties": {
+          "name": {"type": "keyword"},
+          "status": {"type": "short"},
+          "prototypeRef": {
+            "dynamic": "strict",
+            "properties": {
+              "ref": {"type": "keyword"},
+              "refType": {"type": "keyword"}
+            }
+          },
+          "dataRef": {
+            "dynamic": "strict",
+            "properties": {
+              "ref": {"type": "keyword"},
+              "refType": {"type": "keyword"}
+            }
+          },
+          "segment": {"type": "keyword"},
+          "expectation": {"type": "keyword"},
+          "metrics": {"type": "object", "enabled": false},
+          "message": {"type": "text"},
+          "context": {"type": "object", "enabled": false}
+        }
+      },
 
-
-      "featureImportance": {
-        "type": "nested",
+      "validationTarget": {
         "dynamic": "strict",
         "properties": {
-          "feature": {"type": "keyword"},
-          "importance": {"type": "half_float"}
+          "ref": {"type": "keyword"},
+          "refType": {"type": "keyword"}
+        }
+      },
+
+      "validationMetrics": {
+        "type": "nested",
+        "dynamic": false,
+        "properties": {
+          "name": {"type": "keyword"},
+          "value": {"type": "double"},
+          "complexValue": {"type": "object", "enabled": false}
         }
       },
 

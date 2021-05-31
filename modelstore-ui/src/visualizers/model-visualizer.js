@@ -611,7 +611,7 @@ class ModelVisualizer extends React.Component {
                           }
 
                           .regr_pt{
-                            fill: rgba(33, 136, 191, 0.8);
+                            fill: rgba(55, 66, 128, 0.35);
                           }
 
                           .edgePath path {

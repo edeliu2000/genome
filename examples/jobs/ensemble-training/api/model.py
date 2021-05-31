@@ -70,14 +70,15 @@ from pyspark.ml.regression import RandomForestRegressor as SparkRandomForestRegr
 
 from .modelstore.client import ModelStore
 from .modelstore.estimator import GenomeEstimator
-
+from .modelstore import evaluationstore
+from .modelstore.evaluationspec import GenomeEvaluationRun, evaluation, task
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 modelstore_api = os.environ['MODELSTORE']
 
 # fetching step parameters from env variables
-transform_parameters = os.environ['PARAMETERS'] if "PARAMETERS" in os.environ else "{\"ADULT_TRAIN\":true}"
+transform_parameters = os.getenv('PARAMETERS') or "{\"ADULT_TRAIN\":true}"
 logging.info("json parameters:" + transform_parameters)
 transform_parameters = json.loads(transform_parameters)
 
@@ -88,14 +89,16 @@ is_ca_spark_housing_job = transform_parameters['CA_SPARK_TRAIN'] if "CA_SPARK_TR
 is_text_train_job = transform_parameters['TEXT_TRAIN'] if "TEXT_TRAIN" in transform_parameters else False
 is_image_train_job = transform_parameters['IMAGE_TRAIN'] if "IMAGE_TRAIN" in transform_parameters else False
 
-application_parameter = os.environ['APPLICATION'] if "APPLICATION" in os.environ else ""
-pipelinerun_parameter = os.environ['PIPELINE_RUNID'] if "PIPELINE_RUNID" in os.environ else ""
-pipelinename_parameter = os.environ['PIPELINE_NAME'] if "PIPELINE_NAME" in os.environ else ""
-stepname_parameter = os.environ['STEP_NAME'] if "STEP_NAME" in os.environ else ""
+application_parameter = os.getenv('APPLICATION') or ""
+deployment_id = os.getenv('DEPLOYMENT') or ""
+deployment_parameters = os.getenv('DEPLOYMENT_PARAMETERS') or ""
+pipelinerun_parameter = os.getenv('PIPELINE_RUNID') or ""
+pipelinename_parameter = os.getenv('PIPELINE_NAME') or ""
+stepname_parameter = os.getenv('STEP_NAME') or ""
 
 
 logging.info("starting container with modelstore:" + modelstore_api)
-
+logging.info(f"deployment: {deployment_id} | params:{deployment_parameters}")
 
 cachedModels = {}
 trainingModel = False
@@ -105,6 +108,8 @@ modelStore = ModelStore()
 X,y = shap.datasets.adult()
 X_multi,y_multi = shap.datasets.linnerud()
 X_image,y_image = shap.datasets.imagenet50()
+
+
 
 
 
@@ -182,6 +187,52 @@ def trainVGG16Eli5(modelMeta):
 
 
 
+@evaluation(
+  name="test/skill/annotations/better-than-last",
+  versionName="1.2.sklearn",
+  code = "ensemble-training:local.1",
+  targetModel="target-id")
+class TrainTestEvaluation(GenomeEvaluationRun):
+
+
+    @task(dataset={"ref": "mllake://datasets/test-benchmark/california-housing-test"})
+    def evaluateTrainTestSplit(self, t, dataset):
+        my_split = 0.7
+
+        t.add_metric("f2", 2.34)
+        t.expect(my_split, var="my_split").toBeLess(0.76)
+
+
+    @task(dataset={"ref": "mllake://datasets/test-benchmark/california-housing-test"})
+    def checkError(self, t, dataset):
+        my_split = 0.7
+
+        t.add_metric("f2", 2.34)
+        t.expect(lambda: 5/0, var="myFunction").toThrow(ZeroDivisionError)
+
+
+    @task(dataset={"ref": "mllake://datasets/test-benchmark/california-housing-test"})
+    def prototypeTest(self, t, dataset):
+
+        logging.info("running evaluation task:")
+        logging.info(t)
+
+        intersect = 0.82
+        t.add_metric("intersection", intersect) \
+          .expect(intersect, var="intersection") \
+          .toBeGreater(0.52)
+
+        # now prototypes
+        for record in range(5):
+            m = record * 1.24
+            t.prototype(ref="id-123") \
+              .add_metric("f1", record * 2.34) \
+              .expect(m, var="f1") \
+              .toBe([1,0], var="metric")
+
+
+
+
 def trainTextClassifier(modelMeta):
 
     canonicalName = modelMeta["canonicalName"]
@@ -219,7 +270,7 @@ def trainTextClassifier(modelMeta):
 
 
     # save model to file
-    modelStore.saveModel(model, {
+    savedModelResp = modelStore.saveModel(model, {
       "canonicalName": canonicalName,
       "application": application_parameter or "search",
       "pipelineName": pipelinename_parameter or "pipeline-keras-test",
@@ -230,6 +281,9 @@ def trainTextClassifier(modelMeta):
       "versionName": "sklearn-text.1.2.2",
       "predictionType": "classification"
     })
+
+    splitEval = TrainTestEvaluation(None, target = savedModelResp["id"])
+    splitEval.to_run()
 
     logging.info("trained text classifier Model and saved on ModelStore")
 

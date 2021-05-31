@@ -14,6 +14,44 @@ const { v4: uuidv4 } = require('uuid');
 // uuidv4(); // ⇨ '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed'
 
 
+const isValidDeployment = (model) => {
+  if(!model.canonicalName || model.canonicalName === "" ){
+    return false
+  }
+
+  if(!model.application || model.application === "" ){
+    return false
+  }
+
+  return true;
+};
+
+
+const isValidTransform = (model) => {
+  if(!model.canonicalName || model.canonicalName === "" ){
+    return false
+  }
+
+  if(!model.application || model.application === "" ){
+    return false
+  }
+
+  if(model.pipelineRunId){
+    return false
+  }
+
+  if(!model.versionName || model.versionName === "" ){
+    return false
+  }
+
+  if(!model.code || (model.code && (!model.code.ref || !model.code.refType))){
+    return false
+  }
+
+  return true;
+};
+
+
 const isValidModel = (model) => {
   if(!model.canonicalName || model.canonicalName === "" ){
     return false
@@ -68,6 +106,10 @@ const isValidPipeline = (pipeline, isRun) => {
     return false
   }
 
+  if(!isRun && !pipeline.deployment){
+    return false
+  }
+
 
 
   //disallowed properties
@@ -105,17 +147,23 @@ const create = function(req, res, next, artifactType){
 
   var isValid = false;
   var entityType = {
+    "deployment":"pipelineDeployment",
     "model":"model",
+    "transform":"transform",
     "pipeline":"pipeline",
     "pipelineRun": "pipelineRun"
   }[artifactType]
 
   if(artifactType === "model"){
     isValid = isValidModel(req.body);
+  }else if(artifactType === "transform"){
+    isValid = isValidTransform(req.body);
   }else if(artifactType === "pipeline"){
     isValid = isValidPipeline(req.body);
   }else if(artifactType === "pipelineRun"){
     isValid = isValidPipeline(req.body, true);
+  }else if(artifactType === "deployment"){
+    isValid = isValidDeployment(req.body);
   }
 
   if(!isValid){
@@ -126,12 +174,15 @@ const create = function(req, res, next, artifactType){
     return next(validationErr);
   }
 
-  req.body["artifactType"] = entityType
+  var indexName = artifactType === 'deployment' ? 'deployments' : 'model-artifacts';
+  var typeProperty = artifactType === 'deployment' ? 'deploymentType' : 'artifactType'
+
+  req.body[typeProperty] = entityType
   req.body["created"] = Date.now();
   req.body["updated"] = Date.now();
 
   client.index({
-    index: 'model-artifacts',
+    index: indexName,
     id: uuidv4(),
     // type: '_doc', // uncomment this line if you are using {es} ≤ 6
     body: req.body
@@ -147,8 +198,16 @@ const create = function(req, res, next, artifactType){
   })
 };
 
+const createDeployment = function(req, res, next){
+  create(req, res, next, "deployment");
+}
+
 const createModel = function(req, res, next){
   create(req, res, next, "model");
+}
+
+const createTransform = function(req, res, next){
+  create(req, res, next, "transform");
 }
 
 const createPipeline = function(req, res, next){
@@ -238,6 +297,8 @@ const updatePipelineNextRun = function(req, res, next){
 }
 
 module.exports = {
+  createDeployment: createDeployment,
+  createTransform: createTransform,
   createModel: createModel,
   createPipeline: createPipeline,
   createPipelineRun: createPipelineRun,

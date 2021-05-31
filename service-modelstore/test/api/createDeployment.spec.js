@@ -1,7 +1,7 @@
 
 const mock = {
   implementation : (o, callback) => {
-    console.log("noooo sucess")
+    console.log("success creating")
     callback(null, {body:{_id:"1234"}})
   },
   implementationError: (o, callback) => {
@@ -11,7 +11,7 @@ const mock = {
 };
 
 
-const { createPipeline } = require('../../api/create')
+const { createDeployment } = require('../../api/create')
 
 
 jest.mock( '@elastic/elasticsearch', () => ({
@@ -47,21 +47,18 @@ describe('max function', () => {
 
 
 
-describe('create pipeline functions', () => {
+describe('create deployment functions', () => {
 
-  test('test pipeline creation success', () => {
+  test('test deployment creation success', () => {
+
 
     const req = mockRequest(
       {},
       {
-        deployment:"aaa",
         application: 'app',
         canonicalName: 'name',
-        pipelineName: "pipe",
-        versionName: "dag1.1.3.4",
-        recipeRef: {
-          ref: "s3:automl/dag.1.3.3.jar",
-          refType: "s3"
+        parameters: {
+          deployPar: "s3:automl/ai.1.3.3.jar"
         }
       }
     );
@@ -70,7 +67,7 @@ describe('create pipeline functions', () => {
     const mockNext = jest.fn();
 
 
-    createPipeline(req, res, mockNext)
+    createDeployment(req, res, mockNext)
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -80,44 +77,11 @@ describe('create pipeline functions', () => {
   });
 
 
-
-  test('test pipeline creation 500', () => {
-
+  test('test deployment creation 400', () => {
 
     const req = mockRequest(
       {},
       {
-        deployment:"aaa",
-        application: 'app',
-        canonicalName: 'name',
-        pipelineName: "pipe",
-        versionName: "dag1.1.3.4",
-        recipeRef: {
-          ref: "s3:automl/dag.1.3.3.jar",
-          refType: "s3"
-        }
-      }
-    );
-
-    const res = mockResponse();
-    const mockNext = jest.fn();
-
-
-    createPipeline(req, res, mockNext)
-
-    expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
-      status: 500
-    }));
-
-  });
-
-
-  test('test pipeline creation 400', () => {
-
-    const req = mockRequest(
-      {},
-      {
-        application: 'app',
         canonicalName: 'name'
       }
     );
@@ -125,7 +89,7 @@ describe('create pipeline functions', () => {
     const res = mockResponse();
     const mockNext = jest.fn();
 
-    createPipeline(req, res, mockNext)
+    createDeployment(req, res, mockNext)
 
     expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
       status: 400
@@ -133,6 +97,28 @@ describe('create pipeline functions', () => {
   });
 
 
+  test('test model creation 500', () => {
+
+    const req = mockRequest(
+      {},
+      {
+        application: 'app',
+        canonicalName: 'name',
+        parameters: {
+          deployPar: "s3:automl/ai.1.3.3.jar"
+        }
+      }
+    );
+
+    const res = mockResponse();
+    const mockNext = jest.fn();
+
+    createDeployment(req, res, mockNext)
+
+    expect(mockNext).toHaveBeenCalledWith(expect.objectContaining({
+      status: 500
+    }));
+  });
 
 
 })
