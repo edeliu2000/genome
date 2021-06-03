@@ -20,6 +20,7 @@ Scalable Realtime ML Platform for _demystifying_, _dissecting_, _validating_ and
 
 -  Production grade *Tracking and Versioning* ML Models and Pipelines
 -  Production grade *Tracking and Versioning* of Evaluations and Tests
+-  Test and Evaluation Framework for ML
 -  Scalable *Realtime Explanations* of ML model predictions
     -  on all types of data (tabular, image, text based)
 -  Realtime Model and *Prediction Visualizations*
@@ -517,9 +518,10 @@ This is an example of creating a pipeline run of a sequence of three modeling st
 POST http://127.0.0.1:8080/v1.0/genome/compute/sequencer/run
 ```
 
-```javascript
+```json
 
 {
+    "deployment": "deploy-1",
     "pipelineName": "pipe-1",
     "canonicalName":"/search/pipe-1",
     "application":"search",
@@ -530,18 +532,12 @@ POST http://127.0.0.1:8080/v1.0/genome/compute/sequencer/run
       "CA_TRAIN": true
     },
     "datasets":[],
-    // the image for model training
-    // several env variables are reserved for passing dynamic information
-    // like PIPELINE_RUNID, see below for full list
     "image": "ensemble-training:local.3",
     "timeout": "360s",
     "retry": "3"
   },{
     "stepName": "step-2",
     "stepType": "model",
-    // set of user defined parameters propagated to the modeling image
-    // in the modeling image these parameters are available as an env variable
-    // under PARAMETERS
     "parameters":{
       "TEXT_TRAIN": true
     },
