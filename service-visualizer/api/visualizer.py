@@ -34,7 +34,7 @@ modelstore_api = os.environ['MODELSTORE']
 
 from sklearn.feature_extraction.text import CountVectorizer
 
-modelStore = ModelStore()
+model_store = ModelStore()
 
 
 # API-s
@@ -63,24 +63,26 @@ def visualization():
     start_milli = int(round(time.time() * 1000))
     logging.info("started loading model from model store:" + str(start_milli))
 
-    model, modelMeta = modelStore.loadModel({
+    model, modelMeta = model_store.load_model({
       "canonicalName":canonicalName,
       "application": application}, withMeta=True)
 
     logging.info("finished loading spark tree from model store:" + str(int(round(time.time() * 1000)) - start_milli) )
 
-    vizGraph = None
 
+    # convert models to an intermediate representation (IR) for visualization
+    # via Viz3Model
+    viz_graph = None
     try:
         if isinstance(model, GenomeEstimator):
-            vizGraph = model.viz3Graph(model.estimator, tree_index)
+            viz_graph = model.viz3_graph(model.estimator, tree_index)
 
         else:
-            viz3Model = Viz3Model(model,
+            viz3_model = Viz3Model(model,
                           feature_names = None,
                           target_classes = None)
 
-            vizGraph = viz3Model.viz3Graph(model, tree_index=tree_index)
+            viz_graph = viz3_model.viz3_graph(model, tree_index=tree_index)
 
     except VisualizationNotSupported:
         logging.info("Visualization not supported error on model: " + canonicalName)
@@ -90,7 +92,7 @@ def visualization():
 
 
 
-    if vizGraph == None:
+    if viz_graph == None:
         logging.info("Visualization not supported: no graph - error on model: " + canonicalName)
         originHeader = request.headers.get('Origin')
         respHeaders = {
@@ -110,7 +112,7 @@ def visualization():
 
 
 
-    resp = jsonify(vizGraph)
+    resp = jsonify(viz_graph)
     originHeader = request.headers.get('Origin')
     resp.headers.add('Access-Control-Allow-Origin', originHeader)
     resp.headers['Access-Control-Allow-Credentials'] = 'true'

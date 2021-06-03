@@ -187,8 +187,8 @@ class TestModelStoreSave(TestCase):
 
         mock_urlopen.side_effect = [cm, cm1]
 
-        modelStore = client.ModelStore()
-        modelStore.saveModel({}, {})
+        model_store = client.ModelStore()
+        model_store.save_model({}, {})
 
 
         mock_urlopen.assert_called()
@@ -218,9 +218,9 @@ class TestModelStoreSave(TestCase):
 
         mock_urlopen.side_effect = [cm, cm1]
 
-        modelStore = client.ModelStore()
+        model_store = client.ModelStore()
 
-        model, meta = modelStore.loadModel({
+        model, meta = model_store.load_model({
           "canonicalName":"/search/pipeline",
           "application": "search"
         }, withMeta=True)
@@ -261,8 +261,8 @@ class TestModelStoreSave(TestCase):
         mock_zip.namelist.return_value = '["file-1"]'
         mock_zip.extractall.return_value = "no-op"
 
-        modelStore = client.ModelStore()
-        model, meta = modelStore.loadModel({
+        model_store = client.ModelStore()
+        model, meta = modelStore.load_model({
           "canonicalName":"/search/pipeline",
           "application": "search"
         }, withMeta=True)

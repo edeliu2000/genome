@@ -46,11 +46,11 @@ class GenomeEstimator():
 
 
 
-    def viz3Graph(self, estimator, tree_index=0):
+    def viz3_graph(self, estimator, tree_index=0):
 
         viz3Model = Viz3Model(estimator,
                       feature_names = self.feature_names,
                       target_name = self.target_name,
                       target_classes = self.target_classes)
 
-        return viz3Model.viz3Graph(estimator, tree_index=tree_index)
+        return viz3Model.viz3_graph(estimator, tree_index=tree_index)

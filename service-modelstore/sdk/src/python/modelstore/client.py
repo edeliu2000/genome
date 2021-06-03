@@ -223,10 +223,10 @@ class ModelStore():
 
 
 
-    def loadModel(self, meta, withMeta=False, explainer=False):
+    def load_model(self, meta, withMeta=False, explainer=False):
         return self.load(meta, withMeta=withMeta)
 
-    def loadExplainer(self, meta, withMeta=False):
+    def load_explainer(self, meta, withMeta=False):
         return self.load(meta, withMeta=withMeta, explainer=True)
 
     def load(self, meta, withMeta=False, explainer=False):
@@ -300,7 +300,7 @@ class ModelStore():
 
 
 
-    def saveModel(self, model, meta):
+    def save_model(self, model, meta):
 
         # post model blob
         serializedModel = None

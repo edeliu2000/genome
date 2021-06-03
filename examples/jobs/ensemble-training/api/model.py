@@ -171,7 +171,7 @@ def trainVGG16Eli5(modelMeta):
 
 
     # save model to file
-    modelStore.saveModel(genome, {
+    modelStore.save_model(genome, {
       "canonicalName": canonicalName,
       "application": application_parameter or "search",
       "pipelineName": pipelinename_parameter or "pipeline-keras-test",
@@ -270,7 +270,7 @@ def trainTextClassifier(modelMeta):
 
 
     # save model to file
-    savedModelResp = modelStore.saveModel(model, {
+    savedModelResp = modelStore.save_model(model, {
       "canonicalName": canonicalName,
       "application": application_parameter or "search",
       "pipelineName": pipelinename_parameter or "pipeline-keras-test",
@@ -311,7 +311,7 @@ def trainAdultXGBoost(modelMeta):
 
 
     # save model to file
-    modelStore.saveModel(genome_model, {
+    modelStore.save_model(genome_model, {
       "canonicalName": canonicalName,
       "application": application_parameter or "search",
       "pipelineName": pipelinename_parameter or "pipeline-keras-test",
@@ -354,7 +354,7 @@ def trainCaliforniaHousing(modelMeta):
     genome_model.explainer.sampleExplanations(data_to_explain)
 
     # save model to file
-    modelStore.saveModel(genome_model, {
+    modelStore.save_model(genome_model, {
       "canonicalName": canonicalName,
       "application": application_parameter or "search",
       "pipelineName": pipelinename_parameter or "pipeline-keras-test",
@@ -430,7 +430,7 @@ def trainSparkCaliforniaHousing(modelMeta):
 
 
     # save model to file
-    modelStore.saveModel(genome_model, {
+    modelStore.save_model(genome_model, {
       "canonicalName": canonicalName,
       "application": application_parameter or "search",
       "pipelineName": pipelinename_parameter or "pipeline-spark-test",

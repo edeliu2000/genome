@@ -1,22 +1,7 @@
-const OktaJwtVerifier = require('@okta/jwt-verifier');
-const config = require('./config')
+const providerFactory = require('./factory').providerFactory
 const NodeCache = require( "node-cache" );
 const authCache = new NodeCache();
 
-function OktaProvider(cfg){
-  this.okta = new OktaJwtVerifier({issuer:cfg.issuer});
-}
-
-OktaProvider.prototype.verify = function(token, scope){
-  return this.okta.verifyAccessToken(token, "api://default");
-}
-
-function providerFactory(){
-  if(config.provider === "okta"){
-    return new OktaProvider({issuer: config.issuer})
-  }
-  throw {status: 401, message: "no auth provider found"}
-}
 
 function getScope(req, requestedOp){
   var mode = "." + (req.path.indexOf(requestedOp) >= 0 ? "read" : "manage");

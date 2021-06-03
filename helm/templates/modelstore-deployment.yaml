@@ -43,6 +43,14 @@ spec:
                 name: {{ template "genome.fullname" .}}-es-http-ca-internal
                 key: tls.crt
 
+          - name: PROVIDER_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "genome.fullname" .}}-modelstore-pass
+                key: providerPass
+
+
+
         livenessProbe:
           httpGet:
             path: /v1.0/genome/healthz

@@ -135,11 +135,14 @@ class Viz3Model():
             logging.info("finished creating shadow spark tree:" + str(int(round(time.time() * 1000)) - start_milli) )
 
 
+
+
+        # now return the viz3 intermediate representation
         return viz3Model
 
 
 
-    def viz3Graph(self, estimator, tree_index=0):
+    def viz3_graph(self, estimator, tree_index=0):
 
         vizGraph = None
         start_milli = int(round(time.time() * 1000))

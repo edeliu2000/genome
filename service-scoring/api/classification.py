@@ -84,7 +84,7 @@ logging.info("starting container with modelstore:" + modelstore_api)
 cachedModels = {}
 trainingModel = False
 
-modelStore = ModelStore()
+model_store = ModelStore()
 
 X,y = shap.datasets.adult()
 X_multi,y_multi = shap.datasets.linnerud()
@@ -139,13 +139,13 @@ def global_explanations():
 
 
     sample = json.loads(request.data)
-    canonicalName = sample["canonicalName"]
-    modelMeta = sample["modelMeta"] if "modelMeta" in sample else {
-      "canonicalName": canonicalName,
+    canonical_name = sample["canonicalName"]
+    model_meta = sample["modelMeta"] if "modelMeta" in sample else {
+      "canonicalName": canonical_name,
     }
     entries = sample["entries"] if "entries" in sample else None
 
-    model = modelStore.loadModel(modelMeta)
+    model = model_store.load_model(model_meta)
 
     logging.info("fetched model and explainer")
 
@@ -196,7 +196,7 @@ def explanation():
 
 
 
-    model = modelStore.loadModel(modelMeta)
+    model = model_store.load_model(modelMeta)
 
 
     logging.info("created explainer")
