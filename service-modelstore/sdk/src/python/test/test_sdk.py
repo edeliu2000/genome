@@ -262,7 +262,7 @@ class TestModelStoreSave(TestCase):
         mock_zip.extractall.return_value = "no-op"
 
         model_store = client.ModelStore()
-        model, meta = modelStore.load_model({
+        model, meta = model_store.load_model({
           "canonicalName":"/search/pipeline",
           "application": "search"
         }, withMeta=True)

@@ -20,53 +20,13 @@ import warnings
 
 from typing import Mapping, List, Tuple
 
+from .base import BaseRef, CodeRef, DataRef, BaseMetric
+
+
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
-modelstore_api = os.environ['MODELSTORE']
-
-
-
-class BaseRef():
-    def __init__(self, ref:str, refType:str):
-        self.ref = ref
-        self.refType = refType
-
-class DataRef(BaseRef):
-    def __init__(self, ref:str, refType:str):
-        super().__init__(ref, refType)
-
-
-class CodeRef(BaseRef):
-    def __init__(self, ref:str, refType:str):
-        super().__init__(ref, refType)
-
-
-class BaseMetric():
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-
-    def get_meta(self):
-        """
-        :return: a dict with the fields of the metric object
-        """
-        meta = {}
-
-        # all props except weights blob and local file are metadata
-        for k, v in self.__dict__.items():
-            meta[k] = v
-
-
-        return meta
-
-
-
-class NumericMetric(BaseMetric):
-    def __init__(self, name:str, value:float):
-        super().__init__(name, value)
-
+modelstore_api = os.getenv('MODELSTORE')
 
 class Task():
 
@@ -75,14 +35,14 @@ class Task():
       dataRef: DataRef = None,
       segment: str = None,
       prototypeRef: BaseRef = None,
-      expectation: str = None,
+      expectations: List[str] = None,
       context: dict = None):
 
         self.name = name
         self.dataRef = dataRef.__dict__ if dataRef else None
         self.segment = segment
         self.prototypeRef = prototypeRef.__dict__ if prototypeRef else None
-        self.expectation = expectation
+        self.expectations = expectations
         self.context = context
 
 
@@ -108,7 +68,7 @@ class TaskRun(Task):
       dataRef: DataRef = None,
       segment: str = None,
       prototypeRef: BaseRef = None,
-      expectation: str = None,
+      expectations: List[str] = None,
       context: dict = None,
       status:int = 0,
       metrics:dict = None,
@@ -119,7 +79,7 @@ class TaskRun(Task):
           dataRef = dataRef,
           segment = segment,
           prototypeRef = prototypeRef,
-          expectation = expectation,
+          expectations = expectations,
           context = context)
 
         self.status = status

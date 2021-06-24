@@ -230,12 +230,16 @@ class ModelValidation extends React.Component {
           }
 
 
-          { this.state.displayTaskInfo && this.state.displayTaskInfo.expectation &&
+          { this.state.displayTaskInfo && this.state.displayTaskInfo.expectations &&
             <ListItem divider button>
               <ListItemIcon>
                 <Icon>storage</Icon>
               </ListItemIcon>
-              <ListItemText inset primary={this.state.displayTaskInfo.expectation}
+              <ListItemText inset primary={
+                this.state.displayTaskInfo.expectations.map((entry, i) => <div style={{float:"left", width:"100%"}}>
+                    <i> {entry} </i>
+                </div>)
+              }
                 secondary={
                   "Expectation"
                 }

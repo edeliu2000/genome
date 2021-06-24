@@ -97,7 +97,7 @@
             }
           },
           "segment": {"type": "keyword"},
-          "expectation": {"type": "keyword"},
+          "expectations": {"type": "keyword"},
           "metrics": {"type": "object", "enabled": false},
           "message": {"type": "text"},
           "context": {"type": "object", "enabled": false}
