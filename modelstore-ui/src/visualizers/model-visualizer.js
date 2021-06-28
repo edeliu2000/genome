@@ -41,7 +41,8 @@ class ModelVisualizer extends React.Component {
     state = {
       indexSelection: "",
       content: "",
-      vizGraph: null
+      vizGraph: null,
+      selectedLeaf: null
     }
 
     componentDidMount(){
@@ -152,6 +153,8 @@ class ModelVisualizer extends React.Component {
         const size = Math.max(scaledSize, 45);
         const r = size / 2.5;
 
+        var self = this;
+
 
         var shapeSvg = parent
           .append("g")
@@ -159,7 +162,10 @@ class ModelVisualizer extends React.Component {
           .append("svg")
           .attr("id", "svg-" + node.id)
           .attr("height", size + 5)
-          .attr("width", size + 5);
+          .attr("width", size + 5)
+          .on('mouseover', function(d, i){
+            self.setState({selectedLeaf: node.id})
+          });
 
         var arc = d3.arc()
   	      .outerRadius(r - 4)
@@ -233,6 +239,9 @@ class ModelVisualizer extends React.Component {
             return {x:x, y:y};
         });
 
+        var self = this;
+
+
         var shapeSvg = parent
           .append("g")
           .attr("transform", "translate(" + ((-w ) / 2) + ", " + ((-h) / 2) + ")")
@@ -240,6 +249,10 @@ class ModelVisualizer extends React.Component {
           .attr("id", "svg-" + node.label)
           .attr("height", h + 7)
           .attr("width", w)
+          .on('mouseover', function(d, i){
+            self.setState({selectedLeaf: node.id})
+          });
+
 
 
 
@@ -641,7 +654,7 @@ class ModelVisualizer extends React.Component {
 
 
                       <div class="side-graph-cont">
-                        <TreeLeafChart data={this.state.vizGraph} />
+                        <TreeLeafChart data={this.state.vizGraph} selectedLeaf={this.state.selectedLeaf}/>
                         <svg className={"graph-legend"}></svg>
 
                       </div>

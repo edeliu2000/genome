@@ -4,7 +4,7 @@ const ReactDOM = require("react-dom");
 import Avatar from '@material-ui/core/Avatar';
 import Chip from '@material-ui/core/Chip'
 
-import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label} from 'recharts';
+import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, Label} from 'recharts';
 import * as d3 from 'd3'
 
 
@@ -29,7 +29,8 @@ class TreeLeafChart extends React.Component {
           count:e.count,
           name:e.id.replace("leaf", ""),
           std: e.std,
-          classes: objClasses
+          classes: objClasses,
+          id: e.id
         }
 
         if(e.classes){
@@ -75,7 +76,17 @@ class TreeLeafChart extends React.Component {
                     return "leaf: " + label;
                 }}
             />
-            <Bar name="count" dataKey="count" fill="#3f51b5" fillOpacity="0.85"/>
+            <Bar name="count" dataKey="count"  >
+              {chartData.leafs.map((entry, index) => (
+                <Cell
+                  fill = { entry.id === this.props.selectedLeaf ? '#eee' : '#3f51b5' }
+                  strokeWidth={ entry.id === this.props.selectedLeaf ? 2 : 0 }
+                  stroke={ entry.id === this.props.selectedLeaf ? '#888' : '#3f51b5' }
+                  fillOpacity={ entry.id === this.props.selectedLeaf ? "0.75" : "0.85" }
+                />
+
+              ))}
+          </Bar>
 
           </BarChart> || ""
         }
@@ -113,7 +124,9 @@ class TreeLeafChart extends React.Component {
                     return "leaf: " + label;
                 }}
             />
-            { chartData.classes.map((entry, i) => <Bar key={entry} dataKey={entry.replace(" ", "")} stackId="a" fill={color(entry)} fillOpacity="0.85"/>) }
+            { chartData.classes.map((entry, i) => (
+              <Bar key={entry} dataKey={entry.replace(" ", "")} stackId="a" fill={color(entry)} fillOpacity="0.85"/>
+            ))}
 
           </BarChart> || ""
         }
