@@ -24,19 +24,33 @@ spec:
         app: {{ template "genome.fullname" . }}
         component: "{{ .Values.modelstore.name }}"
         release: {{ .Release.Name }}
+
     spec:
+
+      volumes:
+      - name: js-dist-dir
+        hostPath:
+          # Ensure the file directory is created.
+          path: /mnt/js-dist
+          type: Directory
+
       containers:
       - name: {{ template "genome.fullname" . }}-node
         image: "{{ .Values.modelstore.image.repository }}:{{ .Values.modelstore.image.tag }}"
         imagePullPolicy: "{{ .Values.modelstore.image.pullPolicy }}"
         env:
+          - name: GENOME_ENVIRONMENT
+            value: "{{ .Values.environment }}"
+
           - name: ES_ENDPOINT
             value: https://{{ template "genome.fullname" .}}-es-http:9200
+
           - name: ES_PASS
             valueFrom:
               secretKeyRef:
                 name: {{ template "genome.fullname" .}}-es-elastic-user
                 key: elastic
+
           - name: ES_CERT
             valueFrom:
               secretKeyRef:
@@ -48,6 +62,14 @@ spec:
               secretKeyRef:
                 name: {{ template "genome.fullname" .}}-modelstore-pass
                 key: providerPass
+
+          - name: JS_FOLDER
+            value: "{{ .Values.modelstore.jsFolder }}"
+
+
+        volumeMounts:
+        - mountPath: /dist-js
+          name: js-dist-dir
 
 
 

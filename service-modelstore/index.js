@@ -50,11 +50,12 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.use('/static', express.static('dist'))
 
 const PORT = process.env.PORT || 3000;
 const elastic = process.env.ES_ENDPOINT;
-const client_pass = process.env.PROVIDER_PASS;
+const staticFolder = process.env.JS_FOLDER || "dist" ;
+
+app.use('/static', express.static(staticFolder))
 
 app.post('/v1.0/genome/deployment', genome.createDeployment);
 app.post('/v1.0/genome/transform', genome.createTransform);
@@ -88,6 +89,7 @@ app.get('/v1.0/genome/healthz', (req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
+  console.log(`ModelStore ENV ${staticFolder}`);
   console.log(`ModelStore app listening on port ${PORT}!`);
-  console.log(`CLIENT-CODE: ${client_pass}`)
+
 })

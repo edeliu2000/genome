@@ -357,10 +357,11 @@ export default class ModelEditPicker extends React.Component {
     if(err){
       var errMsg = err.message || "an error happened";
       if( err.status === 403 || err.status === 401 ){
+        console.log("error status:", err.status);
         errMsg = "session is not valid"
       }
       console.log("error to show snack")
-      this.setState({snackbarOpen:true, snackbarMessage: errMsg })
+      this.setState({snackbarOpen:true, snackbarMessage: errMsg });
       return;
     }
   }
@@ -791,6 +792,7 @@ export default class ModelEditPicker extends React.Component {
           estimatorCategory={this.props.meta.parameters.__estimator_category__ || ""}
           estimatorClassName={ this.props.meta.parameters.__estimator_class_name__ || "Random Forest"}
           framework={this.props.meta.framework}
+          errorCallBack={this.handleError}
           />
         }
 

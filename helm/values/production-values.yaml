@@ -18,20 +18,43 @@ nginx:
 modelstore:
   name: modelstore
   image:
-    repository: evfurman/node-hello
+    repository: genome-modelstore
     tag: production
     pullPolicy: Always
+  jsFolder: dist
+
 
 routing:
   name: routing
   image:
-    repository: evfurman/node-hello
+    repository: genome-routing
     tag: production
     pullPolicy: Always
+
+
+compute:
+  name: compute
+  image:
+    repository: genome-compute
+    tag: production
+    pullPolicy: Always
+
 
 scoring:
   name: scoring
   image:
-    repository: evfurman/node-hello
+    repository: genome-scoring
     tag: production
     pullPolicy: Always
+
+
+visualizer:
+  name: visualizer
+  image:
+    repository: genome-visualizer
+    tag: production
+    pullPolicy: Always
+
+
+elastic:
+  name: elastic

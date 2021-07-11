@@ -488,12 +488,21 @@ class ModelVisualizer extends React.Component {
             canonicalName: canonicalName
           }), // body data type must match "Content-Type" header
       }).then(function(response) {
+        if(!response.ok){throw response;}
         return response.json()
       }).then(function(respJSON){
         return self.setState({vizGraph: respJSON}, self._buildFancyTree);
       }).catch(function(err){
         console.log("_fetchRaw mystery error: ", err)
-        return callback({status: err.status, message: null},[]);
+        if (typeof err.json === 'function') {
+          err.json().then(jsonErr => {
+            var errStatus = jsonErr.status || (jsonErr.error && jsonErr.error.status)
+            return self.props.errorCallBack({status: errStatus, message: null});
+          })
+        }else{
+          var errStatus = err.status || (err.error && err.error.status)
+          return self.props.errorCallBack({status: errStatus, message: null});
+        }
       })
 
     }

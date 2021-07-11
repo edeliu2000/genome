@@ -310,6 +310,8 @@ class Login extends React.Component {
 
   render() {
     if (this.state.authenticated === null) return null;
+    console.log("##DYNAMICS!!");
+
     return this.state.authenticated ?
       <ModelStorePicker /> :
       <LoginForm baseUrl={this.props.baseUrl} />;

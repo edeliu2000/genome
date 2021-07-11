@@ -79,10 +79,10 @@ class TreeLeafChart extends React.Component {
             <Bar name="count" dataKey="count"  >
               {chartData.leafs.map((entry, index) => (
                 <Cell
-                  fill = { entry.id === this.props.selectedLeaf ? '#eee' : '#3f51b5' }
-                  strokeWidth={ entry.id === this.props.selectedLeaf ? 2 : 0 }
-                  stroke={ entry.id === this.props.selectedLeaf ? '#888' : '#3f51b5' }
-                  fillOpacity={ entry.id === this.props.selectedLeaf ? "0.75" : "0.85" }
+                  fill = { entry.id === this.props.selectedLeaf ? '#1c265c' : '#3f51b5' }
+                  strokeWidth={ entry.id === this.props.selectedLeaf ? 1 : 0 }
+                  stroke={ entry.id === this.props.selectedLeaf ? '#444' : '#3f51b5' }
+                  fillOpacity={ entry.id === this.props.selectedLeaf ? "0.80" : "0.85" }
                 />
 
               ))}
@@ -124,8 +124,8 @@ class TreeLeafChart extends React.Component {
                     return "leaf: " + label;
                 }}
             />
-            { chartData.classes.map((entry, i) => (
-              <Bar key={entry} dataKey={entry.replace(" ", "")} stackId="a" fill={color(entry)} fillOpacity="0.85"/>
+            { chartData.classes.map((cls, i) => (
+              <Bar key={cls} dataKey={cls.replace(" ", "")} stackId="a" fill = { color(cls.replace(" ", "")) }/>
             ))}
 
           </BarChart> || ""

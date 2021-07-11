@@ -22,6 +22,7 @@ modelstore:
     repository: genome-modelstore
     tag: local.1
     pullPolicy: IfNotPresent
+  jsFolder: dist-js
 
 routing:
   name: routing

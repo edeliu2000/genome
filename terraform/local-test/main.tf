@@ -117,7 +117,7 @@ EOT
 resource "null_resource" "argo_k8s" {
 
   provisioner "local-exec" {
-    command = "minikube kubectl -- apply -n argo -f https://raw.githubusercontent.com/argoproj/argo/stable/manifests/install.yaml"
+    command = "minikube kubectl -- apply -n argo -f https://raw.githubusercontent.com/argoproj/argo-workflows/v3.0.6/manifests/namespace-install.yaml"
 
     environment = {
       BUCKET = "example.bucket"

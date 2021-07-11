@@ -22,6 +22,8 @@ modelstore:
     repository: genome-modelstore
     tag: development
     pullPolicy: IfNotPresent
+  jsFolder: dist
+
 
 routing:
   name: routing
