@@ -28,6 +28,8 @@ import Avatar from '@material-ui/core/Avatar';
 import {Tooltip as TooltipReact} from '@material-ui/core/Tooltip';
 
 import TreeLeafChart from './model-leaf-chart'
+import regressionLeaf from './model-leaf-chart-regr';
+import classificationLeaf from './model-leaf-chart-class';
 
 
 import dagreD3 from 'dagre-d3';
@@ -40,7 +42,7 @@ class ModelVisualizer extends React.Component {
 
     state = {
       indexSelection: "",
-      content: "",
+      content: "some",
       vizGraph: null,
       selectedLeaf: null
     }
@@ -119,7 +121,7 @@ class ModelVisualizer extends React.Component {
       var svgGroup = svg.append("g");
 
       // Set up zoom support
-      var zoom = d3.zoom().on("zoom", function() {
+      var zoom = d3.zoom().on("zoom", () => {
           svgGroup.attr("transform", d3.event.transform);
         });
       svg.call(zoom);
@@ -128,211 +130,11 @@ class ModelVisualizer extends React.Component {
       var renderGraph = new dagreD3.render();
 
       // add a custom shape for classification leafs
-      renderGraph.shapes().leaf_class = (parent, bbox, node) => {
-        var w = bbox.width,
-            h = bbox.height;
-
-        var margin = {
-          left: w * 0.13, right: 0,
-          bottom: h * 0.07, top:h * 0.13
-        };
-
-        const color = d3.scaleOrdinal()
-          .domain(node.legend)
-          .range(d3.schemePaired);     //builtin range of colors
-
-        var n_pts = node.count || 120,
-        index = d3.range(n_pts),
-        data = node.classes.map(function(cls) {
-            return {label:cls.name, value:cls.count};
-        });
-        //min and max sizes related to node size for leaf charts
-        const sizeBoundaries = [0.1, 2.3];
-        const scaledCount = Math.min((node.count / 450), 1);
-        const scaledSize = w * (sizeBoundaries[0] + ((sizeBoundaries[1]- sizeBoundaries[0]) * scaledCount));
-        const size = Math.max(scaledSize, 45);
-        const r = size / 2.5;
-
-        var self = this;
-
-
-        var shapeSvg = parent
-          .append("g")
-          .attr("transform", "translate(" + ((-size) / 2) + ", " + ((-size) / 2) + ")")
-          .append("svg")
-          .attr("id", "svg-" + node.id)
-          .attr("height", size + 5)
-          .attr("width", size + 5)
-          .on('mouseover', function(d, i){
-            self.setState({selectedLeaf: node.id})
-          });
-
-        var arc = d3.arc()
-  	      .outerRadius(r - 4)
-  	      .innerRadius(0);
-
-
-        var pie = d3.pie()
-  	      .value(function(d) { return d.value; })(data);
-
-        var arcs = shapeSvg
-          .append("g")
-          .attr("transform", "translate(" + ((size) / 2) + ", " + ((size) / 2) + ") "
-            + "scale("+ (scaledSize/size) + ")")
-          .selectAll("slice")     //this selects all <g> elements with class slice (there aren't any yet)
-          .data(pie)                          //associate the generated pie data (an array of arcs, each having startAngle, endAngle and value properties)
-          .enter()                            //this will create <g> elements for every "extra" data element that should be associated with a selection. The result is creating a <g> for every object in the data array
-          .append("g")                //create a group to hold each slice (we will have a <path> and a <text> element associated with each slice)
-          .attr("class", "slice");    //allow us to style things in the slices (like text)
-
-        arcs.append("path")
-          .attr("d", arc)
-          .attr("fill", function(d, i){ return color(d.data.label); } )
-
-
-        //add label for number counts
-        shapeSvg
-          .append("g")
-          .attr("transform", "translate(" + (((size) / 2) + ((-size) / 4)) + ", " + (((size)) - 3) + ")")
-          .append("text")
-	        .text("n=" + node.count)
-          .attr("class", "leaf_count")
-	        .style("fill", "#666");
-
-
-
-
-
-        console.log("classification shape node: ", w, h, r, node);
-        node.intersect = function(point) {
-          return dagreD3.intersect.rect({
-            x: node.x, y: node.y,
-            width: w, height: h
-          }, point);
-        };
-
-
-        return shapeSvg;
-      };
+      renderGraph.shapes().leaf_class = classificationLeaf(this);
 
 
       // add a custom shape for regression leafs
-      renderGraph.shapes().leaf_regr = (parent, bbox, node) => {
-        var w = bbox.width,
-            h = bbox.height;
-
-        var margin = {
-          left: w * 0.13, right: 0,
-          bottom: h * 0.07, top:h * 0.13
-        };
-
-        const yNormal = d3.randomNormal(node.mean, node.std );
-        const xNormal = d3.randomNormal(0.5, 0.13);
-        const n_pts = d3.scaleLinear()
-            .domain([node.countBounds.min, node.countBounds.max])
-            .range([3, 500]);
-
-        const index = d3.range(Math.round(n_pts(node.count))),
-        data = index.map(function(i) {
-            var x = xNormal();
-            var y = yNormal();
-            return {x:x, y:y};
-        });
-
-        var self = this;
-
-
-        var shapeSvg = parent
-          .append("g")
-          .attr("transform", "translate(" + ((-w ) / 2) + ", " + ((-h) / 2) + ")")
-          .append("svg")
-          .attr("id", "svg-" + node.label)
-          .attr("height", h + 7)
-          .attr("width", w)
-          .on('mouseover', function(d, i){
-            self.setState({selectedLeaf: node.id})
-          });
-
-
-
-
-        // Add Y axis
-        const minMaxY = [Math.min(...data.map(d => {return d.y})), Math.max(...data.map(d => {return d.y}))];
-        var y = d3.scaleLinear()
-            .domain(minMaxY)
-            .range([ h - margin.bottom, margin.top]);
-
-        // Add X axis
-        const minMax = [Math.min(...data.map(d => {return d.x})), Math.max(...data.map(d => {return d.x}))];
-        const mxRange = w - (margin.right + margin.left);
-
-        var x = d3.scaleLinear()
-                .domain(minMax)
-                .range([margin.left + (0.27 * mxRange), w - margin.right - (0.27 * mxRange)]);
-
-        var xScaled = d3.scaleLinear()
-                .domain(minMax)
-                .range([margin.left, w - margin.right]);
-
-        // y axis ticks (line is removed)
-        shapeSvg.append("g")
-            .attr("class", "regr-axis-y")
-            .attr("transform", "translate("+ (margin.left - 2) +", "+ 0 +")")
-            .call(d3.axisLeft(y).tickValues([minMaxY[0], node.mean, minMaxY[1]]))
-            .call(g => g.select(".domain").remove())
-            .call(g => g.selectAll(".tick text")
-              .attr("x", 3)
-              .attr("dy", -1));
-
-        // x axis line, first tick is used as y axis
-        shapeSvg.append("g")
-            .attr("class", "regr-axis-x")
-            .attr("transform", "translate(" + (margin.left - 1) + ", "+ margin.top +")")
-            .call(d3.axisBottom(xScaled)
-              .tickSize(h - margin.top - margin.bottom)
-              .tickValues([minMax[0]]))
-            .call(g => g.select(".domain").remove());
-
-        shapeSvg.append("g")
-          .attr("class", "mean-axis")
-          .attr("transform", "translate(" + (margin.left - 1) + ", "+ 0 +")")
-          .append("line")
-          .attr("stroke", "#333")
-          .attr("stroke-dasharray", "4,4")
-          .attr("x1", xScaled(minMax[0])).attr("x2", xScaled(minMax[1]))
-          .attr("y1", y(node.mean)).attr("y2", y(node.mean));
-
-
-        //add label for number counts
-        shapeSvg
-          .append("g")
-          .attr("transform", "translate(" + (((w) / 2) + ((-w) / 4)) + ", " + (((w)) + 5) + ")")
-          .append("text")
-          .text(node.mean.toFixed(3) + " (n=" + node.count + ")")
-          .attr("class", "leaf_count_regr")
-          .style("fill", "#444");
-
-
-        shapeSvg.append('g')
-          .attr("transform", "translate(" + margin.left + ", "+ 0 +")")
-          .selectAll("dot")
-          .data(data)
-          .enter()
-          .append("circle")
-          .attr("cx", function(d) { return x(d.x); })
-          .attr("cy", function(d) { return y(d.y); })
-          .attr("class", function(d,i) { return "regr_pt pt" + i; })
-          .attr("r", 1.85)
-
-        node.intersect = function(point) {
-          return dagreD3.intersect.rect({
-            x: node.x, y: node.y,
-            width: w, height: h
-          }, point);
-        };
-
-        return shapeSvg;
-      };
+      renderGraph.shapes().leaf_regr = regressionLeaf(this);
 
       // add classification legends
       var legend_class = (parent, node) => {
@@ -379,7 +181,8 @@ class ModelVisualizer extends React.Component {
 
       // Center the graph
       var initialScale = 0.75;
-      svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+      var containerWidth = (() => {try { return svg.attr("width"); } catch(e){ return 600; }})() ;
+      svg.call(zoom.transform, d3.zoomIdentity.translate((containerWidth - g.graph().width * initialScale) / 2, 20).scale(initialScale));
 
       svg.attr('height', g.graph().height * initialScale + 40);
 
@@ -435,9 +238,8 @@ class ModelVisualizer extends React.Component {
 
         // Set up zoom support
         var zoom = d3.zoom().on("zoom", function() {
-            svgGroup.attr("transform", d3.event.transform);
-          });
-        svg.call(zoom);
+          svgGroup.attr("transform", d3.event.transform);
+        });
 
         // Create the renderer
         var renderGraph = new dagreD3.render();
@@ -447,7 +249,8 @@ class ModelVisualizer extends React.Component {
 
         // Center the graph
         var initialScale = 0.75;
-        svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+        var containerWidth = () => {try { return svg.attr("width"); } catch(e){ return 600; }} ;
+        svg.call(zoom.transform, d3.zoomIdentity.translate((containerWidth - g.graph().width * initialScale) / 2, 20).scale(initialScale));
 
         svg.attr('height', g.graph().height * initialScale + 40);
 
@@ -469,8 +272,6 @@ class ModelVisualizer extends React.Component {
       this.setState({indexSelection: index})
 
 
-      var self = this;
-
       fetch(vizPath, {
           method: "POST", // *GET, POST, PUT, DELETE, etc.
           mode: "cors", // no-cors, cors, *same-origin
@@ -487,21 +288,22 @@ class ModelVisualizer extends React.Component {
             application: application,
             canonicalName: canonicalName
           }), // body data type must match "Content-Type" header
-      }).then(function(response) {
+      }).then((response) => {
         if(!response.ok){throw response;}
         return response.json()
-      }).then(function(respJSON){
-        return self.setState({vizGraph: respJSON}, self._buildFancyTree);
-      }).catch(function(err){
+      }).then((respJSON) => {
+        console.log("setting new graph state")
+        return this.setState({vizGraph: respJSON}, this._buildFancyTree);
+      }).catch((err) => {
         console.log("_fetchRaw mystery error: ", err)
         if (typeof err.json === 'function') {
           err.json().then(jsonErr => {
             var errStatus = jsonErr.status || (jsonErr.error && jsonErr.error.status)
-            return self.props.errorCallBack({status: errStatus, message: null});
+            return this.props.errorCallBack({status: errStatus, message: null});
           })
         }else{
           var errStatus = err.status || (err.error && err.error.status)
-          return self.props.errorCallBack({status: errStatus, message: null});
+          return this.props.errorCallBack({status: errStatus, message: null});
         }
       })
 
@@ -521,7 +323,7 @@ class ModelVisualizer extends React.Component {
             <GridList cellHeight={60} cols={1} style={{width:"85%", margin:"auto", marginTop:"0.5em"}}>
               <GridListTile style={{textAlign:"center"}} cols={1}>
 
-                  <Button onClick={this.handleModelVisualization} variant="raised" component="span" >
+                  <Button id="visualizerButton" onClick={this.handleModelVisualization} variant="raised" component="span" >
                   <ShareIcon style={{transform:"rotate(90deg)"}}/>
                   <span style={{marginLeft:"0.45em"}}>Visualize Model</span>
                   </Button>
@@ -535,7 +337,7 @@ class ModelVisualizer extends React.Component {
                   />
                   </Badge>
                   { this.props.estimatorCategory === "ensemble" &&
-                  <FormControl variant="outlined" style={{marginLeft:"1em", minWidth:130, maxWidth:150}}>
+                  <FormControl id="ensembleIndexMenu" variant="outlined" style={{marginLeft:"1em", minWidth:130, maxWidth:150}}>
                     <InputLabel id="modelTreeIndex">Tree Index</InputLabel>
                     <Select
                       labelId="modelTreeIndex"
@@ -544,7 +346,7 @@ class ModelVisualizer extends React.Component {
                       onChange={this.handleModelVisualization}
                     >
                       {
-                        this._createArray(this.props.ensembleEstimators).map((targetClass, i) => <MenuItem value={targetClass}>
+                        this._createArray(this.props.ensembleEstimators).map((targetClass, i) => <MenuItem id={"ensembleItemIndex-" + i} value={targetClass}>
                           {targetClass}
                         </MenuItem>)
                       }

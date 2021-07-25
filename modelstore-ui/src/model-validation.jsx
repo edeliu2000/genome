@@ -92,7 +92,10 @@ class ModelValidation extends React.Component {
   };
 
 
-  _loadValidations = () => {
+  _loadValidations = (testCallback) => {
+
+    console.log("componentDidMount executed")
+
     var validationTarget = this.props.validationTarget;
     var application = this.props.application || "search";
     var artifactType = this.props.artifactType;
@@ -106,37 +109,25 @@ class ModelValidation extends React.Component {
       validationTarget:validationTarget,
       application: application,
       artifactType: artifactType
-    }, function(err, validations){
+    }, (err, validations) => {
 
        if(err) {
-         console.log("error on explanation", err);
-         return self.handleError(err);
+         console.log("error on validations", err);
+         this.props.errorCallback && this.props.errorCallback(err);
+         return testCallback && testCallback()
        }
 
        if(validations && validations.length){
-         self.setState({
+         this.setState({
            validations: validations
          });
-         return;
+         return testCallback && testCallback();
        }
 
     }, "/v1.0/genome/modelstore/search-validations",
       window.location.protocol + "//" + window.location.host,
       accToken || "");
   };
-
-  handleError = (err) => {
-    if(err){
-      var errMsg = err.message || "an error happened";
-      if( err.status === 403 || err.status === 401 ){
-        errMsg = "session is not valid"
-      }
-      console.log("error to show snack")
-      this.setState({snackbarOpen:true, snackbarMessage: errMsg })
-      return;
-    }
-  };
-
 
   closeTaskInfo = () => {
     this.setState(state => ({ displayValidation: null, displayTaskInfo: null }));
@@ -155,8 +146,10 @@ class ModelValidation extends React.Component {
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
+
+            <div style={{float:"left"}}>
             {
-              entry.tasks.map((task, j) => <div style={{margin:"0.2 0.4em"}}><Chip
+              entry.tasks.map((task, j) => <div style={{float:"left", margin:"0.4em 0.4em"}}><Chip
                   avatar={<Avatar>T</Avatar>}
                   label={task.name}
                   color="primary"
@@ -165,6 +158,7 @@ class ModelValidation extends React.Component {
                   deleteIcon={ task.status ? <DoneIcon color="primary" style={{color:"#22a355"}}/> : <ErrorIcon color="secondary" style={{color:"#e5383b"}}/> }
                 /></div>)
             }
+            </div>
           </ExpansionPanelDetails>
         </ExpansionPanel>)
       }
@@ -237,7 +231,7 @@ class ModelValidation extends React.Component {
               </ListItemIcon>
               <ListItemText inset primary={
                 this.state.displayTaskInfo.expectations.map((entry, i) => <div style={{float:"left", width:"100%"}}>
-                    <i> {entry} </i>
+                    <i> {entry.recipe ? entry.recipe : ""} </i>
                 </div>)
               }
                 secondary={
@@ -311,4 +305,7 @@ ModelValidation.propTypes = {
 const ModelValidationWithStyles = withStyles(styles)(ModelValidation)
 
 
-export default ModelValidationWithStyles;
+export {
+  ModelValidationWithStyles,
+  ModelValidation
+}

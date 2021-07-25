@@ -5,8 +5,6 @@ const MUIDataTable = require("mui-datatables");
 
 const _softDeleteESQuery = require("./elastic-queries")._softDeleteESQuery
 const _createESQuery = require("./elastic-queries")._createESQuery
-const _getFeatureJobAggregations = require("./elastic-queries")._getFeatureJobAggregations
-const _getLastFeatureJobs = require("./elastic-queries")._getLastFeatureJobs
 const _fetchData = require("./elastic-queries")._fetchData
 const _fetchDataRaw = require("./elastic-queries")._fetchDataRaw
 

@@ -61,9 +61,9 @@ class TreeLeafChart extends React.Component {
       .range(d3.schemePaired);     //builtin range of colors
 
     return (
-      <div style={{width:"100%", marginTop:"0.3em"}}>
+      <div id="barTreeCharts" style={{width:"100%", marginTop:"0.3em"}}>
         { chartData && chartData.leafs && chartData.leafs.length &&
-          <BarChart
+          <BarChart id="barTreeLeafCountChart"
             data={chartData.leafs}
             width={290}
             height={200}>
@@ -76,7 +76,7 @@ class TreeLeafChart extends React.Component {
                     return "leaf: " + label;
                 }}
             />
-            <Bar name="count" dataKey="count"  >
+            <Bar id="barcount-key" key="barCountKey" name="count" dataKey="count"  >
               {chartData.leafs.map((entry, index) => (
                 <Cell
                   fill = { entry.id === this.props.selectedLeaf ? '#1c265c' : '#3f51b5' }
@@ -112,6 +112,7 @@ class TreeLeafChart extends React.Component {
 
         { chartData && chartData.leafs && chartData.leafs.length && chartData.classes &&
           <BarChart
+            id="classificationBarChart"
             data={chartData.leafs}
             width={290}
             height={200}>

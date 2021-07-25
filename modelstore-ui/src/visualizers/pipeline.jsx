@@ -56,26 +56,6 @@ class PipelineVisualizer extends React.Component {
     })
   }
 
-  modelIcon = () => {
-    const svgNS = 'http://www.w3.org/2000/svg';
-    var modelSVG = document.createElementNS(svgNS, 'g');
-    var paths = [
-      "M102.4,179.2v25.6c28.3,0.1,51.1,22.9,51.2,51.2c-0.1,28.3-22.9,51.1-51.2,51.2c-28.3-0.1-51.1-22.9-51.2-51.2c0.1-28.3,22.9-51.1,51.2-51.2V179.2v-25.6C45.8,153.6,0,199.4,0,256c0,56.6,45.8,102.4,102.4,102.4c56.6,0,102.4-45.8,102.4-102.4c0-56.6-45.8-102.4-102.4-102.4V179.2z",
-      "M409.6,25.6v25.6c28.3,0.1,51.1,22.9,51.2,51.2c-0.1,28.3-22.9,51.1-51.2,51.2c-28.3-0.1-51.1-22.9-51.2-51.2c0.1-28.3,22.9-51.1,51.2-51.2V25.6V0C353,0,307.2,45.8,307.2,102.4c0,56.6,45.8,102.4,102.4,102.4c56.6,0,102.4-45.8,102.4-102.4C512,45.8,466.2,0,409.6,0V25.6z",
-      "M409.6,332.8v25.6c28.3,0.1,51.1,22.9,51.2,51.2c-0.1,28.3-22.9,51.1-51.2,51.2c-28.3-0.1-51.1-22.9-51.2-51.2c0.1-28.3,22.9-51.1,51.2-51.2V332.8v-25.6c-56.6,0-102.4,45.8-102.4,102.4c0,56.6,45.8,102.4,102.4,102.4c56.6,0,102.4-45.8,102.4-102.4c0-56.6-45.8-102.4-102.4-102.4V332.8z",
-      "M183.3,245.5l169-87.1c12.6-6.5,17.5-21.9,11-34.5c-6.5-12.6-21.9-17.5-34.5-11l-169,87.1c-12.6,6.5-17.5,21.9-11,34.5C155.2,247,170.7,252,183.3,245.5",
-      "M159.8,312l169,87.1c12.6,6.5,28,1.5,34.5-11c6.5-12.6,1.5-28-11-34.5l-169-87.1c-12.6-6.5-28-1.5-34.5,11C142.3,290.1,147.2,305.6,159.8,312"
-    ]
-
-    paths.forEach((p)=>{
-      var el = document.createElementNS(svgNS,'path');
-      tspan.setAttribute('d', p);
-      modelSVG.appendChild(el);
-    })
-
-    return modelSVG;
-  }
-
   createGraph = (it, steps, group) => {
     var nodes = [];
     var edges = [];
@@ -220,6 +200,7 @@ class PipelineVisualizer extends React.Component {
       />
 
       <DagreGraph
+            id="pipelineGraphVisualization"
             nodes={graph.nodes}
             links={graph.edges}
             config={{
@@ -251,7 +232,7 @@ class PipelineVisualizer extends React.Component {
         }}>
           {this.state.selectedStep.stepName}
         </Typography>
-        <List style={{marginTop:"0.35em"}}>
+        <List id="listOfNodeCard" style={{marginTop:"0.35em"}}>
 
           { this.state.selectedStep.schedule &&
           <ListItem divider>
@@ -333,7 +314,7 @@ class PipelineVisualizer extends React.Component {
         </List>
         </CardContent>
         <CardActions>
-          <Button size="small" color="primary" onClick={this.closeStepInfo}>Close</Button>
+          <Button id="closeCardButton" size="small" color="primary" onClick={this.closeStepInfo}>Close</Button>
         </CardActions>
       </Card>
 

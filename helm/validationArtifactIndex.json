@@ -97,7 +97,13 @@
             }
           },
           "segment": {"type": "keyword"},
-          "expectations": {"type": "keyword"},
+          "expectations": {
+            "dynamic": "strict",
+            "properties": {
+              "__type__": {"type": "keyword"},
+              "recipe": {"type": "keyword"}
+            }
+          },
           "metrics": {"type": "object", "enabled": false},
           "message": {"type": "text"},
           "context": {"type": "object", "enabled": false}

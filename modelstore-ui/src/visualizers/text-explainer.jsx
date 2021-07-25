@@ -39,6 +39,7 @@ class WeightedSpan extends React.Component{
 }
 
 class TextExplainerVisualizer extends React.Component {
+
   state = {
     classSelection: "",
     classScore: 0,
@@ -216,7 +217,7 @@ class TextExplainerVisualizer extends React.Component {
           onChange={this.handleClassSelection}
         >
           {
-            this.props.targetClasses.map((targetClass, i) => <MenuItem value={targetClass.target}>
+            this.props.targetClasses.map((targetClass, i) => <MenuItem id={"targetClsComponent-" + i} class="targetItem" value={targetClass.target}>
               {targetClass.target}
             </MenuItem>)
           }
@@ -245,7 +246,7 @@ class TextExplainerVisualizer extends React.Component {
         }}
         elevation={2}
       >
-        <div>
+        <div id="textExplanationSpanContainer">
         {spanChildren}
         </div>
       </Paper>

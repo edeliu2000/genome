@@ -76,7 +76,7 @@ import ModelVisualizer from './visualizers/model-visualizer'
 import AdditiveRemoteVisualizer from './visualizers/additive-remote'
 import PipelineVisualizer from './visualizers/pipeline'
 
-import ModelValidation from './model-validation'
+import {ModelValidationWithStyles as ModelValidation} from './model-validation'
 
 const _fetchData = require("./elastic-queries")._fetchData
 const _fetchDataRaw = require("./elastic-queries")._fetchDataRaw
@@ -781,6 +781,7 @@ export default class ModelEditPicker extends React.Component {
             ref:this.props.meta.mid,
             refType: this.props.meta.artifactType || "model"}}
           application={ this.props.meta.application || ""}
+          errorCallBack={this.handleError}
         />
         </span>
 

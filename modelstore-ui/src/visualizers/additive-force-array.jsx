@@ -290,7 +290,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
     this.hoverGroup2.attr("display", "none");
   }
 
-  mouseMoved() {
+  mouseMoved(testX) {
     let i, nearestExp;
 
     this.hoverLine.attr("display", "");
@@ -302,7 +302,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
     this.hoverGroup1.attr("display", "");
     this.hoverGroup2.attr("display", "");
 
-    let x = mouse(this.svg.node())[0];
+    let x = testX || mouse(this.svg.node())[0];
     if (this.props.explanations) {
 
       // Find the nearest explanation to the cursor position
@@ -564,10 +564,11 @@ class AdditiveForceArrayVisualizer extends React.Component {
         (this.height - 10 - this.topOffset) / 2 + this.topOffset + "px"
       )
       .style("left", 10 - this.ylabel.node().offsetWidth / 2 + "px");
+
     this.internalDraw();
   }
 
-  internalDraw() {
+  internalDraw(test) {
     // we fill in any implicit feature values and assume they have a zero effect and value
     for (let e of this.props.explanations) {
       for (let i of this.usedFeatures) {
@@ -707,7 +708,10 @@ class AdditiveForceArrayVisualizer extends React.Component {
     );
 
     let width = this.wrapper.node().offsetWidth;
-    if (width == 0) return setTimeout(() => this.draw(explanations), 500);
+    if (width == 0){
+      if( test ) { width = 750; }
+      else{ return setTimeout(() => this.draw(explanations), 500); }
+    }
 
     this.svg.style("height", this.height + "px");
     this.svg.style("width", width + "px");

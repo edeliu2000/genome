@@ -61,14 +61,19 @@ class AdditiveRemoteVisualizer extends React.Component {
   }
 
   componentDidMount() {
-    this.onBatchExplain()
+    this.initialBatchExplain();
+  }
+
+  initialBatchExplain = (next) => {
     this.setState({
       force: null,
       forceBaseValue: 0,
       forceFeatures: {},
       forceFeatureNames: {},
       entryToExplain: "",
-    })
+    });
+    this.onBatchExplain(next)
+
   }
 
 
@@ -91,7 +96,6 @@ class AdditiveRemoteVisualizer extends React.Component {
 
 
   handleNumSamplesSelection = (event) => {
-    var self = this;
     this.setState(prevState => ({
       shownExplanations: prevState.explanations.slice(0, Number(event.target.value)),
       numShownSamples: Number(event.target.value)
@@ -99,7 +103,6 @@ class AdditiveRemoteVisualizer extends React.Component {
   }
 
   handleNumClustersSelection = (event) => {
-    var self = this;
     this.setState({
       numClusters: Number(event.target.value)
     })
@@ -107,21 +110,23 @@ class AdditiveRemoteVisualizer extends React.Component {
 
 
 
-  onBatchExplain = () => {
+  onBatchExplain = (next) => {
     var canonicalName = this.props.canonicalName;
-
-    var self = this;
     var accToken = sessionStorage.getItem('accessToken');
 
     // call explain endpoint for shapley values
     _fetchDataRaw({
       canonicalName:canonicalName,
       application: "search"
-    }, function(err, explanations){
+    }, (err, explanations) => {
+
+      console.log("no error yet on explanation", err);
+
 
        if(err) {
          console.log("error on explanation", err);
-         return self.props.handleError(err);
+         this.props.handleError(err);
+         return next && next();
        }
 
        var base = explanations.expected_value instanceof Array ? explanations.expected_value[0] :explanations.expected_value;
@@ -142,13 +147,15 @@ class AdditiveRemoteVisualizer extends React.Component {
 
        })
 
-       self.setState({
+       this.setState({
          expected: base,
          explanations: explanations,
-         shownExplanations: explanations.slice(0, self.state.numShownSamples),
+         shownExplanations: explanations.slice(0, this.state.numShownSamples),
          featureNames: featureNames,
          numSamples: explanations ? explanations.length : 0
        })
+
+       return next && next();
 
     }, "/v1.0/genome/routing/explanation/samples",
       window.location.protocol + "//" + window.location.host,
@@ -156,7 +163,7 @@ class AdditiveRemoteVisualizer extends React.Component {
   }
 
 
-  onExplainClick = () => {
+  onExplainClick = (next) => {
     var canonicalName = this.props.canonicalName;
     const { entryToExplain } = this.state;
     var entries = JSON.parse("[" + entryToExplain + "]");
@@ -171,9 +178,12 @@ class AdditiveRemoteVisualizer extends React.Component {
       entries: entries,
     }, function(err, explanations){
 
+      console.log("explanations for single entry:", explanations);
+
        if(err) {
          console.log("error on explanation", err);
-         return self.props.handleError(err);
+         self.props.handleError(err);
+         return next && next();
        }
 
        var base = explanations.expected instanceof Array ? explanations.expected[0] :explanations.expected;
@@ -205,7 +215,7 @@ class AdditiveRemoteVisualizer extends React.Component {
          }))
        }
 
-
+       return next && next();
 
     }, "/v1.0/genome/routing/explain",
       window.location.protocol + "//" + window.location.host,
@@ -217,9 +227,11 @@ class AdditiveRemoteVisualizer extends React.Component {
 
 
   render() {
-    return [(
+    return (
 
-      ( this.state.explanations && this.state.explanations.length &&
+      <div id="all-shap-cont-vizualizer">
+
+      { this.state.explanations && this.state.explanations.length &&
 
         <div id="shap-array-vizualizer" style={{"width":"100%", "marginTop":"0.5em"}}>
 
@@ -238,10 +250,10 @@ class AdditiveRemoteVisualizer extends React.Component {
             value={this.state.numShownSamples}
             onChange={this.handleNumSamplesSelection}
           >
-              <MenuItem value={100}>{100}</MenuItem>
-              <MenuItem value={250}>{250}</MenuItem>
-              <MenuItem value={500}>{500}</MenuItem>
-              <MenuItem value={this.state.numSamples}>{this.state.numSamples}</MenuItem>
+              <MenuItem id="itemSamples-0" value={100}>{100}</MenuItem>
+              <MenuItem id="itemSamples-1" value={250}>{250}</MenuItem>
+              <MenuItem id="itemSamples-2" value={500}>{500}</MenuItem>
+              <MenuItem id="itemSamples-3" value={this.state.numSamples}>{this.state.numSamples}</MenuItem>
           </Select>
         </FormControl>
 
@@ -272,9 +284,10 @@ class AdditiveRemoteVisualizer extends React.Component {
         />
 
         </div>
-      ) || null ),
+      }
 
-      (
+      {
+
         <div id="shap-vizualizer" style={{"width":"100%", "marginTop":"0.5em"}}>
 
         <AdditiveForceVisualizer
@@ -285,6 +298,7 @@ class AdditiveRemoteVisualizer extends React.Component {
           features={this.state.forceFeatures}
           featureNames={this.state.forceFeatureNames}
         />
+
 
         <TextField
           id="entryToExplain"
@@ -299,13 +313,17 @@ class AdditiveRemoteVisualizer extends React.Component {
           }}
         />
 
-        <Button onClick={this.onExplainClick} style={{ marginLeft: "30px" }} size="small" variant="contained" color="primary">
+        <Button id="explainButton" onClick={this.onExplainClick} style={{ marginLeft: "30px" }} size="small" variant="contained" color="primary">
           explain
         </Button>
 
         </div>
 
-      )];
+      }
+
+      </div>
+
+    );
   }
 
 }

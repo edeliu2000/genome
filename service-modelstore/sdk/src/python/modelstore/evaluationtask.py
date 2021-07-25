@@ -175,7 +175,9 @@ class GenomeTask():
           dataRef = self.dataset,
           segment = self.segment,
           prototypeRef = BaseRef(self.proto["ref"], self.proto["refType"]) if self.proto else None,
-          expectations = [exp.expectation_str() for exp in self.expectations],
+          expectations = [{
+            "__type__":"genome_recipe",
+            "recipe": exp.expectation_str()} for exp in self.expectations],
           status = 0 if 0 in expectation_statuses else min(expectation_statuses),
           metrics = self.metrics
         )
@@ -189,7 +191,9 @@ class GenomeTask():
           "name": self.name,
           "dataset": self.dataset.__dict__,
           "segment": self.segment.__dict__ if self.segment else None,
-          "expectations": [exp.expectation_str() for exp in self.expectations],
+          "expectations": [{
+            "__type__":"genome_recipe",
+            "recipe": exp.expectation_str()} for exp in self.expectations],
           "status": 0 if 0 in expectation_statuses else min(expectation_statuses),
           "metrics": self.metrics
         })

@@ -159,11 +159,102 @@ class AdditiveForceVisualizer extends React.Component {
     this.draw();
   }
 
+  _getEffectLabel = (d) => {
+    if (d.effect !== undefined && d.effect !== null && d.effect !== "") {
+      return (
+        d.name +
+        " (effect: " +
+        (isNaN(d.effect) ? d.effect : this.tickFormat(d.effect)) +
+        ")"
+      );
+    } else return d.name;
+  }
+
+  _barLabelPath = (scaleOffset, topOffset, scale, lineFunction) => {
+    return d => {
+      return lineFunction([
+        [
+          scale(d.x) + scale(Math.abs(d.effect)) + scaleOffset,
+          23 + topOffset
+        ],
+        [
+          (d.effect > 0 ? scale(d.textx) : scale(d.textx) + d.textWidth) +
+            scaleOffset +
+            5,
+          33 + topOffset
+        ],
+        [
+          (d.effect > 0 ? scale(d.textx) : scale(d.textx) + d.textWidth) +
+            scaleOffset +
+            5,
+          54 + topOffset
+        ],
+        [
+          (d.effect > 0 ? scale(d.textx) - d.textWidth : scale(d.textx)) +
+            scaleOffset -
+            5,
+          54 + topOffset
+        ],
+        [
+          (d.effect > 0 ? scale(d.textx) - d.textWidth : scale(d.textx)) +
+            scaleOffset -
+            5,
+          33 + topOffset
+        ],
+        [scale(d.x) + scaleOffset, 23 + topOffset]
+      ]);
+    }
+  }
+
+  _labelBlockPath = (joinPointIndex, scaleOffset, topOffset, scaleFunction, lineFunction) => {
+
+    return (d, i) => {
+      let x = scaleFunction(d.x) + scaleOffset;
+      let w = scaleFunction(Math.abs(d.effect));
+      let pointShiftStart = d.effect < 0 ? -4 : 4;
+      let pointShiftEnd = pointShiftStart;
+      if (i === joinPointIndex) pointShiftStart = 0;
+      if (i === joinPointIndex - 1) pointShiftEnd = 0;
+      return lineFunction([
+        [x, 6 + topOffset],
+        [x + w, 6 + topOffset],
+        [x + w + pointShiftEnd, 14.5 + topOffset],
+        [x + w, 23 + topOffset],
+        [x, 23 + topOffset],
+        [x + pointShiftStart, 14.5 + topOffset]
+      ]);
+    };
+  }
+
+  _onMouseOver = (totalEffect, scaleOffset, topOffset, scaleFunction) => {
+    return d => {
+      if (scaleFunction(Math.abs(d.effect)) > scaleFunction(totalEffect) / 100 ||
+          scaleFunction(Math.abs(d.effect)) < 10) {
+        let x = scaleFunction(d.x) + scaleOffset;
+        let w = scaleFunction(Math.abs(d.effect));
+        this.hoverLabel
+          .attr("opacity", 1)
+          .attr("x", x + w/2)
+          .attr("y", topOffset + 0.5)
+          .attr("fill", d.effect > 0 ? this.colors[0] : this.colors[1])
+          .text(this._getEffectLabel(d));
+        this.hoverLabelBacking
+          .attr("opacity", 1)
+          .attr("x", x + w/2)
+          .attr("y", topOffset + 0.5)
+          .text(this._getEffectLabel(d));
+      }
+    }
+  }
+
+
   draw() {
     // copy the feature names onto the features
     each(this.props.featureNames, (n, i) => {
       if (this.props.features[i]) this.props.features[i].name = n;
     });
+
+    console.log("Going through featureNames:", this.props.features)
 
     // create our link function
     if (this.props.link === "identity") {
@@ -176,9 +267,13 @@ class AdditiveForceVisualizer extends React.Component {
     }
 
     // Set the dimensions of the plot
-    let width = this.svg.node() && this.svg.node().parentNode ?
-      this.svg.node().parentNode.offsetWidth : 0;
-    if (width == 0) return setTimeout(() => this.draw(this.props), 500);
+    let width = this.props.test ? 750 : (this.svg.node() && this.svg.node().parentNode ?
+      this.svg.node().parentNode.offsetWidth : 0);
+
+    console.log("width:", width, "test:",  this.props.test);
+
+
+    if (width == 0) return setTimeout(() => this.draw(), 500);
     this.svg.style("height", 100 + "px");
     this.svg.style("width", width + "px");
     let topOffset = 50;
@@ -226,27 +321,6 @@ class AdditiveForceVisualizer extends React.Component {
       .x(d => d[0])
       .y(d => d[1]);
 
-    let getLabel = d => {
-      if (d.value !== undefined && d.value !== null && d.value !== "") {
-        return (
-          d.name +
-          " = " +
-          (isNaN(d.value) ? d.value : this.tickFormat(d.value))
-        );
-      } else return d.name;
-    };
-
-    let getEffectLabel = d => {
-      if (d.effect !== undefined && d.effect !== null && d.effect !== "") {
-        return (
-          d.name +
-          " (effect: " +
-          (isNaN(d.effect) ? d.effect : this.tickFormat(d.effect)) +
-          ")"
-        );
-      } else return d.name;
-    };
-
     data = this.props.hideBars ? [] : data;
     let blocks = this.mainGroup.selectAll(".force-bar-blocks").data(data);
     blocks
@@ -254,41 +328,9 @@ class AdditiveForceVisualizer extends React.Component {
       .append("path")
       .attr("class", "force-bar-blocks")
       .merge(blocks)
-      .attr("d", (d, i) => {
-        let x = scale(d.x) + scaleOffset;
-        let w = scale(Math.abs(d.effect));
-        let pointShiftStart = d.effect < 0 ? -4 : 4;
-        let pointShiftEnd = pointShiftStart;
-        if (i === joinPointIndex) pointShiftStart = 0;
-        if (i === joinPointIndex - 1) pointShiftEnd = 0;
-        return lineFunction([
-          [x, 6 + topOffset],
-          [x + w, 6 + topOffset],
-          [x + w + pointShiftEnd, 14.5 + topOffset],
-          [x + w, 23 + topOffset],
-          [x, 23 + topOffset],
-          [x + pointShiftStart, 14.5 + topOffset]
-        ]);
-      })
+      .attr("d", this._labelBlockPath(joinPointIndex, scaleOffset, topOffset, scale, lineFunction))
       .attr("fill", d => (d.effect > 0 ? this.colors[0] : this.colors[1]))
-      .on("mouseover", d => {
-        if (scale(Math.abs(d.effect)) > scale(totalEffect) / 100 ||
-            scale(Math.abs(d.effect)) < 10) {
-          let x = scale(d.x) + scaleOffset;
-          let w = scale(Math.abs(d.effect));
-          this.hoverLabel
-            .attr("opacity", 1)
-            .attr("x", x + w/2)
-            .attr("y", topOffset + 0.5)
-            .attr("fill", d.effect > 0 ? this.colors[0] : this.colors[1])
-            .text(getEffectLabel(d));
-          this.hoverLabelBacking
-            .attr("opacity", 1)
-            .attr("x", x + w/2)
-            .attr("y", topOffset + 0.5)
-            .text(getEffectLabel(d));
-        }
-      })
+      .on("mouseover", this._onMouseOver(totalEffect, scaleOffset, topOffset, scale))
       .on("mouseout", () => {
         this.hoverLabel.attr("opacity", 0);
         this.hoverLabelBacking.attr("opacity", 0);
@@ -325,10 +367,10 @@ class AdditiveForceVisualizer extends React.Component {
       .attr("fill", d => (d.effect > 0 ? this.colors[0] : this.colors[1]))
       .attr("stroke", function(d) {
         d.textWidth = Math.max(
-          this.getComputedTextLength(),
+          this.getComputedTextLength && this.getComputedTextLength(),
           scale(Math.abs(d.effect)) - 10
         );
-        d.innerTextWidth = this.getComputedTextLength();
+        d.innerTextWidth = this.getComputedTextLength && this.getComputedTextLength();
         return "none";
       });
     this.filteredData = filteredData;
@@ -381,39 +423,7 @@ class AdditiveForceVisualizer extends React.Component {
       .attr("stroke", "none")
       .attr("opacity", 0.2)
       .merge(labelBacking)
-      .attr("d", d => {
-        return lineFunction([
-          [
-            scale(d.x) + scale(Math.abs(d.effect)) + scaleOffset,
-            23 + topOffset
-          ],
-          [
-            (d.effect > 0 ? scale(d.textx) : scale(d.textx) + d.textWidth) +
-              scaleOffset +
-              5,
-            33 + topOffset
-          ],
-          [
-            (d.effect > 0 ? scale(d.textx) : scale(d.textx) + d.textWidth) +
-              scaleOffset +
-              5,
-            54 + topOffset
-          ],
-          [
-            (d.effect > 0 ? scale(d.textx) - d.textWidth : scale(d.textx)) +
-              scaleOffset -
-              5,
-            54 + topOffset
-          ],
-          [
-            (d.effect > 0 ? scale(d.textx) - d.textWidth : scale(d.textx)) +
-              scaleOffset -
-              5,
-            33 + topOffset
-          ],
-          [scale(d.x) + scaleOffset, 23 + topOffset]
-        ]);
-      })
+      .attr("d", this._barLabelPath(scaleOffset, topOffset, scale, lineFunction))
       .attr("fill", d => `url(#linear-backgrad-${d.effect > 0 ? 0 : 1})`);
     labelBacking.exit().remove();
 
@@ -586,6 +596,7 @@ class AdditiveForceVisualizer extends React.Component {
   render() {
     return (
       <svg
+        class="force-array-svg-cont"
         ref={x => (this.svg = select(x))}
         style={{
           userSelect: "none",
