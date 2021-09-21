@@ -306,7 +306,7 @@ export default class ModelStoreTable extends React.Component {
       searchUrlQuery += "&artifactType=" + decodeURIComponent(input.artifactType)
     }
 
-    _fetchData(queryToES, function(err, hits){
+    _fetchData(queryToES, (err, hits) => {
 
       if(err){
         var errMsg = err.message || "an error happened";

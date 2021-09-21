@@ -48,32 +48,111 @@ provider "google-beta" {
   ]
 }
 
-# We use this data provider to expose an access token for communicating with the GKE cluster.
-data "google_client_config" "client" {}
 
-# Use this datasource to access the Terraform account's email for Kubernetes permissions.
-data "google_client_openid_userinfo" "terraform_user" {}
+# Retrieve an access token as the Terraform runner
+data "google_client_config" "provider" {}
+
+data "google_container_cluster" "my_cluster" {
+  name     = "my-cluster"
+  location = "us-central1"
+}
+
 
 provider "kubernetes" {
-  version = "~> 1.7.0"
-
+  host                   = "https://${data.google_container_cluster.my_cluster.endpoint}"
+  token                  = data.google_client_config.provider.access_token
+  cluster_ca_certificate = base64decode(
+    data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate,
+  )
   load_config_file       = false
-  host                   = data.template_file.gke_host_endpoint.rendered
-  token                  = data.template_file.access_token.rendered
-  cluster_ca_certificate = data.template_file.cluster_ca_certificate.rendered
 }
+
 
 provider "helm" {
   # Use provider with Helm 3.x support
   version = "~> 1.1.1"
 
   kubernetes {
-    host                   = data.template_file.gke_host_endpoint.rendered
-    token                  = data.template_file.access_token.rendered
-    cluster_ca_certificate = data.template_file.cluster_ca_certificate.rendered
+    host                   = "https://${data.google_container_cluster.my_cluster.endpoint}"
+    token                  = data.google_client_config.provider.access_token
+    cluster_ca_certificate = base64decode(
+      data.google_container_cluster.my_cluster.master_auth[0].cluster_ca_certificate,
+    )
     load_config_file       = false
   }
 }
+
+
+
+
+
+resource "google_compute_subnetwork" "genome_subnetwork" {
+  name          = "genome-subnetwork"
+  ip_cidr_range = "10.2.0.0/16"
+  region        = "us-central1"
+  network       = google_compute_network.genome_network.id
+  secondary_ip_range {
+    range_name    = "services-range"
+    ip_cidr_range = "192.168.1.0/24"
+  }
+
+  secondary_ip_range {
+    range_name    = "pod-ranges"
+    ip_cidr_range = "192.168.64.0/22"
+  }
+}
+
+resource "google_compute_network" "genome_network" {
+  name                    = "genome-network"
+  auto_create_subnetworks = false
+}
+
+resource "google_container_cluster" "genome_cluster" {
+  name               = "genome-vpc-native-cluster"
+  location           = "us-central1"
+
+  network    = google_compute_network.genome_network.id
+  subnetwork = google_compute_subnetwork.genome_subnetwork.id
+
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "services-range"
+    services_secondary_range_name = google_compute_subnetwork.genome_subnetwork.secondary_ip_range.1.range_name
+  }
+
+  # Removes the implicit default node pool, recommended when using
+  # google_container_node_pool.
+  remove_default_node_pool = true
+  initial_node_count = 1
+
+  # other settings...
+}
+
+
+# Linux node pool to run Linux-only Kubernetes Pods.
+resource "google_container_node_pool" "linux_pool" {
+  name               = "linux-pool"
+  project            = google_container_cluster.genome_cluster.project
+  cluster            = google_container_cluster.genome_cluster.name
+  location           = google_container_cluster.genome_cluster.location
+
+
+  autoscaling {
+    min_node_count = "1"
+    max_node_count = "5"
+  }
+
+  management {
+    auto_repair  = "true"
+    auto_upgrade = "true"
+  }
+
+  node_config {
+    image_type   = "COS_CONTAINERD"
+    machine_type = "n1-standard-1"
+  }
+}
+
+
 
 # ---------------------------------------------------------------------------------------------------------------------
 # DEPLOY A PRIVATE CLUSTER IN GOOGLE CLOUD PLATFORM
@@ -260,11 +339,135 @@ resource "kubernetes_cluster_role_binding" "user" {
   }
 }
 
+
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # DEPLOY GenomeAI CHART
 # A chart repository is a location where packaged charts can be stored and shared. Define Bitnami Helm repository location,
 # so Helm can install the nginx chart.
 # ---------------------------------------------------------------------------------------------------------------------
+
+
+resource "kubernetes_namespace" "genome-namespace" {
+  metadata {
+    name = "local"
+  }
+}
+
+resource "kubernetes_namespace" "genome-es-namespace" {
+  metadata {
+    name = "elastic-local"
+  }
+}
+
+resource "kubernetes_namespace" "genome-argo-namespace" {
+  metadata {
+    name = "argo"
+  }
+}
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# DEPLOY Elastic ECK Operator and Elastic  Service
+# ---------------------------------------------------------------------------------------------------------------------
+
+resource "null_resource" "elastic_k8s_eck" {
+
+  provisioner "local-exec" {
+    command = "kubectl -- apply -f https://download.elastic.co/downloads/eck/1.2.0/all-in-one.yaml"
+
+    environment = {
+      BUCKET = "example.bucket"
+    }
+  }
+}
+
+resource "null_resource" "elastic_k8s" {
+
+  provisioner "local-exec" {
+    command = <<EOT
+cat <<EOF | kubectl -- apply -f -
+  apiVersion: elasticsearch.k8s.elastic.co/v1
+  kind: Elasticsearch
+  metadata:
+    name: genome-a
+    namespace: local
+  spec:
+    version: 7.8.1
+    nodeSets:
+    - name: default
+      count: 1
+      config:
+        node.master: true
+        node.data: true
+        node.ingest: true
+
+
+      volumeClaimTemplates:
+      - metadata:
+          name: elasticsearch-data
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 7Gi
+          storageClassName: standard
+EOF
+EOT
+    environment = {
+      BUCKET = "example.bucket"
+    }
+
+  }
+
+  depends_on = [null_resource.elastic_k8s_eck]
+}
+
+
+resource "null_resource" "elastic_k8s_kibana" {
+  provisioner "local-exec" {
+    command = <<EOT
+cat <<EOF | kubectl -- apply -f -
+  apiVersion: kibana.k8s.elastic.co/v1
+  kind: Kibana
+  metadata:
+    name: genome-a
+    namespace: local
+  spec:
+    version: 7.8.1
+    count: 1
+    elasticsearchRef:
+      name: genome-a
+EOF
+EOT
+    environment = {
+      BUCKET = "example.bucket"
+    }
+  }
+
+  depends_on = [null_resource.elastic_k8s]
+}
+
+
+# ------------------------------------------------------
+# Deploy Genome ARGO
+# ------------------------------------------------------
+
+resource "null_resource" "argo_k8s" {
+
+  provisioner "local-exec" {
+    command = "kubectl -- apply -n argo -f https://raw.githubusercontent.com/argoproj/argo-workflows/v3.0.6/manifests/namespace-install.yaml"
+
+    environment = {
+      BUCKET = "example.bucket"
+    }
+  }
+}
+
+
 
 resource "helm_release" "genome_services" {
   depends_on = [google_container_node_pool.node_pool]
@@ -319,6 +522,45 @@ EOT
   depends_on = [null_resource.elastic_k8s_eck]
 
 }
+
+
+resource "helm_release" "genome_local" {
+  name  = "genome-a"
+  chart = "../helm"
+  namespace = "local"
+
+  values = [
+    "${file("../helm/values/local-values.yaml")}"
+  ]
+
+  depends_on = [null_resource.elastic_k8s]
+
+}
+
+resource "null_resource" "elastic_index_ready" {
+  provisioner "local-exec" {
+    command = "kubectl -- wait -n local --for=condition=complete job/initialize-index --timeout=600s"
+  }
+
+  depends_on = [helm_release.genome_local]
+}
+
+resource "null_resource" "elastic_validation_index_ready" {
+  provisioner "local-exec" {
+    command = "kubectl -- wait -n local --for=condition=complete job/initialize-validation-index --timeout=600s"
+  }
+
+  depends_on = [helm_release.genome_local]
+}
+
+resource "null_resource" "elastic_deployment_index_ready" {
+  provisioner "local-exec" {
+    command = "kubectl -- wait -n local --for=condition=complete job/initialize-deployment-index --timeout=600s"
+  }
+
+  depends_on = [helm_release.genome_local]
+}
+
 
 
 
