@@ -1,5 +1,6 @@
 const React = require('react');
 const ReactDOM = require("react-dom");
+const OktaAuth = require('@okta/okta-auth-js').OktaAuth;
 
 
 import AppBar from '@material-ui/core/AppBar';
@@ -18,13 +19,11 @@ import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
-import OktaAuth from '@okta/okta-auth-js';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import config from './app.config'
 
 import { withStyles } from '@material-ui/core/styles';
-import { withAuth } from '@okta/okta-react';
 
 import ModelStorePicker from './model-store-picker'
 
@@ -51,8 +50,12 @@ class LoginDialog extends React.Component {
   constructor(props) {
     super(props);
 
+    console.log("##HASH -- :", window.location.hash);
+
     var params = window.location.hash
       && this.parseQueryString(window.location.hash.substring(1));
+
+    console.log("URL after login:", params, window.location);
 
     var accessToken = sessionStorage.getItem("auth_state") === decodeURIComponent(params.state) ?
         params.access_token : "";
@@ -72,7 +75,9 @@ class LoginDialog extends React.Component {
       sessionStorage.removeItem("auth_state");
     }
 
-    this.oktaAuth = new OktaAuth({ url: props.baseUrl });
+    this.oktaAuth = new OktaAuth({
+      issuer: props.issuer,
+      url: props.baseUrl });
   }
 
 
@@ -109,11 +114,12 @@ class LoginDialog extends React.Component {
     var nonce = "foo";
     sessionStorage.setItem("auth_state", state);
 
-    window.location = baseUrl
+    var authLoc = baseUrl
       + "oauth2/default/v1/authorize?"
       + new URLSearchParams({
         client_id:config.client_id,
         response_type: "token",
+        response_mode: "fragment",
         scope:"/v1.0/genome/searchkeywords.app:*.read",
         state:state,
         nonce:nonce,
@@ -121,17 +127,24 @@ class LoginDialog extends React.Component {
         redirect_uri: window.location.protocol + "//"
           + window.location.host + window.location.pathname
     });
+
+    console.log("redirecting to v1/authorize endpoint: ", authLoc);
+    window.location.replace(authLoc);
+
+    return false;
+
   }
 
-  oktaHandleSignIn= () => {
+  oktaHandleSignIn = () => {
     console.log("okta sdk:", this.oktaAuth)
     this.oktaAuth
-        .signIn({
+        .signInWithCredentials({
           username: this.state.user,
           password: this.state.pass
         })
         .then(res => {
-          console.log("getting access token...");
+          console.log("session token:", res.sessionToken);
+          console.log("getting access token...", res.sessionToken, res);
           this.handleAccessToken(this.props.baseUrl, res.sessionToken);
           //this.setState({
           //  sessionToken: res.sessionToken
@@ -141,6 +154,7 @@ class LoginDialog extends React.Component {
           this.setState({ error: err.message });
           console.log(err.errorCode + ' error', err);
         });
+    return false;
   }
 
   render() {
@@ -164,7 +178,7 @@ class LoginDialog extends React.Component {
                 <SendIcon />
               </IconButton>
               <Typography variant="title" color="inherit" className={classes.flex}>
-                Genome ModelStore
+                Genome Evaluation Store
               </Typography>
             </Toolbar>
           </AppBar>
@@ -310,12 +324,11 @@ class Login extends React.Component {
 
   render() {
     if (this.state.authenticated === null) return null;
-    console.log("##DYNAMICS!!");
 
     return this.state.authenticated ?
       <ModelStorePicker /> :
-      <LoginForm baseUrl={this.props.baseUrl} />;
+      <LoginForm issuer={this.props.issuer} baseUrl={this.props.baseUrl} />;
   }
 }
 
-export default withAuth(Login);
+export default Login;

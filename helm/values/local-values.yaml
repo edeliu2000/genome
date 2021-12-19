@@ -28,7 +28,7 @@ routing:
   name: routing
   image:
     repository: genome-routing
-    tag: local.1.28
+    tag: local.1
     pullPolicy: IfNotPresent
 
 compute:

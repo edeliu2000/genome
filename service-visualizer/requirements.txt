@@ -1,8 +1,8 @@
 flask
 gunicorn
-xgboost==1.0.0
+numpy
 scikit-learn
-matplotlib
+xgboost
 shap
 pyspark
 singledispatch >= 3.4.0.3

@@ -19,23 +19,6 @@ import shutil
 from PIL import Image
 
 
-import tensorflow
-import tensorflow.keras
-from tensorflow.keras.models import Model
-from tensorflow.compat.v1.keras.backend import get_session
-
-
-from tensorflow.keras.datasets import mnist
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten
-from tensorflow.keras.layers import Conv2D, MaxPooling2D
-from tensorflow.keras import backend as K
-
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-
-tensorflow.compat.v1.disable_v2_behavior()
-
 import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeRegressor
@@ -114,31 +97,6 @@ X_image,y_image = shap.datasets.imagenet50()
 
 
 
-def trainVGG16():
-
-    # load pre-trained model and choose two images to explain
-    model = VGG16(weights='imagenet', include_top=True)
-
-    # load the ImageNet class names
-    url = "https://s3.amazonaws.com/deep-learning-models/image-models/imagenet_class_index.json"
-    fname = shap.datasets.cache(url)
-    with open(fname) as f:
-        class_names = json.load(f)
-
-    # explain how the input to the 7th layer of the model explains the top two classes
-    def map2layer(x, layer):
-        feed_dict = dict(zip([model.layers[0].input], [preprocess_input(x.copy())]))
-        return get_session().run(model.layers[layer].input, feed_dict)
-
-    explainer = shap.GradientExplainer(
-        (model.layers[7].input, model.layers[-1].output),
-        map2layer(X_image, 7),
-        local_smoothing=0 # std dev of smoothing noise
-        )
-
-    cachedModels["model-vgg16"] = {"explainer": explainer, "model":model, "classes":class_names}
-
-
 
 def getImageNetClasses():
     if "imagenet/classes" in cachedModels:
@@ -157,8 +115,25 @@ def getImageNetClasses():
 
 
 
-
 def trainVGG16Eli5(modelMeta):
+
+    import tensorflow
+    import tensorflow.keras
+    from tensorflow.keras.models import Model
+    from tensorflow.compat.v1.keras.backend import get_session
+
+
+    from tensorflow.keras.datasets import mnist
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Dropout, Flatten
+    from tensorflow.keras.layers import Conv2D, MaxPooling2D
+    from tensorflow.keras import backend as K
+
+    from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
+    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
+    tensorflow.compat.v1.disable_v2_behavior()
+
 
     canonicalName = modelMeta["canonicalName"]
 

@@ -1,5 +1,5 @@
 FROM openjdk:8-jdk-slim
-COPY --from=python:3.6 / /
+COPY --from=python:3.8 / /
 
 #update
 RUN apt-get update

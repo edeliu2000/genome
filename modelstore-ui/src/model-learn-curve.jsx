@@ -104,7 +104,7 @@ export default class ModelLearningCurve extends React.Component{
       <div>
 
       <div style={{"float":"left", "width":"45%", marginLeft:"-1em"}}>
-      <Button variant="fab" mini color="primary" onClick={this.handleClickOpenProps}>
+      <Button mini color="primary" onClick={this.handleClickOpenProps}>
         <Icon>poll</Icon>
       </Button>
       </div>

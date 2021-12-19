@@ -150,12 +150,12 @@ class ModelValidation extends React.Component {
             <div style={{float:"left"}}>
             {
               entry.tasks.map((task, j) => <div style={{float:"left", margin:"0.4em 0.4em"}}><Chip
-                  avatar={<Avatar>T</Avatar>}
+                  avatar={<Avatar color="primary">T</Avatar>}
                   label={task.name}
-                  color="primary"
+                  variant="outlined"
                   onClick={()=>{this.setState({displayValidation: entry, displayTaskInfo: task})}}
                   onDelete={()=>{this.setState({displayValidation: entry, displayTaskInfo: task})}}
-                  deleteIcon={ task.status ? <DoneIcon color="primary" style={{color:"#22a355"}}/> : <ErrorIcon color="secondary" style={{color:"#e5383b"}}/> }
+                  deleteIcon={ task.status ? <DoneIcon style={{color:"#22a355"}}/> : <ErrorIcon style={{color:"#e5383b"}}/> }
                 /></div>)
             }
             </div>

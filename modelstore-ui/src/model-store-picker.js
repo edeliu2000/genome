@@ -2,9 +2,8 @@ const React = require('react');
 
 import PropTypes from 'prop-types';
 
-import DateFnsUtils from 'material-ui-pickers/utils/date-fns-utils';
-import MuiPickersUtilsProvider from 'material-ui-pickers/utils/MuiPickersUtilsProvider';
-import DateTimePicker from 'material-ui-pickers/DateTimePicker';
+import DateFnsUtils from '@date-io/date-fns';
+import { MuiPickersUtilsProvider, KeyboardDateTimePicker, DateTimePicker} from '@material-ui/pickers';
 
 import classNames from 'classnames';
 import { withStyles } from '@material-ui/core/styles';
@@ -80,6 +79,7 @@ class ModelStorePicker extends React.Component {
   }
 
   componentDidMount = () => {
+    console.log("Displaying ModelPicker")
     this.handleURLQuery()
   }
 
@@ -229,36 +229,35 @@ class ModelStorePicker extends React.Component {
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
 
         <div style={{marginLeft:"1em"}} className="picker">
-          <DateTimePicker
-            value={startDate}
+          <KeyboardDateTimePicker
+            value={this.state.startDate}
             onChange={this.handleStartDate}
-            clearable={true}
             label="Start Date"
-            format="YYYY/MM/DD hh:mm A"
-            keyboard
+            format="yyyy/MM/DD hh:mm A"
+            clearable
           />
         </div>
 
         <div className="picker">
-          <DateTimePicker
-            value={endDate}
+          <KeyboardDateTimePicker
+            value={this.state.endDate}
             onChange={this.handleEndDate}
-            clearable={true}
             label="End Date"
-            format="YYYY/MM/DD hh:mm A"
-            keyboard
+            format="yyyy/MM/DD hh:mm A"
+            clearable
           />
         </div>
 
       </MuiPickersUtilsProvider>
 
-      <FormControl variant="outlined" style={{marginLeft:"1em", minWidth:120}}>
+      <FormControl style={{marginLeft:"1em", minWidth:120}}>
         <InputLabel id="artifactTypeLabel">Type</InputLabel>
         <Select
           labelId="artifactTypeLabel"
           id="artifactTypeSelect"
           value={this.state.artifactType}
           onChange={this.handleArtifactType}
+          autoWidth
         >
           <MenuItem value={"model"}>Models</MenuItem>
           <MenuItem value={"pipeline"}>Pipelines</MenuItem>
@@ -272,7 +271,12 @@ class ModelStorePicker extends React.Component {
       <div id="chart-ctn-state-title" style={{float:"left", width:"400px", textAlign:"center"}}></div>
       <div id="chart-ctn-state"></div>
       <div style={{float:"left", width:"100%"}}>
-      <div style={{marginTop:"0.2em"}} id="root"><ModelStoreTable yada="yada" artifactType={this.state.artifactType} onRef={ref => (this.tableChild = ref)} /></div>
+      <div style={{marginTop:"0.2em"}} id="root">
+        <ModelStoreTable
+          yada="yada"
+          artifactType={this.state.artifactType}
+          onRef={ref => (this.tableChild = ref)} />
+      </div>
       </div>
       </div>
       </div>

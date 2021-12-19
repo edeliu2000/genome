@@ -208,7 +208,7 @@ class TextExplainerVisualizer extends React.Component {
     return (
 
       <div style={{marginLeft:"auto", marginRight:"auto", width:"70%"}}>
-      <FormControl variant="outlined" style={{marginLeft:"1em", minWidth:130, maxWidth:150}}>
+      <FormControl style={{marginTop:"-0.8em", marginLeft:"1em", minWidth:130, maxWidth:150}}>
         <InputLabel id="classLabel">Label Class</InputLabel>
         <Select
           labelId="classLabel"

@@ -3,9 +3,8 @@ const ReactDOM = require("react-dom");
 
 import Button from '@material-ui/core/Button';
 
-import DateFnsUtils from 'material-ui-pickers/utils/date-fns-utils';
-import MuiPickersUtilsProvider from 'material-ui-pickers/utils/MuiPickersUtilsProvider';
-import DateTimePicker from 'material-ui-pickers/DateTimePicker';
+import DateFnsUtils from '@date-io/date-fns';
+import { MuiPickersUtilsProvider, DateTimePicker} from '@material-ui/pickers';
 
 
 import Dialog from '@material-ui/core/Dialog';
@@ -609,7 +608,7 @@ export default class ModelEditPicker extends React.Component {
                    /> : ""),
 
                 <Chip
-                  style={{position:"relative", top:"0.3em", marginLeft:"0.5em"}}
+                  style={{position:"relative", marginLeft:"0.5em"}}
                   avatar={<Avatar><AccessTime /></Avatar>}
                   label={"duration ( " + (this.props.meta.duration / (1000 * 60)).toFixed(2) + "m )"}
                   variant="outlined"

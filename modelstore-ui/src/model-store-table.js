@@ -1,13 +1,13 @@
 const React = require('react');
 const ReactDOM = require("react-dom");
 
-const MUIDataTable = require("mui-datatables");
 
 const _softDeleteESQuery = require("./elastic-queries")._softDeleteESQuery
 const _createESQuery = require("./elastic-queries")._createESQuery
 const _fetchData = require("./elastic-queries")._fetchData
 const _fetchDataRaw = require("./elastic-queries")._fetchDataRaw
 
+import MUIDataTable from "mui-datatables";
 import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label} from 'recharts';
 
 import { withStyles } from '@material-ui/core/styles';
@@ -47,35 +47,43 @@ var DATA = [
   {"mid":"no-mid", "schema":"no-schema", "url":"Chart", "artifactBlob":{}, "parameters":{}, "tags":{}}],
 ];
 
+const testDATA = [["col-1", "col-2"]]
+
 var CHART_DATA = [];
 var SELECTED_DATES = {start: null, end:null, featureStart:null, featureEnd:null};
 var ARTIFACT_TYPE = "model";
 var NUM_SEARCH = 0;
 
+const testColumns = ["Prop-1", "Prop-2"]
 const columns = [
-      {name:"PipelineName", options:{filter:true}},
+      {name:"PipelineName", options:{
+        filter:true,
+        customBodyRender: (value, tableMeta, updateValue) => {
+           return (<div className={"cellSmall"}>{value}</div>)
+        }
+      }},
 
       {name:"Stage", options:{
         filter:true,
-        customRender: (value, tableMeta, updateValue) => {
+        customBodyRender: (value, tableMeta, updateValue) => {
            return (<div className={"cellSmall"}>{value}</div>)
         }
       }},
       {name:"RunId", options:{
         filter:true,
-        customRender: (value, tableMeta, updateValue) => {
+        customBodyRender: (value, tableMeta, updateValue) => {
            return (<div className={"cellSmall"}>{value}</div>)
         }
       }},
       {name:"ModelId", options:{
         filter:true,
-        customRender: (value, tableMeta, updateValue) => {
+        customBodyRender: (value, tableMeta, updateValue) => {
            return (<div className={"cellSmall"}>{value}</div>)
         }
       }},
       {name:"Status", options:{
         filter:true,
-        customRender: (value, tableMeta, updateValue) => {
+        customBodyRender: (value, tableMeta, updateValue) => {
           const colorOfBtn = value === "deployed" ? "primary" : "disabled"
           const online = value === "deployed" || value === 1;
           const error = value === 2;
@@ -94,14 +102,14 @@ const columns = [
 
       {name:"Version", options:{
         filter:true,
-        customRender: (value, tableMeta, updateValue) => {
+        customBodyRender: (value, tableMeta, updateValue) => {
            return (<div className={"cellSmall"}>{value}</div>)
         }
       }},
 
       {name:"Created", options:{
         filter:true,
-        customRender: (value, tableMeta, updateValue) => {
+        customBodyRender: (value, tableMeta, updateValue) => {
            return (<div className={"cellSmall"}>{value}</div>)
         }
       }},
@@ -109,7 +117,7 @@ const columns = [
       {name:"Actions", options:{
         filter:false,
         sort:false,
-        customRender: (value, tableMeta, updateValue) => {
+        customBodyRender: (value, tableMeta, updateValue) => {
           console.log("columnValue", value)
           return (
             <div style={{"float":"left", width:"8em"}}>
@@ -147,44 +155,6 @@ export default class ModelStoreTable extends React.Component {
   componentDidMount() {
     var self = this;
     document.addEventListener("keydown", this.onKeyDown(this), false);
-
-    setTimeout(function(){
-      document.querySelector('div[role="toolbar"] h2').textContent = '';
-      ReactDOM.render(
-        <TextField fullWidth className="mainSearch" label="search..." />,
-        document.querySelector('div[role="toolbar"] h2'))
-    },50);
-
-    setTimeout(function(){
-    document.querySelector('button[aria-label="Search"]').addEventListener("click", function(evt){
-      setTimeout(function(){
-
-        if(document.querySelector('div[aria-label="Search"] > span > div.addedInpt:nth-child(2)')) return;
-
-        var container = document.querySelector('div[aria-label="Search"]')
-
-        ReactDOM.render(
-          <span>
-          {self._constructInput("addedInpt", "pipeline")}
-          {self._constructInput("addedInpt", "stage")}
-          {self._constructInput("addedInpt", "run")}
-          </span>,
-          document.querySelector('div[aria-label="Search"]'))
-
-
-        document.querySelector('div[role="toolbar"] > div:nth-child(1) > div > button')
-          .addEventListener("click", function(e){
-              setTimeout(function(){
-                document.querySelector('div[role="toolbar"] h2').textContent = '';
-                ReactDOM.render(
-                  <TextField fullWidth className="mainSearch" label="search..." />,
-                  document.querySelector('div[role="toolbar"] h2'))
-              }, 50);
-            });
-      }, 50);
-    }, false);
-  }, 50);
-
     this.props.onRef(this)
   }
 
@@ -403,7 +373,7 @@ export default class ModelStoreTable extends React.Component {
     self.onReturn = function(event){
       if (event.keyCode === 13) {
 
-        var keywordSearch = document.querySelector('div.mainSearch input');
+        var keywordSearch = document.querySelector('div[data-test-id="Search"] > input');
         var pipelineEl = document.querySelector('div[aria-label="Search"] > div.addedInpt:nth-child(1) input');
         var stageEl = document.querySelector('div[aria-label="Search"] > div.addedInpt:nth-child(2) input');
         var accessToken = sessionStorage.getItem("accessToken");
@@ -463,60 +433,9 @@ export default class ModelStoreTable extends React.Component {
 
     const options = {
       filterType: 'dropdown',
-      responsive: 'stacked',
-
-
-      onRowsSelect: function(currentSeleted, rowsSelect){
-        console.log("current, rows", currentSeleted, rowsSelect);
-        var pickerDom = document.getElementById("chart-ctn");
-        if(rowsSelect && rowsSelect.length){
-          pickerDom.style.display = "none";
-        }else if (rowsSelect && rowsSelect.length == 0){
-          pickerDom.style.display = "block";
-        }
-      },
-
-
-      onRowsDelete: function(self){ return function(rowsDeleted){
-        console.log("rows deleted:", rowsDeleted)
-        var midsToDelete = [];
-        for(var i=0; i<rowsDeleted.data.length;i++){
-          var tuple = [DATA[rowsDeleted.data[i].dataIndex][3], DATA[rowsDeleted.data[i].dataIndex][2]];
-          midsToDelete.push(tuple);
-          DATA.splice(rowsDeleted.data[i].dataIndex, 1);
-        }
-
-        console.log("row mid-s to delete:", midsToDelete);
-
-        _fetchData(_softDeleteESQuery(midsToDelete), function(hits){
-          console.log("completed soft delete - whatever hits means", hits);
-        }, "ml_model_feature/_update_by_query");
-
-
-        //now update the ui and rerender
-        //var searchTerms = DATA[rowsDeleted.data[0].dataIndex][0] + "/" + DATA[rowsDeleted.data[0].dataIndex][1] + "/" + DATA[rowsDeleted.data[0].dataIndex][2]
-        //self.searchForValue(searchTerms, SELECTED_DATES["start"], SELECTED_DATES["end"]);
-
-        console.log("updating UI with new length: ", DATA.length)
-        self._afterDeletedChangeUI(DATA)
-
-
-        //setTimeout(function(){
-        //  ReactDOM.render(React.createElement(App, null), document.getElementById("root"));
-        //}, 500);
-
-        document.getElementById("chart-ctn").style.display = "block"
-
-        throw "no further deletions to send"
-
-      }}(this),
-
-      onSearchChange: function(self){ return function(searchString){
-        console.log("new-search-string:", searchString);
-
-        throw "no useful search";
-
-      }}(this)
+      responsive: 'vertical',
+      searchAlwaysOpen: true,
+      download: false
     };
 
 

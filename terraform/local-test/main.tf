@@ -2,10 +2,17 @@ terraform {
   # The modules used in this example have been updated with 0.12 syntax, additionally we depend on a bug fixed in
   # version 0.12.7.
   required_version = ">= 0.12.7"
+
+  required_providers {
+      helm       = "= 2.3.0"  # https://github.com/hashicorp/terraform-provider-helm/releases
+      kubernetes = "= 2.5.0" # https://github.com/hashicorp/terraform-provider-kubernetes/releases
+    }
 }
+
 
 provider "kubernetes" {
   config_context_cluster = "minikube"
+  config_path = "~/.kube/config"
 }
 
 resource "kubernetes_namespace" "genome-namespace" {
@@ -31,15 +38,28 @@ resource "kubernetes_namespace" "genome-argo-namespace" {
 # DEPLOY Elastic ECK Operator and Elastic  Service
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "null_resource" "elastic_k8s_eck" {
+resource "null_resource" "elastic_k8s_eck_crds" {
 
   provisioner "local-exec" {
-    command = "minikube kubectl -- apply -f https://download.elastic.co/downloads/eck/1.2.0/all-in-one.yaml"
+    command = "minikube kubectl -- create -f https://download.elastic.co/downloads/eck/1.8.0/crds.yaml"
 
     environment = {
       BUCKET = "example.bucket"
     }
   }
+}
+
+resource "null_resource" "elastic_k8s_eck" {
+
+  provisioner "local-exec" {
+    command = "minikube kubectl -- apply -f https://download.elastic.co/downloads/eck/1.8.0/operator.yaml"
+
+    environment = {
+      BUCKET = "example.bucket"
+    }
+  }
+
+  depends_on = [null_resource.elastic_k8s_eck_crds]
 }
 
 resource "null_resource" "elastic_k8s" {
@@ -53,7 +73,7 @@ cat <<EOF | minikube kubectl -- apply -f -
     name: genome-a
     namespace: local
   spec:
-    version: 7.8.1
+    version: 7.15.0
     nodeSets:
     - name: default
       count: 1
@@ -95,7 +115,7 @@ cat <<EOF | minikube kubectl -- apply -f -
     name: genome-a
     namespace: local
   spec:
-    version: 7.8.1
+    version: 7.15.0
     count: 1
     elasticsearchRef:
       name: genome-a
@@ -123,6 +143,8 @@ resource "null_resource" "argo_k8s" {
       BUCKET = "example.bucket"
     }
   }
+
+  depends_on = [kubernetes_namespace.genome-argo-namespace]
 }
 
 
@@ -133,6 +155,8 @@ resource "null_resource" "argo_k8s" {
 provider "helm" {
   kubernetes {
     config_context_cluster = "minikube"
+    config_path = "~/.kube/config"
+
   }
 }
 

@@ -16,8 +16,10 @@ import glob
 import tempfile
 import zipfile
 import shutil
+import warnings
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
 
 from .modelstore.client import ModelStore
 from .modelstore.estimator import GenomeEstimator
@@ -30,10 +32,7 @@ from .modelstore.visualizer import VisualizationNotSupported
 visualization_api = Blueprint('visualization_api', __name__)
 health_api = Blueprint('health_api', __name__)
 
-modelstore_api = os.environ['MODELSTORE']
-
-from sklearn.feature_extraction.text import CountVectorizer
-
+modelstore_api = os.getenv('MODELSTORE')
 model_store = ModelStore()
 
 

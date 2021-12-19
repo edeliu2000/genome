@@ -1,1 +1,1 @@
-A client for genome's ModelStore
+A client for genome's ModelStore and EvaluationStore

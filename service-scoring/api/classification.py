@@ -7,6 +7,11 @@ import sys
 import time
 import os
 import os.path
+import warnings
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
+
 import pickle
 import urllib.request
 from urllib.error import  URLError
@@ -17,26 +22,6 @@ import tempfile
 import zipfile
 import shutil
 from PIL import Image
-
-import matplotlib
-import matplotlib.pyplot as pl
-
-import tensorflow
-import tensorflow.keras
-from tensorflow.keras.models import Model
-from tensorflow.compat.v1.keras.backend import get_session
-
-
-from tensorflow.keras.datasets import mnist
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Flatten
-from tensorflow.keras.layers import Conv2D, MaxPooling2D
-from tensorflow.keras import backend as K
-
-from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-
-tensorflow.compat.v1.disable_v2_behavior()
 
 import numpy as np
 import pandas as pd
@@ -59,21 +44,27 @@ from sklearn.pipeline import Pipeline, make_pipeline
 import xgboost
 import shap
 
-from .eli5.keras import explain_prediction
-from .eli5.image import format_as_image
+#from .eli5.keras import explain_prediction
+#from .eli5.image import format_as_image
 
-from .modelstore.client import ModelStore
-from .modelstore.estimator import GenomeEstimator
-from .modelstore.explainer import GenomeExplainer
+try:
+    from .modelstore.client import ModelStore
+    from .modelstore.estimator import GenomeEstimator
+    from .modelstore.explainer import GenomeExplainer
+except ImportError:
+    warnings.warn('relative modelstore client not be imported', ImportWarning)
+    logging.info("importing modelstore --- --- ###")
+    from modelstore.client import ModelStore
+    from modelstore.estimator import GenomeEstimator
+    from modelstore.explainer import GenomeExplainer
+    logging.info("imported modelstore --- --- ###")
 
-
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 # routes
 explanation_api = Blueprint('explanation_api', __name__)
 health_api = Blueprint('health_api', __name__)
 
-modelstore_api = os.environ['MODELSTORE']
+modelstore_api = os.getenv('MODELSTORE')
 is_train_job = os.environ['TRAIN_PARAMS'] if "TRAIN_PARAMS" in os.environ else False
 
 
@@ -85,11 +76,6 @@ cachedModels = {}
 trainingModel = False
 
 model_store = ModelStore()
-
-X,y = shap.datasets.adult()
-X_multi,y_multi = shap.datasets.linnerud()
-X_image,y_image = shap.datasets.imagenet50()
-
 
 
 def getImageNetClasses():
@@ -221,6 +207,8 @@ def explanation():
         base64_decoded = base64.b64decode(imageEntryBase64 + "===")
         image_entry = Image.open(io.BytesIO(base64_decoded)).convert('RGB')
         image_entry.thumbnail(dims, Image.ANTIALIAS)
+
+        import tensorflow
         #im = tensorflow.keras.preprocessing.image.load_img(image_entry, target_size=dims) # -> PIL image
         doc = tensorflow.keras.preprocessing.image.img_to_array(image_entry) # -> numpy array
         logging.info("doc is has shape:" + str(doc.shape))

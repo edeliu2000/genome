@@ -323,12 +323,19 @@ class ModelVisualizer extends React.Component {
             <GridList cellHeight={60} cols={1} style={{width:"85%", margin:"auto", marginTop:"0.5em"}}>
               <GridListTile style={{textAlign:"center"}} cols={1}>
 
-                  <Button id="visualizerButton" onClick={this.handleModelVisualization} variant="raised" component="span" >
+                  <Button id="visualizerButton" onClick={this.handleModelVisualization}
+                   variant="raised"
+                   component="span"
+                   style={{marginTop:"0.5em"}}
+                  >
                   <ShareIcon style={{transform:"rotate(90deg)"}}/>
                   <span style={{marginLeft:"0.45em"}}>Visualize Model</span>
                   </Button>
 
-                  <Badge badgeContent={this.props.ensembleEstimators} max={999} color="primary">
+                  <Badge
+                    badgeContent={this.props.ensembleEstimators}
+                    style={{marginTop:"0.5em"}}
+                    max={999} color="primary">
                   <Chip
                     style={{marginLeft:"1em"}}
                     avatar={<Avatar>M</Avatar>}
@@ -337,13 +344,15 @@ class ModelVisualizer extends React.Component {
                   />
                   </Badge>
                   { this.props.estimatorCategory === "ensemble" &&
-                  <FormControl id="ensembleIndexMenu" variant="outlined" style={{marginLeft:"1em", minWidth:130, maxWidth:150}}>
+                  <FormControl id="ensembleIndexMenu"
+                  style={{marginTop:"-0.5em", marginLeft:"1.3em", minWidth:130, maxWidth:150}}>
                     <InputLabel id="modelTreeIndex">Tree Index</InputLabel>
                     <Select
                       labelId="modelTreeIndex"
                       id="ensambleModelTreeIndex"
                       value={this.state.indexSelection}
                       onChange={this.handleModelVisualization}
+                      autoWidth
                     >
                       {
                         this._createArray(this.props.ensembleEstimators).map((targetClass, i) => <MenuItem id={"ensembleItemIndex-" + i} value={targetClass}>

@@ -74,10 +74,12 @@ app.post('/v1.0/genome/evaluationRun', validation.createEvaluationRun);
 
 app.post('/v1.0/genome/search', search.search);
 app.post('/v1.0/genome/search/activeSchedules', search.queryPipelinesToRun);
-app.post('/v1.0/genome/searchkeywords', authRequired, search.searchByKeywords);
+app.post('/v1.0/genome/searchkeywords', search.searchByKeywords);
+//app.post('/v1.0/genome/searchkeywords', authRequired, search.searchByKeywords);
 
 app.post('/v1.0/genome/search-validations', searchValidation.search);
-app.post('/v1.0/genome/search-validations-keywords', authRequired, searchValidation.searchByKeywords);
+app.post('/v1.0/genome/search-validations-keywords', searchValidation.searchByKeywords);
+//app.post('/v1.0/genome/search-validations-keywords', authRequired, searchValidation.searchByKeywords);
 
 app.post('/v1.0/genome/blob', blob.blob);
 app.get('/v1.0/genome/blob/:id', blob.get);

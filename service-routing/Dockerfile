@@ -1,4 +1,4 @@
-FROM node:10 as build
+FROM node:16 as build
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ COPY ./core/auth ./auth
 
 RUN npm install
 
-FROM node:10-alpine
+FROM node:lts-alpine
 
 COPY --from=build /app /
 

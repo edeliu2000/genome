@@ -5,4 +5,4 @@ import Login from './model-store-login'
 import config from './app.config'
 
 //now initialize the main element
-ReactDOM.render(<Login baseUrl={config.url} />, document.getElementById("datepicker-ctn"));
+ReactDOM.render(<Login issuer={config.issuer} baseUrl={config.url} />, document.getElementById("datepicker-ctn"));

@@ -52,7 +52,7 @@ from .estimator import GenomeEstimator
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
-modelstore_api = os.environ['MODELSTORE']
+modelstore_api = os.getenv('MODELSTORE')
 GENOME_FILE = '_genome_.p'
 
 
