@@ -165,6 +165,7 @@ def trainVGG16Eli5(modelMeta):
 @evaluation(
   name="test/skill/annotations/better-than-last",
   versionName="1.2.sklearn",
+  dimension="performance",
   code = "ensemble-training:local.1",
   targetModel="target-id")
 class TrainTestEvaluation(GenomeEvaluationRun):
@@ -174,8 +175,9 @@ class TrainTestEvaluation(GenomeEvaluationRun):
     def evaluateTrainTestSplit(self, t, dataset):
         my_split = 0.7
 
-        t.add_metric("f2", 2.34)
-        t.expect(my_split, var="my_split").toBeLess(0.76)
+        t.add_metric("f1", 0.32)
+        t.add_metric("f2", 0.87)
+        t.expect(metric="f2").toBeLess(0.76)
 
 
     @task(dataset={"ref": "mllake://datasets/test-benchmark/california-housing-test"})
@@ -194,12 +196,12 @@ class TrainTestEvaluation(GenomeEvaluationRun):
 
         intersect = 0.82
         t.add_metric("intersection", intersect) \
-          .expect(intersect, var="intersection") \
+          .expect(metric="intersection") \
           .toBeGreater(0.52)
 
         # now prototypes
-        for record in range(5):
-            m = record * 1.24
+        for record in range(1, 6):
+            m = float(record * 1.24)
             t.prototype(ref="id-123") \
               .add_metric("f1", record * 2.34) \
               .expect(m, var="f1") \

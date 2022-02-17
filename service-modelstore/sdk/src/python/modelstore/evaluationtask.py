@@ -187,10 +187,22 @@ class GenomeTask():
 
         expectation_statuses = [exp.get_status() for exp in self.expectations] or [-1]
 
+        #handle segment serialization
+        segment_prop = None
+        if self.segment:
+          segment_prop = {
+            "name": self.segment.name,
+            "filters":[{
+              "__type__": filter.recipeType,
+              "recipe": filter.recipe
+            } for filter in (self.segment.filters or [])]
+          }
+
+
         return json.dumps({
           "name": self.name,
           "dataset": self.dataset.__dict__,
-          "segment": self.segment.__dict__ if self.segment else None,
+          "segment": segment_prop,
           "expectations": [{
             "__type__":"genome_recipe",
             "recipe": exp.expectation_str()} for exp in self.expectations],
@@ -220,7 +232,16 @@ class GenomeTask():
         return self
 
 
-    def expect(self, value, var=None):
-        t = TaskExpectation(value, var=var)
+    def expect(self, value=None, var:str=None, metric:str = None):
+
+        t = None
+        if metric:
+            expectation_metric = self.metrics[metric] if metric in self.metrics else None
+            t = TaskExpectation(expectation_metric, var="metric[" + metric + "]")
+
+        else:
+            t = TaskExpectation(value, var=var)
+
+
         self.expectations.append(t)
         return t

@@ -20,7 +20,7 @@ import warnings
 
 from typing import Mapping, List, Tuple
 
-from .base import BaseRef, CodeRef, DataRef, BaseMetric
+from .base import BaseRef, CodeRef, DataRef, Segment, BaseMetric
 
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -33,7 +33,7 @@ class Task():
     def __init__(self,
       name: str = None,
       dataRef: DataRef = None,
-      segment: str = None,
+      segment: Segment = None,
       prototypeRef: BaseRef = None,
       expectations: List[str] = None,
       context: dict = None):
@@ -98,7 +98,8 @@ class Validation():
       code: CodeRef = None,
       parameters: dict = None,
       inputModality: str = None,
-      framework: str = None):
+      framework: str = None,
+      dimension: str = None):
 
         self.canonicalName = canonicalName
         self.application = application
@@ -107,6 +108,7 @@ class Validation():
         self.parameters = parameters
         self.inputModality = inputModality
         self.framework = framework
+        self.dimension = dimension
 
 
 
@@ -154,6 +156,8 @@ class Evaluation(Validation):
           parameters = self.parameters,
           inputModality = self.inputModality,
           framework = self.framework,
+          dimension = self.dimension,
+
 
           dataRefs = dataRefs,
           pipelineName = pipelineName,
@@ -183,7 +187,8 @@ class Test(Evaluation):
       parameters: dict = None,
       dataRefs: List[DataRef] = None,
       inputModality: str = None,
-      framework: str = None):
+      framework: str = None,
+      dimension: str = None):
 
         super().__init__(
           canonicalName = canonicalName,
@@ -192,7 +197,8 @@ class Test(Evaluation):
           code = code,
           parameters = parameters,
           inputModality = inputModality,
-          framework = framework)
+          framework = framework,
+          dimension = dimension)
 
         self.dataRefs = [ d.__dict__ for d in dataRefs ] if dataRefs else None
 
@@ -221,6 +227,7 @@ class Test(Evaluation):
           parameters = self.parameters,
           inputModality = self.inputModality,
           framework = self.framework,
+          dimension = self.dimension,
           dataRefs = [DataRef(d["ref"], d["refType"]) for d in self.dataRefs] if self.dataRefs else None,
 
           pipelineName = pipelineName,
@@ -258,6 +265,7 @@ class EvaluationRun(Test):
 
       inputModality: str = None,
       framework: str = None,
+      dimension: str = None,
       status: int = None,
       context: dict = None,
 
@@ -285,6 +293,7 @@ class EvaluationRun(Test):
 
         self.inputModality = inputModality
         self.framework = framework
+        self.dimension = dimension
         self.status = status
         self.context = context if context else None
         self.user = user if user else None

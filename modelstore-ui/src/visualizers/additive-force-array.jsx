@@ -1066,7 +1066,7 @@ class AdditiveForceArrayVisualizer extends React.Component {
           }}
         />
 
-        <FormControl variant="outlined" style={{marginTop:"-3em", marginLeft:"6em", minWidth:130, maxWidth:250}}>
+        <FormControl style={{marginTop:"-3em", marginLeft:"6em", minWidth:130, maxWidth:250}}>
           <InputLabel id="forceArrayXLabel">Sample Order</InputLabel>
           <Select
             labelId="forceArrayXLabel"

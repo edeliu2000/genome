@@ -157,6 +157,16 @@ class LoginDialog extends React.Component {
     return false;
   }
 
+
+  handleEnter = (e) => {
+    if(e.keyCode === 13){
+      e.preventDefault(); // Ensure it is only this code that runs
+      console.log('-- pressed enter:', e);
+      this.oktaHandleSignIn();
+    }
+  }
+
+
   render() {
     const { classes } = this.props;
 
@@ -169,6 +179,7 @@ class LoginDialog extends React.Component {
           fullScreen
           open={this.state.open}
           onClose={this.handleClose}
+          onKeyUp={this.handleEnter}
           TransitionComponent={Transition}
         >
 

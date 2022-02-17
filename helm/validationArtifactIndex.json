@@ -32,6 +32,7 @@
       "versionName": {"type": "keyword"},
       "framework": {"type": "keyword"},
       "inputModality": {"type": "keyword"},
+      "dimension": {"type": "keyword"},
 
 
       "code": {
@@ -96,7 +97,20 @@
               "refType": {"type": "keyword"}
             }
           },
-          "segment": {"type": "keyword"},
+          "segment": {
+            "dynamic": "strict",
+            "properties": {
+              "name": {"type": "keyword"},
+              "filters": {
+                "dynamic": "strict",
+                "properties":{
+                  "__type__": {"type": "keyword"},
+                  "recipe": {"type": "keyword"}
+                }
+              },
+              "refType": {"type": "keyword"}
+            }
+          },
           "expectations": {
             "dynamic": "strict",
             "properties": {

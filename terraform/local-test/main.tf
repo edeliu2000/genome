@@ -9,6 +9,9 @@ terraform {
     }
 }
 
+variable "elastic_crd_count" {
+    default = 1
+}
 
 provider "kubernetes" {
   config_context_cluster = "minikube"
@@ -39,6 +42,7 @@ resource "kubernetes_namespace" "genome-argo-namespace" {
 # ---------------------------------------------------------------------------------------------------------------------
 
 resource "null_resource" "elastic_k8s_eck_crds" {
+  count = "${var.elastic_crd_count}"
 
   provisioner "local-exec" {
     command = "minikube kubectl -- create -f https://download.elastic.co/downloads/eck/1.8.0/crds.yaml"

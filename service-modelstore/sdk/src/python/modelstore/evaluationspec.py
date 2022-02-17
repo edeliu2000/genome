@@ -142,6 +142,7 @@ class GenomeEvaluationRun():
           versionName = self.versionName,
           inputModality = self.inputModality,
           framework = self.framework,
+          dimension = self.dimension,
           status = status,
 
           code = code,
@@ -221,7 +222,8 @@ def evaluation(
   pipelineStage = None,
   pipelineRunId = None,
   inputModality = None,
-  framework = None):
+  framework = None,
+  dimension = None):
 
     def f(cls):
         cls.canonicalName = name
@@ -242,6 +244,8 @@ def evaluation(
 
         cls.inputModality = inputModality or os.getenv('inputModality')
         cls.framework = framework or os.getenv('framework')
+        cls.dimension = dimension or os.getenv('dimension')
+
 
 
         return cls

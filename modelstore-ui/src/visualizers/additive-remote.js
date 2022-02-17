@@ -242,7 +242,7 @@ class AdditiveRemoteVisualizer extends React.Component {
           variant="outlined"
         />
 
-        <FormControl variant="outlined" style={{marginLeft:"1em", minWidth:130, maxWidth:150}}>
+        <FormControl style={{marginLeft:"1em", minWidth:130, maxWidth:150}}>
           <InputLabel id="numShapSamples">Num Samples</InputLabel>
           <Select
             labelId="numShapSamples"
@@ -257,7 +257,7 @@ class AdditiveRemoteVisualizer extends React.Component {
           </Select>
         </FormControl>
 
-        <FormControl variant="outlined" style={{marginLeft:"3em", minWidth:130, maxWidth:150}}>
+        <FormControl style={{marginLeft:"3em", minWidth:130, maxWidth:150}}>
           <InputLabel id="numSimClusters">Clusters</InputLabel>
           <Select
             labelId="numSimClusters"

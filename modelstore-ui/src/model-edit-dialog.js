@@ -51,6 +51,7 @@ import PhotoCamera from '@material-ui/icons/PhotoCamera';
 import ShareIcon from '@material-ui/icons/Share';
 import AccessTime from '@material-ui/icons/AccessTime';
 import DoneIcon from '@material-ui/icons/Done';
+import ErrorIcon from '@material-ui/icons/Error';
 import Avatar from '@material-ui/core/Avatar';
 
 import CancelIcon from '@material-ui/icons/Cancel';
@@ -589,7 +590,8 @@ export default class ModelEditPicker extends React.Component {
                       avatar={<Avatar>C</Avatar>}
                       label={"completed"}
                       variant="outlined"
-                      deleteIcon={<DoneIcon />}
+                      onDelete={()=>{}}
+                      deleteIcon={<DoneIcon color="primary" style={{color:"#22a355"}}/>}
                      />,
                   2: <Chip
                       style={{marginLeft:"0.5em"}}
@@ -597,6 +599,8 @@ export default class ModelEditPicker extends React.Component {
                       label={"failed"}
                       color="secondary"
                       variant="outlined"
+                      onDelete={()=>{}}
+                      deleteIcon={<ErrorIcon color="secondary" />}
                      />
                 }[this.props.meta.status] : ""),
 
@@ -796,7 +800,7 @@ export default class ModelEditPicker extends React.Component {
           />
         }
 
-        <div style={{marginTop:"0.5em"}}><Chip color="secondary" label={"id: " + this.props.meta.mid}/></div>
+        <div style={{marginTop:"0.5em"}}><Chip color="primary" label={"id: " + this.props.meta.mid}/></div>
 
         <div style={{marginTop:"0.5em"}}><Chip label={"updated: " + this.props.meta.created}/></div>
 

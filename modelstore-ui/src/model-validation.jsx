@@ -140,10 +140,19 @@ class ModelValidation extends React.Component {
       {
         this.state.validations.map((entry, i) => <ExpansionPanel>
           <ExpansionPanelSummary expandIcon={<ExpandMore />}>
+
             <Typography className={styles.heading}>
               <div style={{float:"left", margin: "-0.2em 0.7em"}}>{entry.status ? <DoneIcon style={{color:"#22a355"}} /> : <ErrorIcon style={{color:"#e5383b"}} />}
               </div> {entry.canonicalName} ({entry.tasks.length} tasks)
             </Typography>
+            <Chip
+              avatar={<Avatar>P</Avatar>}
+              label="performance"
+              clickable
+              color="primary"
+              style={{float:"right", left:"1em", top:"-0.3em"}}
+            />
+
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
 
@@ -210,14 +219,18 @@ class ModelValidation extends React.Component {
           }
 
 
-          { this.state.displayTaskInfo && this.state.displayTaskInfo.segment &&
+          { this.state.displayTaskInfo && this.state.displayTaskInfo.segment && this.state.displayTaskInfo.segment.filters &&
             <ListItem divider button>
               <ListItemIcon>
                 <Icon>storage</Icon>
               </ListItemIcon>
-              <ListItemText inset primary={this.state.displayTaskInfo.segment}
+              <ListItemText inset primary={
+                this.state.displayTaskInfo.segment.filters.map((filter, i) => <div style={{float:"left", width:"100%"}}>
+                    <i> {filter.recipe ? filter.recipe : ""} </i>
+                </div>)
+              }
                 secondary={
-                  "Segment"
+                  "Segment: " + this.state.displayTaskInfo.segment.name
                 }
               />
             </ListItem>
@@ -225,7 +238,9 @@ class ModelValidation extends React.Component {
 
 
           { this.state.displayTaskInfo && this.state.displayTaskInfo.expectations &&
-            <ListItem divider button>
+            <ListItem divider button style={{
+              backgroundColor: !this.state.displayTaskInfo.status ? "rgb(233, 56, 21, 0.3)" : "transparent"
+            }}>
               <ListItemIcon>
                 <Icon>storage</Icon>
               </ListItemIcon>
