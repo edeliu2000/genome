@@ -8,6 +8,6 @@ keywords:
 - nodejs
 - nginx
 - modelstore
-version: 0.1.153
+version: 0.1.154
 sources:
 - https://bitbucket.org/edeliu2000/genome

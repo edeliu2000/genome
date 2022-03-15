@@ -4,7 +4,13 @@
 
 replicaCount: 1
 
-environment: local
+environment: genesis
+
+volumes:
+  jsFolder: /dist-js
+  mntFolder: /mnt/js-dist
+  mntType: Directory
+  
 
 nginx:
   name: nginx
@@ -15,6 +21,14 @@ nginx:
   service:
     type: NodePort
     nodePort: 30000
+
+sidecar:
+  name: sidecar
+  image:
+    repository: genome-sidecar
+    tag: latest
+    pullPolicy: IfNotPresent
+
 
 modelstore:
   name: modelstore

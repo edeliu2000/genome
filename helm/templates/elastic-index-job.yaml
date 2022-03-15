@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: index-job
-        image: curlimages/curl
+        image: "{{ .Values.index_cronjob.image.repository }}:{{ .Values.index_cronjob.image.tag }}"
         command:
         - curl
         - "-iX PUT"
@@ -23,6 +23,12 @@ spec:
         - "-d"
         - "$(ES_INDEX_PAYLOAD)"
         - "$(ES_URL)/model-artifacts"
+
+        volumeMounts:
+          - mountPath: "/etc/elastic"
+            name: elastic-ssl
+            readOnly: true
+
         env:
         - name: ES_URL
           value: https://{{ template "genome.fullname" . }}-es-http:9200
@@ -39,6 +45,10 @@ spec:
               name: {{ template "genome.fullname" . }}-es-elastic-user
               key: elastic
 
+      volumes:
+        - name: elastic-ssl
+          secret:
+            secretName: {{ template "genome.fullname" .}}-es-http-ca-internal
 
 
       restartPolicy: Never

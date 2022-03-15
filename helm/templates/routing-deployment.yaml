@@ -49,8 +49,8 @@ spec:
         workingDir: /
 
       - name: sidecar-apiserver
-        image: sidecar-kubectl:latest
-        imagePullPolicy: IfNotPresent
+        image: "{{ .Values.sidecar.image.repository }}:{{ .Values.sidecar.image.tag }}"
+        imagePullPolicy: "{{ .Values.sidecar.image.pullPolicy }}"
         ports:
         - containerPort: 8001
       restartPolicy: Always

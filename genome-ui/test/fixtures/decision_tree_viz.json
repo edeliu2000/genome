@@ -1,0 +1,735 @@
+{
+    "classifier": true,
+    "edges": [
+        {
+            "end": "leaf6",
+            "label": "&lt;",
+            "start": "node5"
+        },
+        {
+            "end": "leaf7",
+            "label": "&ge;",
+            "start": "node5"
+        },
+        {
+            "end": "leaf4",
+            "label": "&lt;",
+            "start": "node3"
+        },
+        {
+            "end": "node5",
+            "label": "&ge;",
+            "start": "node3"
+        },
+        {
+            "end": "leaf2",
+            "label": "&lt;",
+            "start": "node1"
+        },
+        {
+            "end": "node3",
+            "label": "&ge;",
+            "start": "node1"
+        },
+        {
+            "end": "leaf12",
+            "label": "&lt;",
+            "start": "node11"
+        },
+        {
+            "end": "leaf13",
+            "label": "&ge;",
+            "start": "node11"
+        },
+        {
+            "end": "leaf15",
+            "label": "&lt;",
+            "start": "node14"
+        },
+        {
+            "end": "leaf16",
+            "label": "&ge;",
+            "start": "node14"
+        },
+        {
+            "end": "node11",
+            "label": "&lt;",
+            "start": "node10"
+        },
+        {
+            "end": "node14",
+            "label": "&ge;",
+            "start": "node10"
+        },
+        {
+            "end": "leaf19",
+            "label": "&lt;",
+            "start": "node18"
+        },
+        {
+            "end": "leaf20",
+            "label": "&ge;",
+            "start": "node18"
+        },
+        {
+            "end": "leaf22",
+            "label": "&lt;",
+            "start": "node21"
+        },
+        {
+            "end": "leaf23",
+            "label": "&ge;",
+            "start": "node21"
+        },
+        {
+            "end": "node18",
+            "label": "&lt;",
+            "start": "node17"
+        },
+        {
+            "end": "node21",
+            "label": "&ge;",
+            "start": "node17"
+        },
+        {
+            "end": "node10",
+            "label": "&lt;",
+            "start": "node9"
+        },
+        {
+            "end": "node17",
+            "label": "&ge;",
+            "start": "node9"
+        },
+        {
+            "end": "leaf26",
+            "label": "&lt;",
+            "start": "node25"
+        },
+        {
+            "end": "leaf27",
+            "label": "&ge;",
+            "start": "node25"
+        },
+        {
+            "end": "leaf30",
+            "label": "&lt;",
+            "start": "node29"
+        },
+        {
+            "end": "leaf31",
+            "label": "&ge;",
+            "start": "node29"
+        },
+        {
+            "end": "leaf33",
+            "label": "&lt;",
+            "start": "node32"
+        },
+        {
+            "end": "leaf34",
+            "label": "&ge;",
+            "start": "node32"
+        },
+        {
+            "end": "node29",
+            "label": "&lt;",
+            "start": "node28"
+        },
+        {
+            "end": "node32",
+            "label": "&ge;",
+            "start": "node28"
+        },
+        {
+            "end": "node25",
+            "label": "&lt;",
+            "start": "node24"
+        },
+        {
+            "end": "node28",
+            "label": "&ge;",
+            "start": "node24"
+        },
+        {
+            "end": "node9",
+            "label": "&lt;",
+            "start": "node8"
+        },
+        {
+            "end": "node24",
+            "label": "&ge;",
+            "start": "node8"
+        },
+        {
+            "end": "node1",
+            "label": "&lt;",
+            "start": "node0"
+        },
+        {
+            "end": "node8",
+            "label": "&ge;",
+            "start": "node0"
+        }
+    ],
+    "legend": [
+        "alt.atheism",
+        "comp.graphics",
+        "sci.med",
+        "soc.religion.christian"
+    ],
+    "model_type": "tree",
+    "nodes": [
+        {
+            "count": 67,
+            "id": "node5",
+            "label": "f{4}@0.07"
+        },
+        {
+            "count": 69,
+            "id": "node3",
+            "label": "f{3}@-0.00"
+        },
+        {
+            "count": 70,
+            "id": "node1",
+            "label": "f{34}@-0.13"
+        },
+        {
+            "count": 584,
+            "id": "node11",
+            "label": "f{41}@0.00"
+        },
+        {
+            "count": 289,
+            "id": "node14",
+            "label": "f{0}@0.15"
+        },
+        {
+            "count": 873,
+            "id": "node10",
+            "label": "f{15}@0.01"
+        },
+        {
+            "count": 366,
+            "id": "node18",
+            "label": "f{4}@0.01"
+        },
+        {
+            "count": 7,
+            "id": "node21",
+            "label": "f{73}@0.01"
+        },
+        {
+            "count": 373,
+            "id": "node17",
+            "label": "f{6}@0.05"
+        },
+        {
+            "count": 1246,
+            "id": "node9",
+            "label": "f{2}@0.05"
+        },
+        {
+            "count": 8,
+            "id": "node25",
+            "label": "f{38}@0.01"
+        },
+        {
+            "count": 40,
+            "id": "node29",
+            "label": "f{51}@0.03"
+        },
+        {
+            "count": 65,
+            "id": "node32",
+            "label": "f{39}@0.13"
+        },
+        {
+            "count": 105,
+            "id": "node28",
+            "label": "f{3}@0.03"
+        },
+        {
+            "count": 113,
+            "id": "node24",
+            "label": "f{72}@-0.07"
+        },
+        {
+            "count": 1359,
+            "id": "node8",
+            "label": "f{7}@0.04"
+        },
+        {
+            "count": 1429,
+            "id": "node0",
+            "label": "f{6}@-0.05"
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 0,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 1,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 1,
+            "id": "leaf2",
+            "label": "Node 2",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 0,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 2,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 2,
+            "id": "leaf4",
+            "label": "Node 4",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 100,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 0,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 66,
+            "id": "leaf6",
+            "label": "Node 6",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 1,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 1,
+            "id": "leaf7",
+            "label": "Node 7",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 71,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 19,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 167,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 228,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 317,
+            "id": "leaf12",
+            "label": "Node 12",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 55,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 31,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 240,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 91,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 267,
+            "id": "leaf13",
+            "label": "Node 13",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 92,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 19,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 71,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 123,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 193,
+            "id": "leaf15",
+            "label": "Node 15",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 13,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 6,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 137,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 96,
+            "id": "leaf16",
+            "label": "Node 16",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 502,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 18,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 7,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 323,
+            "id": "leaf19",
+            "label": "Node 19",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 5,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 14,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 43,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 6,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 43,
+            "id": "leaf20",
+            "label": "Node 20",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 3,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 0,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 3,
+            "id": "leaf22",
+            "label": "Node 22",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 8,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 4,
+            "id": "leaf23",
+            "label": "Node 23",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 1,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 0,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 1,
+            "id": "leaf26",
+            "label": "Node 26",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 8,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 7,
+            "id": "leaf27",
+            "label": "Node 27",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 34,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 8,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 6,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 33,
+            "id": "leaf30",
+            "label": "Node 30",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 1,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 8,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 3,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 7,
+            "id": "leaf31",
+            "label": "Node 31",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 113,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 1,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 64,
+            "id": "leaf33",
+            "label": "Node 33",
+            "leaf": true
+        },
+        {
+            "classes": [
+                {
+                    "count": 0,
+                    "name": "alt.atheism"
+                },
+                {
+                    "count": 0,
+                    "name": "comp.graphics"
+                },
+                {
+                    "count": 1,
+                    "name": "sci.med"
+                },
+                {
+                    "count": 0,
+                    "name": "soc.religion.christian"
+                }
+            ],
+            "count": 1,
+            "id": "leaf34",
+            "label": "Node 34",
+            "leaf": true
+        }
+    ],
+    "pipeline": {
+        "edges": [
+            {
+                "end": "transform2",
+                "label": "1.00",
+                "start": "transform1"
+            },
+            {
+                "end": "transform3",
+                "label": "1.00",
+                "start": "transform2"
+            }
+        ],
+        "nodes": [
+            {
+                "id": "transform1",
+                "label": "TfidfVectorizer",
+                "leaf": true,
+                "mean": 1
+            },
+            {
+                "id": "transform2",
+                "label": "TruncatedSVD",
+                "leaf": true,
+                "mean": 1
+            },
+            {
+                "id": "transform3",
+                "label": "RandomForestClassifier",
+                "leaf": true,
+                "mean": 1
+            }
+        ]
+    }
+}

@@ -58,13 +58,19 @@ const staticFolder = process.env.JS_FOLDER || "dist" ;
 app.use('/static', express.static(staticFolder))
 
 app.post('/v1.0/genome/deployment', genome.createDeployment);
-app.post('/v1.0/genome/transform', genome.createTransform);
-app.post('/v1.0/genome/model', genome.createModel);
 
 app.post('/v1.0/genome/pipeline', genome.createPipeline);
 app.put('/v1.0/genome/pipeline/:pipelineId/nextRun', genome.updatePipelineNextRun);
 app.post('/v1.0/genome/pipelineRun', genome.createPipelineRun);
 app.post('/v1.0/genome/pipelineRun/:runId/status', genome.createPipelineRunStatus);
+
+
+app.post('/v1.0/genome/transform', genome.createTransform);
+app.post('/v1.0/genome/model', genome.createModel);
+
+app.post('/v1.0/genome/blob', blob.blob);
+app.get('/v1.0/genome/blob/:id', blob.get);
+
 
 app.post('/v1.0/genome/test', validation.createTest);
 app.post('/v1.0/genome/testRun', validation.createTestRun);
@@ -81,8 +87,6 @@ app.post('/v1.0/genome/search-validations', searchValidation.search);
 app.post('/v1.0/genome/search-validations-keywords', searchValidation.searchByKeywords);
 //app.post('/v1.0/genome/search-validations-keywords', authRequired, searchValidation.searchByKeywords);
 
-app.post('/v1.0/genome/blob', blob.blob);
-app.get('/v1.0/genome/blob/:id', blob.get);
 
 app.get('/v1.0/genome/healthz', (req, res) => {
   res.send('ping!\n');

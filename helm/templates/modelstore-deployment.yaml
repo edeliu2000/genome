@@ -27,12 +27,7 @@ spec:
 
     spec:
 
-      volumes:
-      - name: js-dist-dir
-        hostPath:
-          # Ensure the file directory is created.
-          path: /mnt/js-dist
-          type: Directory
+      {{ template "genome.volumes" .}}
 
       containers:
       - name: {{ template "genome.fullname" . }}-node
@@ -64,12 +59,13 @@ spec:
                 key: providerPass
 
           - name: JS_FOLDER
-            value: "{{ .Values.modelstore.jsFolder }}"
+            value: {{ .Values.volumes.jsFolder }}
+
+          - name: MNT_FOLDER
+            value: {{ .Values.volumes.mntFolder }}
 
 
-        volumeMounts:
-        - mountPath: /dist-js
-          name: js-dist-dir
+        {{ template "genome.volumeMounts" .}}
 
 
 

@@ -30,3 +30,28 @@ Create chart name and version as used by the chart label.
 {{- define "genome.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{/*
+Create volumes config for loading host folders.
+*/}}
+{{- define "genome.volumes" -}}
+{{- if .Values.volumes.mntFolder -}}
+volumes:
+- name: js-dist-dir
+  hostPath:
+    # Ensure the file directory is created.
+    path: {{ .Values.volumes.mntFolder }}
+    type: {{ .Values.volumes.mntType }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create volumeMounts for mounting predefined volumes.
+*/}}
+{{- define "genome.volumeMounts" -}}
+{{- if .Values.volumes.mntFolder -}}
+volumeMounts:
+- mountPath: /{{ .Values.volumes.jsFolder }}
+  name: js-dist-dir
+{{- end -}}
+{{- end -}}

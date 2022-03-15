@@ -4,7 +4,12 @@
 
 replicaCount: 1
 
-environment: development
+environment: genesis
+
+volumes:
+  jsFolder:
+  mntFolder:
+  mntType:
 
 nginx:
   name: nginx
@@ -16,41 +21,53 @@ nginx:
     type: NodePort
     nodePort: 30000
 
+sidecar:
+  name: sidecar
+  image:
+    repository: us-west1-docker.pkg.dev/genome-285119/genome/sidecar-kubectl
+    tag: latest
+    pullPolicy: IfNotPresent
+
+index_cronjob:
+  name: index_cronjob
+  image:
+    repository: curlimages/curl
+    tag: latest
+    pullPolicy: IfNotPresent
+
 modelstore:
   name: modelstore
   image:
-    repository: genome-modelstore
+    repository: us-west1-docker.pkg.dev/genome-285119/genome/genome-modelstore
     tag: development
     pullPolicy: IfNotPresent
-  jsFolder: dist
-
 
 routing:
   name: routing
   image:
-    repository: genome-routing
+    repository: us-west1-docker.pkg.dev/genome-285119/genome/genome-routing
     tag: development
     pullPolicy: IfNotPresent
 
 compute:
   name: compute
   image:
-    repository: genome-compute
+    repository: us-west1-docker.pkg.dev/genome-285119/genome/genome-compute
     tag: development
     pullPolicy: IfNotPresent
 
 scoring:
   name: scoring
   image:
-    repository: genome-scoring
+    repository: us-west1-docker.pkg.dev/genome-285119/genome/genome-scoring
     tag: development
     pullPolicy: IfNotPresent
 
 visualizer:
   name: visualizer
   image:
-    repository: genome-visualizer
-    tag: local
+    repository: us-west1-docker.pkg.dev/genome-285119/genome/genome-visualizer
+    tag: development
     pullPolicy: IfNotPresent
 
 elastic:
