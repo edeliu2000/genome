@@ -6,7 +6,7 @@ Genome is a cloud native (K8) platform for model tests and explanations, geared 
 # Table of Contents
 1. [Vision](#vision)
 2. [Genome Capabilities](#genomecapabilities)
-3. [Components and Architecture](#componentsandarchitecture)
+3. [Components](#componentsandarchitecture)
 4. [Model Store and Framework](#modelvisualizations)
 4. [Evaluation Store and Framework](#evaluationstoreandframework-examples)
 4. [Explaining Model Predictions](#explainingmodelpredictions-examples)
@@ -18,12 +18,13 @@ Genome is a cloud native (K8) platform for model tests and explanations, geared 
 ## Vision
 Scalable Realtime ML Platform for _demystifying_, _dissecting_, _validating_ and _enhancing_ *trust* on increasingly complex production AI. We plan to achieve this via:
 
--  Production grade *Tracking and Versioning* ML Models and Pipelines
--  Production grade *Tracking and Versioning* of Evaluations and Tests
--  Test and Evaluation Framework for ML
+-  Scalable *Realtime Test/Evaluations* for ML
 -  Scalable *Realtime Explanations* of ML model predictions
     -  on all types of data (tabular, image, text based)
 -  Realtime Model and *Prediction Visualizations*
+-  Framework and an Evaluation Store for ML Tests/Evaluations
+-  Production grade *Tracking and Versioning* ML Models, Pipelines and Deployments
+-  Production grade *Tracking and Versioning* of Evaluations and Tests
 
 #### Why Realtime?
 Providing realtime explanations for models is at the core of our vision. Why realtime plays a big role is because we want _auditors_ (yes, we believe ML should increasingly be audited and regulated, especially if it drives actions and decisions) along with ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
@@ -45,7 +46,7 @@ Considering that especially explanations derived from model-agnostic/blackbox ap
     -  linear, logistic model types
 
 
-## Components and Architecture:
+## Components:
 -  Genome Model Store - API-s to store, version and track models
 -  Genome Evaluation Store - API-s to store and track model tests and evaluations
 -  Compute and Sequencer - API-s to create pipeline runs/schedules
