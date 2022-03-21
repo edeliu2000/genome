@@ -1,7 +1,7 @@
 
 
-# Genome - Platform for Realtime ML Model Explanations and Inspection
-Genome is a cloud native (K8) platform for model tests and explanations, geared towards production grade ML and AI pipelines. It comes with a suite of components that can be used in tandem or isolated to achieve realtime explanations of all model types and a structured representation of tests for AI. It is built on top of scalable technologies that lend themselves well to be operated at scale in the cloud.
+# Genome - Platform for Realtime ML (Model) Explanations, Inspection and Trust/Testing
+Genome is a cloud native (K8) platform for model testing and explanations, geared towards production grade ML and AI pipelines that need to instill trust for their stakeholders. It comes with a suite of components that can be used in tandem or isolated to achieve realtime explanations and testing of all model types via a structured representation of tests and quality for AI. It is built on top of scalable technologies that lend themselves well to be operated at scale in the cloud.
 
 # Table of Contents
 1. [Vision](#vision)
