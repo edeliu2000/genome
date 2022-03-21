@@ -18,18 +18,19 @@ Genome is a cloud native (K8) platform for model tests and explanations, geared 
 ## Vision
 Scalable Realtime ML Platform for _demystifying_, _dissecting_, _validating_ and _enhancing_ *trust* on increasingly complex production AI. We plan to achieve this via:
 
--  *Realtime and Interactive Tests/Evaluations* for ML
--  *Realtime and Interactive Explanations* of ML predictions
+-  AI Services focused on *Realtime and Interactive Tests/Evaluations* for ML
+-  AI Services focused on *Realtime and Interactive Explanations* of ML predictions
     -  on all types of data (tabular, image, text based)
 -  Realtime Model and *Prediction Visualizations*
 -  Framework and an Evaluation Store for reporting ML Tests/Evaluations
+-  Framework and a Model Store for reporting ML models and supporting model cards
 -  Production grade *Tracking and Versioning* ML Models, Pipelines and Deployments
 -  Production grade *Tracking and Versioning* of Evaluations and Tests
 
 #### Why Realtime?
-Providing realtime explanations for models is at the core of our vision. Why realtime plays a big role is because we want _auditors_ (yes, we believe ML should increasingly be audited and regulated, especially if it drives actions and decisions) along with ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
+Providing realtime tests and explanations for ML (models) is at the core of our vision. Why realtime plays a big role is because we want _auditors_ and stakeholders (yes, we believe ML should increasingly be audited and accessible for introspection to customers and other stakeholders, especially if it drives actions and decisions) along with ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
 
-Considering that especially explanations derived from model-agnostic/blackbox approaches are expensive, getting explanations *on-demand* and on a per need basis, rather than doing it on blanket for all training data, drops the cost and hence accessibility of model explanations in general for any particular prediction, which is critical and increasingly important. The current and future realtime capabilities of Genome are well positioned to service this need.
+Considering that especially tests and explanations derived from model-agnostic/blackbox approaches are expensive, getting explanations *on-demand* and on a per need basis, rather than doing it on blanket for all training data, drops the cost and hence accessibility of model explanations in general for any particular prediction, which is critical and increasingly important. The current and future realtime capabilities of Genome are well positioned to service this need.
 
 
 ## Genome Capabilities
@@ -41,7 +42,7 @@ Considering that especially explanations derived from model-agnostic/blackbox ap
     -  image based models (CNN architectures) via GradCAM
     -  text based models operating on documents via LIME
 
--  Visualize model architecture and internals. Visualizations are a second leg to enabling interpretation and explanation. They can help clarify why models make certain decisions and are helpful for explainable model types, especially in the case of tree based models, to help interpret their decisions.
+-  Visualize model architecture and internals. Visualizations are a second leg to enabling interpretation, explanations, testing and trust. They can help clarify why models make certain decisions and are helpful for explainable model types, especially in the case of tree based models, to help interpret their decisions.
     -  trees, forests, ensembles (sklearn, XGBoost, Spark ML)
     -  linear, logistic model types
 
