@@ -42,6 +42,8 @@
     "build_project": "webpack --config ./webpack.config.js",
     "test": "jest --coverage"
   },
-  "author": "endri.deliu@gmail.com",
+  "author": {
+    "name": "Endri Del"
+  },
   "license": "MIT"
 }
