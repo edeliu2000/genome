@@ -1,6 +1,6 @@
 
 
-# Genome - Platform for Machine Learning Testing and Realtime Explanations/Introspection and Trust
+# Genome - Platform for Machine Learning Testing, Realtime Explanations/Introspection and Trust
 Genome is a cloud native (K8) platform for ML model testing and explanations, geared towards production grade ML and AI pipelines that need to instill trust for different stakeholders. It comes with a suite of components that can be used in tandem or isolated to achieve testing/evaluations and realtime explanations of all model types via a structured representation of quality for AI. It is built on top of scalable technologies that lend themselves well to be operated at scale in the cloud.
 
 # Table of Contents
