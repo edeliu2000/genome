@@ -1,6 +1,6 @@
 
 
-# Genome - Platform for Machine Learning Trust, Testing and Realtime Model Explanations/Introspection
+# Genome - Platform for Machine Learning Testing and Realtime Explanations/Introspection and Trust
 Genome is a cloud native (K8) platform for ML model testing and explanations, geared towards production grade ML and AI pipelines that need to instill trust for different stakeholders. It comes with a suite of components that can be used in tandem or isolated to achieve testing/evaluations and realtime explanations of all model types via a structured representation of quality for AI. It is built on top of scalable technologies that lend themselves well to be operated at scale in the cloud.
 
 # Table of Contents
@@ -28,9 +28,9 @@ Scalable Realtime ML Platform for _demystifying_, _dissecting_, _validating_ and
 -  Production grade *Tracking and Versioning* of Evaluations and Tests
 
 #### Why Realtime?
-Providing realtime tests and explanations for ML (models) is at the core of our vision. Why realtime plays a big role is because we want _auditors_ and stakeholders (yes, we believe ML should increasingly be audited and accessible for introspection to customers and other stakeholders, especially if it drives actions and decisions) along with ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
+Providing realtime tests and explanations for ML (models) is at the core of our vision. Why realtime plays a big role is because we want _auditors_ and stakeholders (ML should increasingly be audited and accessible for introspection to customers and other stakeholders, especially if it drives actions and decisions) along with ML engineers to be able to explain *new* data as it is available without waiting for the next batch job in several hours.
 
-Considering that especially tests and explanations derived from model-agnostic/blackbox approaches are expensive, getting explanations *on-demand* and on a per need basis, in addition to supporting batch automated cases, for all training data, drops the cost and hence accessibility of model introspections and explanation in general for any particular prediction, which is critical and increasingly important. The current and future realtime capabilities of Genome are well positioned to service this need.
+Considering that especially tests and explanations derived from model-agnostic/blackbox approaches are expensive, getting explanations *on-demand* and on a per need basis, drops the cost and hence accessibility of model introspections and explanation in general for any particular prediction, which is critical and increasingly important. The current and future realtime capabilities of Genome are well positioned to service this need. In addition Genome supports batch automated test cases where more expensive and elaborate tests/evaluations can be performed.
 
 
 ## Genome Capabilities
