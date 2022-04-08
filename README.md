@@ -63,9 +63,9 @@ Considering that especially tests and explanations derived from model-agnostic/b
 
 ## ML Tests via Evaluation Store and the Evaluation Framework
 Evaluations in Genome are akin to unit testing in software engineering and represent a critical stage in the ML development lifecycle. Genome treats tests as first class citizens via the Evaluation Store and the associated framework. The Evaluation Store is the system of record for representing and tracking ML tests in a structured way. We use following terminology for testing:
--  *Evaluations*: represent full test suites testing a behavioral scenario holistically. Evaluations can have multiple tasks.
--  *Task(s)*: represents a unit test, part of the full behavioral scenario. Tasks can operate on datasets, segments or single data points, what we call prototypes, in order to allow for different levels of _data coverage_ for the test scenario. Tasks can contain multiple expectations.
--  *Expectation(s)*: are single (boolean) checks for particular low level conditions. Metric checks can happen here, as well as raw data point comparisons.
+-  **Evaluations**: represent full test suites testing a behavioral scenario holistically. Evaluations can have multiple tasks.
+-  **Task(s)**: represents a unit test, a specific part/unit of the full behavioral scenario. Tasks can operate on datasets, segments or single data points, what we call _prototypes_, in order to allow for different levels of _data coverage_ for the test scenario. Tasks can contain multiple expectations.
+-  **Expectation(s)**: are single (boolean) checks for particular low level conditions. Metric checks can happen here, as well as raw data point comparisons.
 
 To use the Evaluation Store create an evaluation class like in the example below, then run it with the trained model. Note the similarity with unit testing.
 
