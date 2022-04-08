@@ -1,7 +1,7 @@
 
 
-# Genome - Platform for Machine Learning Testing, Realtime Explanations/Introspection and Trust
-Genome is a cloud native (K8) platform for ML model testing and explanations, geared towards production grade ML and AI pipelines that need to instill trust for different stakeholders. It comes with a suite of components that can be used in tandem or isolated to achieve testing/evaluations and realtime explanations of all model types via a structured representation of quality for AI. It is built on top of scalable technologies that lend themselves well to be operated at scale in the cloud.
+# Genome - Platform for ML Testing, Trust and Realtime Explanations
+Genome is a cloud native (K8) platform for ML testing and explanations, geared towards production grade ML and AI pipelines that need to instill trust for different stakeholders. It comes with a suite of components that can be used in tandem or isolated to achieve testing/evaluations and realtime explanations of all model types via a structured representation of quality for AI. It is built on top of scalable technologies that lend themselves well to be operated at scale in the cloud.
 
 # Table of Contents
 1. [Vision](#vision)
@@ -18,7 +18,7 @@ Genome is a cloud native (K8) platform for ML model testing and explanations, ge
 ## Vision
 Scalable Realtime ML Platform for _demystifying_, _dissecting_, _validating_ and _enhancing_ *trust* on increasingly complex production AI. We plan to achieve this via:
 
--  AI Services focused on *Realtime and Interactive Tests/Evaluations* for ML
+-  AI Services focused on *Batch as well as Realtime and Interactive Tests/Evaluations* for ML
 -  AI Services focused on *Realtime and Interactive Explanations* of ML predictions
     -  on all types of data (tabular, image, text based)
 -  Realtime Model and *Prediction Visualizations*
@@ -34,7 +34,7 @@ Considering that especially tests and explanations derived from model-agnostic/b
 
 
 ## Genome Capabilities
--  Store, Version, Search Models Evaluations and Pipelines with the Genome Model and Evaluation Stores
+-  Store, Version, Search Model Evaluations and Pipelines with the Genome Model and Evaluation Stores
 -  Store, Version and Search Evaluations and Tests via the Evaluation Store API-s and framework
 -  Define model and ML pipelines with Compute and Sequencer
 -  Explain in *realtime* predictions of any model type, in particular:
@@ -57,6 +57,138 @@ Considering that especially tests and explanations derived from model-agnostic/b
 -  Auth - Auth[n|z] for external facing API-s
 -  UI - UI for pipelines and models
 -  Gateway
+
+
+
+
+## ML Tests via Evaluation Store and the Evaluation Framework
+Evaluations in Genome are akin to unit testing in software engineering and represent a critical stage in the ML development lifecycle. Genome treats tests as first class citizens via the Evaluation Store and the associated framework. The Evaluation Store is the system of record for representing and tracking ML tests in a structured way. We use following terminology for testing:
+-  *Evaluations*: represent full test suites testing a behavioral scenario holistically. Evaluations can have multiple tasks.
+-  *Task(s)*: represents a unit test, part of the full behavioral scenario. Tasks can operate on datasets, segments or single data points, what we call prototypes, in order to allow for different levels of _data coverage_ for the test scenario. Tasks can contain multiple expectations.
+-  *Expectation(s)*: are single (boolean) checks for particular low level conditions. Metric checks can happen here, as well as raw data point comparisons.
+
+To use the Evaluation Store create an evaluation class like in the example below, then run it with the trained model. Note the similarity with unit testing.
+
+
+```python
+
+import logging
+from .modelstore.client import ModelStore
+from .modelstore.estimator import GenomeEstimator
+from .modelstore import evaluationstore
+from .modelstore.evaluationspec import GenomeEvaluationRun, evaluation, task
+
+
+
+# use the @evaluation annotation to declare a class as an evaluation
+@evaluation(
+  name="test/skill/annotations/better-than-last",
+  versionName="1.2.sklearn",
+  code = "ensemble-training:local.1",
+  targetModel="target-id")
+class TrainTestEvaluation(GenomeEvaluationRun):
+
+
+    # use the @task annotation to declare a method as an evaluation task
+    # task metadata for functions annotated this way, will be stored in
+    # our Evaluation Store
+    @task(dataset={"ref": "mllake://datasets/benchmark/california-housing-test"})
+    def evaluateTrainTestSplit(self, t, dataset):
+        my_split = 0.7
+
+        t.add_metric("f2", 2.34)
+        t.expect(my_split, var="my_split").toBeLess(0.76)
+
+    # how to test for errors
+    @task(dataset={"ref": "mllake://datasets/benchmark/california-housing-test"})
+    def checkError(self, t, dataset):
+        my_split = 0.7
+
+        t.add_metric("f2", 2.34)
+        t.expect(lambda: 5/0, var="myFunction").toRaise(ZeroDivisionError)
+
+
+    # how to test for specific records in a dataset (named prototypes)
+    # behaving in a certain way for a model
+    @task(dataset={"ref": "mllake://datasets/benchmark/california-housing-test"})
+    def prototypeTest(self, t, dataset):
+
+        logging.info("running evaluation task:")
+        logging.info(t)
+
+        intersect = 0.82
+        t.add_metric("intersection", intersect) \
+          .expect(intersect, var="intersection") \
+          .toBeGreater(0.52)
+
+        # now some dummy prototypes
+        for record in range(5):
+            m = record * 1.24
+            t.prototype(ref="id-123") \
+              .add_metric("f1", record * 2.34) \
+              .expect(m, var="f1") \
+              .toBe([1,0], var="metric")
+
+
+# now that the evaluation definition with its annotations is provided
+# we can run the test either as part of the training stage, or separately
+
+model_store = ModelStore()
+
+canonicalName = modelMeta["canonicalName"]
+
+
+categories = ['alt.atheism', 'soc.religion.christian',
+          'comp.graphics', 'sci.med']
+
+twenty_train = fetch_20newsgroups(
+  subset='train',
+  categories=categories,
+  shuffle=True,
+  random_state=42,
+  remove=('headers', 'footers'),
+)
+
+#pipeline is composed out of tfid +LSA
+vec = TfidfVectorizer(min_df=3, stop_words='english',
+                  ngram_range=(1, 2))
+svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
+lsa = make_pipeline(vec, svd)
+forest_model = RandomForestClassifier(n_estimators=205,max_depth=5)
+
+pipe = make_pipeline(lsa, forest_model)
+
+# fit and score
+pipe.fit(twenty_train.data, twenty_train.target)
+
+model = GenomeEstimator(pipe,
+    estimator_predict = "predict_proba",
+    target_classes = twenty_train.target_names,
+    modality = "text")
+
+
+# save model
+saved_model = model_store.save_model(model, {
+  "canonicalName": canonicalName,
+  "application": application_parameter or "search",
+  "pipelineName": pipelinename_parameter or "pipeline-keras-test",
+  "pipelineRunId": pipelinerun_parameter,
+  "pipelineStage": stepname_parameter or "model",
+  "framework": "sklearn",
+  "inputModality": "text",
+  "versionName": "sklearn-text.1.2.2",
+  "predictionType": "classification"
+})
+
+# now finally run the evaluation defined in TrainTestEvaluation
+# in target we are dynamically passing the trained model id from model store
+split_eval = TrainTestEvaluation(None, target = saved_model["id"])
+split_eval.to_run()
+
+
+
+```
+
 
 
 ## Training Models and Explaining their Predictions in Realtime - Examples
@@ -377,128 +509,6 @@ RESPONSE:
 Significant effort has gone into the visualizer implementation for text explanations to adjust it to a pure javascript/react version as opposed to its original lime/eli5 implementation so we recommend using that UI for visualizing the API results.
 
 
-## Evaluation Store and Framework - Examples
-Testing and evaluations are critical stages in the model development lifecycle. Genome treats tests and evaluations as first class citizens via its Evaluation Store. The Evaluation Store is the system of record for representing and tracking tests and evaluations in a structured way. To use the Evaluation Store create a test or evaluation class like in the example below, then run it with the trained model.
-
-
-```python
-
-import logging
-from .modelstore.client import ModelStore
-from .modelstore.estimator import GenomeEstimator
-from .modelstore import evaluationstore
-from .modelstore.evaluationspec import GenomeEvaluationRun, evaluation, task
-
-
-
-# use the @evaluation annotation to declare a class as an evaluation
-@evaluation(
-  name="test/skill/annotations/better-than-last",
-  versionName="1.2.sklearn",
-  code = "ensemble-training:local.1",
-  targetModel="target-id")
-class TrainTestEvaluation(GenomeEvaluationRun):
-
-
-    # use the @task annotation to declare a method as an evaluation task
-    # task metadata for functions annotated this way, will be stored in
-    # our Evaluation Store
-    @task(dataset={"ref": "mllake://datasets/benchmark/california-housing-test"})
-    def evaluateTrainTestSplit(self, t, dataset):
-        my_split = 0.7
-
-        t.add_metric("f2", 2.34)
-        t.expect(my_split, var="my_split").toBeLess(0.76)
-
-    # how to test for errors
-    @task(dataset={"ref": "mllake://datasets/benchmark/california-housing-test"})
-    def checkError(self, t, dataset):
-        my_split = 0.7
-
-        t.add_metric("f2", 2.34)
-        t.expect(lambda: 5/0, var="myFunction").toRaise(ZeroDivisionError)
-
-
-    # how to test for specific records in a dataset (named prototypes)
-    # behaving in a certain way for a model
-    @task(dataset={"ref": "mllake://datasets/benchmark/california-housing-test"})
-    def prototypeTest(self, t, dataset):
-
-        logging.info("running evaluation task:")
-        logging.info(t)
-
-        intersect = 0.82
-        t.add_metric("intersection", intersect) \
-          .expect(intersect, var="intersection") \
-          .toBeGreater(0.52)
-
-        # now some dummy prototypes
-        for record in range(5):
-            m = record * 1.24
-            t.prototype(ref="id-123") \
-              .add_metric("f1", record * 2.34) \
-              .expect(m, var="f1") \
-              .toBe([1,0], var="metric")
-
-
-# now that the evaluation definition with its annotations is provided
-# we can run the test either as part of the training stage, or separately
-
-model_store = ModelStore()
-
-canonicalName = modelMeta["canonicalName"]
-
-
-categories = ['alt.atheism', 'soc.religion.christian',
-          'comp.graphics', 'sci.med']
-
-twenty_train = fetch_20newsgroups(
-  subset='train',
-  categories=categories,
-  shuffle=True,
-  random_state=42,
-  remove=('headers', 'footers'),
-)
-
-#pipeline is composed out of tfid +LSA
-vec = TfidfVectorizer(min_df=3, stop_words='english',
-                  ngram_range=(1, 2))
-svd = TruncatedSVD(n_components=100, n_iter=7, random_state=42)
-lsa = make_pipeline(vec, svd)
-forest_model = RandomForestClassifier(n_estimators=205,max_depth=5)
-
-pipe = make_pipeline(lsa, forest_model)
-
-# fit and score
-pipe.fit(twenty_train.data, twenty_train.target)
-
-model = GenomeEstimator(pipe,
-    estimator_predict = "predict_proba",
-    target_classes = twenty_train.target_names,
-    modality = "text")
-
-
-# save model
-saved_model = model_store.save_model(model, {
-  "canonicalName": canonicalName,
-  "application": application_parameter or "search",
-  "pipelineName": pipelinename_parameter or "pipeline-keras-test",
-  "pipelineRunId": pipelinerun_parameter,
-  "pipelineStage": stepname_parameter or "model",
-  "framework": "sklearn",
-  "inputModality": "text",
-  "versionName": "sklearn-text.1.2.2",
-  "predictionType": "classification"
-})
-
-# now finally run the evaluation defined in TrainTestEvaluation
-# in target we are dynamically passing the trained model id from model store
-split_eval = TrainTestEvaluation(None, target = saved_model["id"])
-split_eval.to_run()
-
-
-
-```
 
 ## Model Visualizations
 
