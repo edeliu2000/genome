@@ -16,9 +16,9 @@ Genome is a cloud native (K8) platform for ML testing and explanations, geared t
 8. [Testing](#testing)
 
 ## Vision
-Scalable Realtime ML Platform for _demystifying_, _dissecting_, _validating_ and _enhancing_ *trust* on increasingly complex production AI. We plan to achieve this via:
+Scalable Realtime ML Platform for _validating_, _demystifying_ and _enhancing_ *trust* on increasingly complex production AI. We plan to achieve this via:
 
--  AI Services focused on *Batch as well as Realtime and Interactive Tests/Evaluations* for ML
+-  AI Services focused on *Batch and Realtime/Interactive ML Tests/Evaluations*
 -  AI Services focused on *Realtime and Interactive Explanations* of ML predictions
     -  on all types of data (tabular, image, text based)
 -  Realtime Model and *Prediction Visualizations*
@@ -49,7 +49,7 @@ Considering that especially tests and explanations derived from model-agnostic/b
 
 ## Components:
 -  Genome Model Store - API-s to store, version and track models
--  Genome Evaluation Store - API-s to store and track model tests and evaluations
+-  Genome Evaluation Store - API-s to store and track ML tests and evaluations
 -  Compute and Sequencer - API-s to create pipeline runs/schedules
 -  Realtime Explainer - API-s to explain models from Model Store
 -  Realtime Visualizer - API-s to visualize Models from Model Store
@@ -62,7 +62,7 @@ Considering that especially tests and explanations derived from model-agnostic/b
 
 
 ## ML Tests via Evaluation Store and the Evaluation Framework
-Evaluations in Genome are akin to unit testing in software engineering and represent a critical stage in the ML development lifecycle. Genome treats tests as first class citizens via the Evaluation Store and the associated framework. The Evaluation Store is the system of record for representing and tracking ML tests in a structured way. We use following terminology for testing:
+Evaluations in Genome are akin to unit testing in software engineering and represent a critical stage in the ML development lifecycle. With Genome we treat **ML tests as first class citizens** via the Evaluation Store and the associated framework. The Evaluation Store is the system of record for representing and tracking ML tests in a structured way. We use following terminology for testing:
 -  **Evaluations**: represent full test suites testing a behavioral scenario holistically. Evaluations can have multiple tasks.
 -  **Task(s)**: represents a unit test, a specific part/unit of the full behavioral scenario. Tasks can operate on datasets, segments or single data points, what we call _prototypes_, in order to allow for different levels of _data coverage_ for the test scenario. Tasks can contain multiple expectations.
 -  **Expectation(s)**: are single (boolean) checks for particular low level conditions. Metric checks can happen here, as well as raw data point comparisons.
