@@ -193,7 +193,7 @@ split_eval.to_run()
 
 
 
-## Training Models and Explaining their Predictions in Realtime - Examples
+## Explaining Models in Realtime - Examples
 
 ### Explaining Models on Tabular Data
 In this example we'll be creating and training a tree based model, specifically a random forest regressor that predicts on the CA housing dataset. Then the model will be stored in the Model Store to get realtime explanations.
