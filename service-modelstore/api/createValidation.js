@@ -117,7 +117,7 @@ const create = function(req, res, next, artifactType){
 
   req.body["artifactType"] = entityType
   req.body["created"] = Date.now();
-  req.body["updated"] = Date.now();
+  req.body["artifactTime"] = Date.now();
 
   client.index({
     index: 'validation-artifacts',

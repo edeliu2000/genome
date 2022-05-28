@@ -30,6 +30,12 @@ except ImportError:
 
 
 try:
+    import xgboost
+except ImportError:
+    warnings.warn('xgboost could not be imported', ImportWarning)
+
+
+try:
     from pyspark.ml import PipelineModel
     from pyspark.sql import SparkSession, SQLContext
 
@@ -54,6 +60,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 modelstore_api = os.getenv('MODELSTORE')
 GENOME_FILE = '_genome_.p'
+XGB_MODEL_FILE = 'xgb_model.json'
 
 
 class ModelStore():
@@ -111,7 +118,6 @@ class ModelStore():
                 logging.info("initializing keras/tensorflow model:" + model_id)
                 tmpdir = tempfile.mkdtemp()
                 z = zipfile.ZipFile(io.BytesIO(model_file))
-                logging.info("files in zip:" + str(z.namelist()))
                 z.extractall(tmpdir)
                 tf_model = tensorflow.keras.models.load_model(tmpdir)
                 if os.path.isfile(tmpdir + '/' + GENOME_FILE):
@@ -134,6 +140,23 @@ class ModelStore():
                     model.estimator = tf_model
                 else:
                     model = tf_model
+
+
+            elif "xgboost" in modelMetaArtifact["framework"]:
+
+                logging.info("initializing xgboost model:" + model_id)
+                tmpdir = tempfile.mkdtemp()
+                z = zipfile.ZipFile(io.BytesIO(model_file))
+                z.extractall(tmpdir)
+                xgb_model = xgboost.Booster()  # init model
+                xgb_model.load_model(tmpdir + '/' + XGB_MODEL_FILE)
+                if os.path.isfile(tmpdir + '/' + GENOME_FILE):
+                    model = pickle.load( open( tmpdir + '/' + GENOME_FILE, "rb" ))
+                    model.estimator = xgb_model
+                else:
+                    model = xgb_model
+
+
 
 
             elif "spark" in modelMetaArtifact["framework"] and not explainer:
@@ -318,6 +341,8 @@ class ModelStore():
 
             tmpdir = tempfile.mkdtemp()
             model_save_path = os.path.join(tmpdir, "model")
+            os.makedirs(model_save_path, exist_ok=True)
+
             tensorflow.saved_model.save(estimator, model_save_path)
             if isinstance(model, GenomeEstimator):
                 # remove estimator to not pickle the tf model
@@ -339,6 +364,8 @@ class ModelStore():
             else:
               estimator.save(model_save_path)
 
+
+
             if isinstance(model, GenomeEstimator):
                 # remove estimator to not pickle the spark model
                 model.estimator = None
@@ -356,7 +383,42 @@ class ModelStore():
             serializedModel = fileobj.read()
 
 
+        elif "xgboost" in str(type(estimator)).lower():
+            tmpdir = tempfile.mkdtemp()
+            model_save_path = os.path.join(tmpdir, "model")
+            os.makedirs(model_save_path, exist_ok=True)
+
+            if isinstance(model, GenomeEstimator):
+                # remove estimator to not pickle the xgboost model
+                model.estimator = None
+
+                # save the genome meta file
+                pickle.dump(model, open(model_save_path + '/' + GENOME_FILE, "wb"))
+
+
+            estimator.save_model(model_save_path + '/' + XGB_MODEL_FILE)
+
+            shutil.make_archive(os.path.join(tmpdir, 'model-file'), 'zip', model_save_path)
+            fileobj = open(tmpdir + "/model-file.zip", 'rb')
+            serializedModel = fileobj.read()
+
+
+
+
+
         else:
+            tmpdir = tempfile.mkdtemp()
+            model_save_path = os.path.join(tmpdir, "model")
+            os.makedirs(model_save_path, exist_ok=True)
+
+
+            logging.info("saving sklearn or other framework model at : " + model_save_path)
+
+
+            if isinstance(model, GenomeEstimator):
+                # save the genome meta file
+                pickle.dump(model, open(model_save_path + '/' + GENOME_FILE, "wb"))
+
 
             serializedModel = pickle.dumps(model)
 
@@ -421,7 +483,7 @@ class ModelStore():
             modelMeta["parameters"]["__prediction_type__"] = predictionType
 
 
-        reqMeta = urllib.request.Request(modelstore_api + "/v1.0/genome/model")
+        reqMeta = urllib.request.Request(modelstore_api + "/v1.0/genome/modelArtifact")
         reqMeta.add_header(
             'Content-Type',
             'application/json',

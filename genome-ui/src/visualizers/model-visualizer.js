@@ -248,11 +248,12 @@ class ModelVisualizer extends React.Component {
         renderGraph(svgGroup, g);
 
         // Center the graph
-        var initialScale = 0.75;
+        const initialScaleWidth = 0.75;
+        const initialScaleHeight = 0.45;
         var containerWidth = () => {try { return svg.attr("width"); } catch(e){ return 600; }} ;
-        svg.call(zoom.transform, d3.zoomIdentity.translate((containerWidth - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+        svg.call(zoom.transform, d3.zoomIdentity.translate((containerWidth - g.graph().width * initialScaleWidth) / 2, 20).scale(initialScaleWidth));
 
-        svg.attr('height', g.graph().height * initialScale + 40);
+        svg.attr('height', g.graph().height * initialScaleHeight + 40);
 
     }
 
@@ -400,7 +401,7 @@ class ModelVisualizer extends React.Component {
 
                           .pipeline-graph {
                             width: 100%;
-                            height: 180px;
+                            height: 100px;
                             float:left;
                           }
 
@@ -461,7 +462,7 @@ class ModelVisualizer extends React.Component {
                       { this.state.vizGraph && this.state.vizGraph.pipeline &&
                       <div style={{width:"100%", marginLeft:"1em"}}>
                       <Chip
-                        style={{marginLeft:"auto", marginRight:"auto"}}
+                        style={{marginLeft:"auto", marginRight:"auto", marginTop:"1em"}}
                         avatar={<Avatar>P</Avatar>}
                         label={"Pipeline"}
                         variant="outlined"

@@ -32,6 +32,15 @@ spec:
         env:
           - name: MODELSTORE
             value: http://{{ template "genome.fullname" . }}-modelstore-service:3000
+          - name: TEMP
+            value: /mnt/tmpout
+
+
+        volumeMounts:
+        - mountPath: /mnt/tmp-out
+          name: tmp-volume
+
+
         livenessProbe:
           httpGet:
             path: /healthz
@@ -43,5 +52,10 @@ spec:
         - containerPort: 5000
         resources: {}
         workingDir: /
+
+      volumes:
+      - name: tmp-volume
+        emptyDir: {}
+
       restartPolicy: Always
 status: {}

@@ -20,17 +20,66 @@ import ExpandMore from '@material-ui/icons/ExpandMore';
 
 import { curveBasis } from "d3-shape";
 
+const _fetchData = require("../elastic-queries")._fetchData
+const _fetchDataRaw = require("../elastic-queries")._fetchDataRaw
 
 
 import DagreGraph from "dagre-d3-react"
 class PipelineVisualizer extends React.Component {
 
   state = {
+    pipelineSteps: [],
     selectedStep: {},
     displayStepInfo: "none",
     openCollapsableParams: false,
     openCollapsableDatasets: false
   }
+
+  componentDidMount = () => {
+    console.log("Displaying Pipeline Graph")
+    this._loadPipelineSpec()
+  }
+
+  _loadPipelineSpec = (testCallback) => {
+
+    var self = this;
+    var accToken = sessionStorage.getItem('accessToken');
+
+    //if steps are already provided don;t call API
+    const steps = this.props.genomePipeline
+    if(Array.isArray(steps)){
+      this.setState({
+        pipelineSteps: steps
+      });
+      return {};
+    }
+
+
+    // call validation store endpoint
+    _fetchDataRaw({
+      application: this.props.application,
+      artifactType: this.props.genomePipeline.refType,
+      id: this.props.genomePipeline.ref
+    }, (err, pipelines) => {
+
+       if(err) {
+         console.log("error on retrieving pipelines", err);
+         this.props.errorCallback && this.props.errorCallback(err);
+         return testCallback && testCallback()
+       }
+
+       if(pipelines && pipelines.length){
+         this.setState({
+           pipelineSteps: (pipelines[0].recipeRef && pipelines[0].recipeRef.ref && JSON.parse(pipelines[0].recipeRef.ref)) || []
+         });
+         return testCallback && testCallback();
+       }
+
+    }, "/v1.0/genome/modelstore/search?artifactType=" + this.props.genomePipeline.refType,
+      window.location.protocol + "//" + window.location.host,
+      accToken || "");
+  };
+
 
   handleSelection = (e) => {
     //skip connector nodes
@@ -164,7 +213,7 @@ class PipelineVisualizer extends React.Component {
 
   render() {
 
-    const steps = this.props.genomePipeline || [];
+    const steps = this.state.pipelineSteps || [];
     const graph = this.createGraph(null, steps);
 
     return (

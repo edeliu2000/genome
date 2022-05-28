@@ -180,7 +180,7 @@ EOT
 resource "null_resource" "argo_k8s" {
 
   provisioner "local-exec" {
-    command = "${var.kube_command} apply -n argo -f https://raw.githubusercontent.com/argoproj/argo-workflows/v3.0.6/manifests/namespace-install.yaml"
+    command = "${var.kube_command} apply -n argo -f https://raw.githubusercontent.com/argoproj/argo-workflows/v3.3.1/manifests/namespace-install.yaml"
 
     environment = {
       BUCKET = "example.bucket"
@@ -227,6 +227,14 @@ resource "null_resource" "elastic_validation_index_ready" {
 resource "null_resource" "elastic_deployment_index_ready" {
   provisioner "local-exec" {
     command = "${var.kube_command} wait -n ${var.app_namespace} --for=condition=complete job/initialize-deployment-index --timeout=600s"
+  }
+
+  depends_on = [helm_release.genome_ai]
+}
+
+resource "null_resource" "elastic_data_index_ready" {
+  provisioner "local-exec" {
+    command = "${var.kube_command} wait -n ${var.app_namespace} --for=condition=complete job/initialize-dataartifact-index --timeout=600s"
   }
 
   depends_on = [helm_release.genome_ai]

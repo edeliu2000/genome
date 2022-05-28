@@ -23,6 +23,13 @@ import Card from '@material-ui/core/Card';
 import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
 
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableCell from '@material-ui/core/TableCell';
+import TableContainer from '@material-ui/core/TableContainer';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
+import Paper from '@material-ui/core/Paper';
 
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
@@ -35,6 +42,8 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
 import Collapse from '@material-ui/core/Collapse';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import OnlinePieChart from './visualizers/online-pie-chart'
 
 import Icon from '@material-ui/core/Icon';
 import IconButton from '@material-ui/core/IconButton';
@@ -69,6 +78,10 @@ const styles = theme => ({
     width: '100%',
   },
 
+  clickableRow: {
+    cursor: 'pointer'
+  },
+
   heading: {
     fontSize: theme.typography.pxToRem(15),
     fontWeight: theme.typography.fontWeightRegular,
@@ -81,6 +94,7 @@ class ModelValidation extends React.Component {
 
   state = {
     validations: [],
+    showValidationTarget: false,
     openCollapsable: false,
     displayTaskInfo: null,
     displayValidation: null,
@@ -103,6 +117,16 @@ class ModelValidation extends React.Component {
 
     var self = this;
     var accToken = sessionStorage.getItem('accessToken');
+
+    //if validation is already provided don;t call API
+    const validation = this.props.validation
+    if(validation.validationTarget && validation.validationTarget.ref != null){
+      this.setState({
+        validations: [validation],
+        showValidationTarget: true
+      });
+      return {};
+    }
 
     // call validation store endpoint
     _fetchDataRaw({
@@ -133,6 +157,40 @@ class ModelValidation extends React.Component {
     this.setState(state => ({ displayValidation: null, displayTaskInfo: null }));
   };
 
+  getArtifactTypeName = (artifactType) => {
+    console.log("evaluation target ref type:", artifactType);
+    return {
+        "model": "model",
+        "modelArtifact": "model",
+        "dataArtifact": "dataset",
+        "dataset": "dataset",
+        "pipeline": "pipeline",
+        "pipelineRun": "run",
+        "deployment": "deployment"
+      }[artifactType] || "";
+  };
+
+  displayTaskRow = (entry, task) => {
+    return (
+      <TableRow style={{cursor:'pointer'}} key={task.name} onClick={()=>{this.setState({displayValidation: entry, displayTaskInfo: task})}}>
+        <TableCell align="left">{task.name}</TableCell>
+        <TableCell align="left">
+        <Chip
+          label={task.prototypeRef ? "rec" : (task.segment ? "segment" : (task.dataRef ? "dataset" : ""))}
+          avatar={<Avatar>{task.prototypeRef ? "R" : (task.segment ? "S" : (task.dataRef ? "D" : ""))}</Avatar>}
+          variant="outlined"
+          size="small" />
+        {task.prototypeRef ? " " + task.prototypeRef.ref.substring(0, 50): ""}
+        {task.segment ? " " + task.segment.substring(0, 50) : ""}
+        {task.dataRef ? " " + task.dataRef.ref.substring(0, 50) : ""}
+        </TableCell>
+        <TableCell align="left">
+        { task.status ? <DoneIcon style={{color:"#22a355"}}/> : <ErrorIcon style={{color:"#e5383b"}}/> }
+        </TableCell>
+      </TableRow>
+    )
+  }
+
   render(){
 
     return (
@@ -142,32 +200,90 @@ class ModelValidation extends React.Component {
           <ExpansionPanelSummary expandIcon={<ExpandMore />}>
 
             <Typography className={styles.heading}>
-              <div style={{float:"left", margin: "-0.2em 0.7em"}}>{entry.status ? <DoneIcon style={{color:"#22a355"}} /> : <ErrorIcon style={{color:"#e5383b"}} />}
+              <div style={{float:"left", margin: "0em 0.7em"}}>{entry.status ? <DoneIcon style={{color:"#22a355"}} /> : <ErrorIcon style={{color:"#e5383b"}} />}
               </div> {entry.canonicalName} ({entry.tasks.length} tasks)
             </Typography>
             <Chip
               avatar={<Avatar>{(entry.dimension || "").toUpperCase().substr(0,1)}</Avatar>}
               label={ entry.dimension || "dimension" }
-              clickable
               color="primary"
-              style={{float:"right", left:"1em", top:"-0.3em"}}
+              style={{float:"right", left:"1em", position:"relative"}}
             />
+
+            { this.state.showValidationTarget &&
+              <Chip
+                avatar={<Avatar>{(entry.validationTarget.refType || "").toUpperCase().substr(0,1)}</Avatar>}
+                label={
+                  this.getArtifactTypeName(entry.validationTarget.refType) + " | " + (entry.validationTarget.ref || "").substr(0, 10) + "..."
+                }
+
+                clickable
+
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  this.setState({showValidationTarget: false}, () => {
+                    this.props.loadArtifact({
+                      artifactType: entry.validationTarget.refType === "model" ? "modelArtifact" : entry.validationTarget.refType,
+                      application: this.props.application,
+                      id: entry.validationTarget.ref
+                    });
+                  });
+                }}
+
+                style={{float:"right", left:"1.3em"}}
+              />
+            }
+
+            { entry.tasks && entry.tasks.length > 0 &&
+            <span style={{"position":"absolute", "right":"4.5em", "top":"-3.0em", }}>
+              <OnlinePieChart data={[
+                {"name":"pass", "fill":"#00C49F", "value": entry.tasks.filter(t => t.status).length || 0, "percent": ((entry.tasks.filter(t => t.status).length || 0) / entry.tasks.length ) },
+                {"name":"fail", "fill":"#e5383b", "value": entry.tasks.filter(t => !t.status).length || 0, "percent": ((entry.tasks.filter(t => !t.status).length || 0) / entry.tasks.length ) },
+              ]} width={160} height={160}/>
+            </span>
+            }
 
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
 
             <div style={{float:"left"}}>
-            {
-              entry.tasks.map((task, j) => <div style={{float:"left", margin:"0.4em 0.4em"}}><Chip
-                  avatar={<Avatar color="primary">T</Avatar>}
-                  label={task.name}
-                  variant="outlined"
-                  onClick={()=>{this.setState({displayValidation: entry, displayTaskInfo: task})}}
-                  onDelete={()=>{this.setState({displayValidation: entry, displayTaskInfo: task})}}
-                  deleteIcon={ task.status ? <DoneIcon style={{color:"#22a355"}}/> : <ErrorIcon style={{color:"#e5383b"}}/> }
-                /></div>)
-            }
-            </div>
+
+            <TableContainer component={Paper}>
+              <Table size="small" aria-label="dense test table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="left"><span style={{fontStyle: "italic"}}>task</span></TableCell>
+                    <TableCell align="left"><span style={{fontStyle: "italic"}}>data coverage</span></TableCell>
+                    <TableCell align="left"><span style={{fontStyle: "italic"}}>status</span></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+
+                {
+                  entry.tasks.filter(task => task.dataRef && !task.segment && !task.prototypeRef).map((task, j) => (
+                    this.displayTaskRow(entry, task)
+                  ))
+                }
+
+                {
+                  entry.tasks.filter(task => task.segment && !task.prototypeRef).map((task, j) => (
+                    this.displayTaskRow(entry, task)
+                  ))
+                }
+
+                {
+                  entry.tasks.filter(task => task.prototypeRef).map((task, j) => (
+                    this.displayTaskRow(entry, task)
+                  ))
+                }
+
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+
+          </div>
           </ExpansionPanelDetails>
         </ExpansionPanel>)
       }
@@ -198,7 +314,7 @@ class ModelValidation extends React.Component {
               </ListItemIcon>
               <ListItemText inset primary={this.state.displayTaskInfo.prototypeRef.ref}
                 secondary={
-                  "Prototype"
+                  "Record"
                 }
               />
             </ListItem>

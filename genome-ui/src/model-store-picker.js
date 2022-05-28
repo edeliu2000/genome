@@ -19,6 +19,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
 import Select from '@material-ui/core/Select';
+import ListSubheader from '@material-ui/core/ListSubheader';
 
 import ProfileMenu from './profile-menu'
 import ModelNavigationDrawer from './model-navigation-drawer'
@@ -70,7 +71,7 @@ class ModelStorePicker extends React.Component {
   state = {
     startDate: null,
     endDate: null,
-    artifactType: "model",
+    artifactType: "modelArtifact",
     artifactTypeName: "models",
     clearedDate: null,
     openDrawer: false,
@@ -156,10 +157,10 @@ class ModelStorePicker extends React.Component {
   }
 
 
-  handleSearch = (pipelineName, tags, from, to) => {
-    console.log("model pipelineName:", pipelineName, tags);
+  handleSearch = (queryMeta, tags, from, to) => {
+    console.log("model pipelineName:", queryMeta, tags);
     var accessToken = sessionStorage.getItem("accessToken");
-    this.tableChild.searchForValue(pipelineName, from, to, tags, accessToken);
+    this.tableChild.searchForValue(queryMeta, from, to, tags, accessToken);
   }
 
   getURLQueryParams = () => {
@@ -259,9 +260,17 @@ class ModelStorePicker extends React.Component {
           onChange={this.handleArtifactType}
           autoWidth
         >
-          <MenuItem value={"model"}>Models</MenuItem>
-          <MenuItem value={"pipeline"}>Pipelines</MenuItem>
-          <MenuItem value={"pipelineRun"}>PipelineRuns</MenuItem>
+          <ListSubheader>Benchmarking</ListSubheader>
+          <MenuItem value={"evaluation"}>Evaluation Specs</MenuItem>
+          <MenuItem value={"evaluationRun"}>Evaluations</MenuItem>
+          <ListSubheader>ML Artifacts</ListSubheader>
+          <MenuItem value={"pipeline"}>Pipeline Specs</MenuItem>
+          <MenuItem value={"transform"}>Transform Specs</MenuItem>
+          <MenuItem value={"modelArtifact"}>Models</MenuItem>
+          <MenuItem value={"dataArtifact"}>Datasets</MenuItem>
+          <ListSubheader>Deployments and Runs</ListSubheader>
+          <MenuItem value={"deployment"}>Deployments</MenuItem>
+          <MenuItem value={"pipelineRun"}>Pipeline Runs</MenuItem>
         </Select>
       </FormControl>
       <ProfileMenu />

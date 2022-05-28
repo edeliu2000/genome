@@ -30,9 +30,19 @@
       "pipelineStage": {"type": "keyword"},
 
 
+      "dataset": {"type": "keyword"},
+
       "versionName": {"type": "keyword"},
-      "framework": {"type": "keyword"},
-      "inputModality": {"type": "keyword"},
+      "format": {"type": "keyword"},
+
+      "schema": {
+        "dynamic": "strict",
+        "properties": {
+          "ref": {"type": "object", "enabled": false},
+          "refType": {"type": "keyword"}
+        }
+      },
+
 
 
       "code": {
@@ -47,15 +57,7 @@
         "dynamic": true,
 
         "properties": {
-          "__type__": {"type": "keyword"},
-          "__estimator_class_name__": {"type": "keyword"},
-          "__estimator_category__": {"type": "keyword"},
-          "__num_estimators__": {"type": "keyword"},
-          "__prediction_type__": {"type": "keyword"},
-          "__batchSize__": {"type": "integer"},
-          "__iteration__": {"type": "integer"},
-          "__optimizer__": {"type": "keyword"},
-          "__loss_function__": {"type": "keyword"}
+          "__type__": {"type": "keyword"}
         }
       },
 
@@ -76,6 +78,7 @@
         }
       },
 
+
       "dataRefs": {
         "type": "nested",
         "dynamic": "strict",
@@ -86,28 +89,8 @@
       },
 
       "schedule": {"type": "keyword"},
-      "nextRun": {"type": "date"},
-      "shard": {"type": "keyword"},
-
-      "status": {
-        "type": "short"
-      },
-
-
-      "checkpoint": {"type": "keyword"},
-      "epoch": {"type": "short"},
 
       "metrics": {"type": "object", "enabled": false},
-
-
-      "featureImportance": {
-        "type": "nested",
-        "dynamic": "strict",
-        "properties": {
-          "feature": {"type": "keyword"},
-          "importance": {"type": "half_float"}
-        }
-      },
 
       "user": {"type": "keyword"},
 

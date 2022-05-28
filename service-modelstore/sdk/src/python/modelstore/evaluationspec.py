@@ -125,8 +125,15 @@ class GenomeEvaluationRun():
         for t in self.tasks:
             task_run = t.get_task()
             status = task_run.status if task_run.status < status else status
-            dsets.append(t.dataset)
+
+            # add dataset if not already included in evaluation datasets
+            if t.dataset not in dsets:
+                dsets.append(t.dataset)
+
+            # add tasks
             tasks.append(task_run)
+
+            # now add metrics
             for m in t.metrics:
                 metrics.append(BaseMetric(m, t.metrics[m]))
 

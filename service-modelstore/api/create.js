@@ -14,37 +14,12 @@ const { v4: uuidv4 } = require('uuid');
 // uuidv4(); // ⇨ '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed'
 
 
-const isValidDeployment = (model) => {
-  if(!model.canonicalName || model.canonicalName === "" ){
+const isValidDeployment = (deployment) => {
+  if(!deployment.canonicalName || deployment.canonicalName === "" ){
     return false
   }
 
-  if(!model.application || model.application === "" ){
-    return false
-  }
-
-  return true;
-};
-
-
-const isValidTransform = (model) => {
-  if(!model.canonicalName || model.canonicalName === "" ){
-    return false
-  }
-
-  if(!model.application || model.application === "" ){
-    return false
-  }
-
-  if(model.pipelineRunId){
-    return false
-  }
-
-  if(!model.versionName || model.versionName === "" ){
-    return false
-  }
-
-  if(!model.code || (model.code && (!model.code.ref || !model.code.refType))){
+  if(!deployment.application || deployment.application === "" ){
     return false
   }
 
@@ -52,7 +27,44 @@ const isValidTransform = (model) => {
 };
 
 
-const isValidModel = (model) => {
+const isValidTransform = (transformation) => {
+  if(!transformation.canonicalName || transformation.canonicalName === "" ){
+    return false
+  }
+
+  if(!transformation.application || transformation.application === "" ){
+    return false
+  }
+
+  if(!transformation.versionName || transformation.versionName === "" ){
+    return false
+  }
+
+  if(!transformation.code || (transformation.code && (!transformation.code.ref || !transformation.code.refType))){
+    return false
+  }
+
+
+  // disallowed properties
+  if(transformation.pipelineName){
+    return false
+  }
+
+  if(transformation.pipelineStage){
+    return false
+  }
+
+  if(transformation.pipelineRunId){
+    return false
+  }
+
+
+
+  return true;
+};
+
+
+const isValidModelArtifact = (model) => {
   if(!model.canonicalName || model.canonicalName === "" ){
     return false
   }
@@ -85,6 +97,7 @@ const isValidModel = (model) => {
 };
 
 
+
 const isValidPipeline = (pipeline, isRun) => {
   if(!pipeline.canonicalName || pipeline.canonicalName === "" ){
     return false
@@ -94,37 +107,44 @@ const isValidPipeline = (pipeline, isRun) => {
     return false
   }
 
-  if(!pipeline.pipelineName || pipeline.pipelineName === "" ){
-    return false
-  }
 
   if(!pipeline.versionName){
     return false
   }
 
-  if(!pipeline.recipeRef){
+  // pipelineName should also be provided for pipeline specs,
+  // the combination of pipelineName and versionName should be unique,
+  // canonicalName should be used for user defined grouping/tagging
+  if(!pipeline.pipelineName || pipeline.pipelineName === ""){
     return false
   }
 
-  if(!isRun && !pipeline.deployment){
+  // checks for pipe specs props
+  if(!isRun && !pipeline.recipeRef){
+    return false
+  }
+
+  //checks for pipeRun properties
+  if(isRun && !pipeline.deployment){
+    return false
+  }
+
+  if(isRun && !pipeline.pipelineRef){
     return false
   }
 
 
+  // disallowed properties
+  // pipelineRunId is the id created
 
-  //disallowed properties
+  if(pipeline.pipelineRunId){
+    return false
+  }
+
   if(pipeline.pipelineStage){
     return false
   }
 
-  // pipelineRunId is the id created
-  if(isRun && pipeline.pipelineRunId){
-    return false
-  }
-
-  if(!isRun && pipeline.pipelineRunId){
-    return false
-  }
 
   if(pipeline.artifactBlob){
     return false
@@ -148,14 +168,14 @@ const create = function(req, res, next, artifactType){
   var isValid = false;
   var entityType = {
     "deployment":"pipelineDeployment",
-    "model":"model",
+    "modelArtifact":"model",
     "transform":"transform",
     "pipeline":"pipeline",
     "pipelineRun": "pipelineRun"
   }[artifactType]
 
-  if(artifactType === "model"){
-    isValid = isValidModel(req.body);
+  if(artifactType === "modelArtifact"){
+    isValid = isValidModelArtifact(req.body);
   }else if(artifactType === "transform"){
     isValid = isValidTransform(req.body);
   }else if(artifactType === "pipeline"){
@@ -174,12 +194,25 @@ const create = function(req, res, next, artifactType){
     return next(validationErr);
   }
 
-  var indexName = artifactType === 'deployment' ? 'deployments' : 'model-artifacts';
+  var indexName = 'model-artifacts';
   var typeProperty = artifactType === 'deployment' ? 'deploymentType' : 'artifactType'
 
+  if(artifactType === 'deployment'){
+    indexName = 'deployments';
+  }else if(artifactType === 'dataArtifact'){
+    indexName = 'data-artifacts';
+  }
+
+  const now = Date.now()
+
   req.body[typeProperty] = entityType
-  req.body["created"] = Date.now();
-  req.body["updated"] = Date.now();
+  req.body["created"] = now;
+  req.body["artifactTime"] = req.body["artifactTime"] || now;
+
+  if(req.body["artifactStartTime"]){
+    req.body["artifactStartTime"] = req.body["artifactStartTime"] || now;
+  }
+
 
   client.index({
     index: indexName,
@@ -202,8 +235,12 @@ const createDeployment = function(req, res, next){
   create(req, res, next, "deployment");
 }
 
-const createModel = function(req, res, next){
-  create(req, res, next, "model");
+const createModelArtifact = function(req, res, next){
+  create(req, res, next, "modelArtifact");
+}
+
+const createDataArtifact = function(req, res, next){
+  create(req, res, next, "dataArtifact");
 }
 
 const createTransform = function(req, res, next){
@@ -241,10 +278,10 @@ const createPipelineRunStatus = function(req, res, next){
     // type: '_doc', // uncomment this line if you are using {es} ≤ 6
     body: {
       script: {
-        source: 'ctx._source.status = params.status; ctx._source.updated = params.updated;',
+        source: 'ctx._source.status = params.status; ctx._source.artifactTime = params.artifactTime;',
         params:{
           status: status,
-          updated: Date.now(),
+          artifactTime: Date.now(),
         }
       }
     }
@@ -299,7 +336,7 @@ const updatePipelineNextRun = function(req, res, next){
 module.exports = {
   createDeployment: createDeployment,
   createTransform: createTransform,
-  createModel: createModel,
+  createModelArtifact: createModelArtifact,
   createPipeline: createPipeline,
   createPipelineRun: createPipelineRun,
   createPipelineRunStatus: createPipelineRunStatus,

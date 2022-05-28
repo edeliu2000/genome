@@ -7,6 +7,7 @@ const _createESQuery = require("./elastic-queries")._createESQuery
 const _fetchData = require("./elastic-queries")._fetchData
 const _fetchDataRaw = require("./elastic-queries")._fetchDataRaw
 
+
 import MUIDataTable from "mui-datatables";
 import {BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Label} from 'recharts';
 
@@ -24,8 +25,8 @@ import TextField from '@material-ui/core/TextField'
 
 import EditIcon from '@material-ui/icons/Edit';
 
-import ModelEditPicker from './model-edit-dialog'
-import ModelLearningCurve from './model-learn-curve'
+import getColumns from './data-table-columns'
+import {getDetailArtifact, dateFormat} from './detail-dialog-artifact';
 
 
 const styles = theme => ({
@@ -43,93 +44,16 @@ const styles = theme => ({
 
 
 var DATA = [
-  ["PipelineName", "Stage", "RunId", "ModelID", "Online-State", "Version", "Created",
-  {"mid":"no-mid", "schema":"no-schema", "url":"Chart", "artifactBlob":{}, "parameters":{}, "tags":{}}],
+  ["Application", "PipelineName", "Stage", "RunId", "ArtifactId", "Status", "Version", "Created",
+  {"mid":"no-mid", "application":"app", "schema":"no-schema", "url":"Chart", "artifactBlob":{}, "parameters":{}, "tags":{}}],
 ];
 
 const testDATA = [["col-1", "col-2"]]
 
 var CHART_DATA = [];
 var SELECTED_DATES = {start: null, end:null, featureStart:null, featureEnd:null};
-var ARTIFACT_TYPE = "model";
+var ARTIFACT_TYPE = "modelArtifact";
 var NUM_SEARCH = 0;
-
-const testColumns = ["Prop-1", "Prop-2"]
-const columns = [
-      {name:"PipelineName", options:{
-        filter:true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-           return (<div className={"cellSmall"}>{value}</div>)
-        }
-      }},
-
-      {name:"Stage", options:{
-        filter:true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-           return (<div className={"cellSmall"}>{value}</div>)
-        }
-      }},
-      {name:"RunId", options:{
-        filter:true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-           return (<div className={"cellSmall"}>{value}</div>)
-        }
-      }},
-      {name:"ModelId", options:{
-        filter:true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-           return (<div className={"cellSmall"}>{value}</div>)
-        }
-      }},
-      {name:"Status", options:{
-        filter:true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-          const colorOfBtn = value === "deployed" ? "primary" : "disabled"
-          const online = value === "deployed" || value === 1;
-          const error = value === 2;
-          var BtnType = online ? <OnlineIcon color="primary" className={styles.icon} style={{fontSize:"1.6em"}}/> : <OfflineIcon className={styles.icon} style={{fontSize:"1.6em"}}/>
-          if(error){
-            BtnType = <CancelIcon color="secondary" className={styles.icon} style={{fontSize:"1.6em"}}/>
-          }
-
-          return (
-          <div style={{"width":"2em"}}>
-              {BtnType}
-          </div>
-          );
-        }
-      }},
-
-      {name:"Version", options:{
-        filter:true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-           return (<div className={"cellSmall"}>{value}</div>)
-        }
-      }},
-
-      {name:"Created", options:{
-        filter:true,
-        customBodyRender: (value, tableMeta, updateValue) => {
-           return (<div className={"cellSmall"}>{value}</div>)
-        }
-      }},
-
-      {name:"Actions", options:{
-        filter:false,
-        sort:false,
-        customBodyRender: (value, tableMeta, updateValue) => {
-          console.log("columnValue", value)
-          return (
-            <div style={{"float":"left", width:"8em"}}>
-            <ModelEditPicker meta={value} />
-            <ModelLearningCurve meta={value} />
-            </div>
-          );
-        }
-
-      }}
-    ];
-
 
 
 export default class ModelStoreTable extends React.Component {
@@ -141,6 +65,7 @@ export default class ModelStoreTable extends React.Component {
   state = {
     data: DATA,
     elements: [],
+    artifactType: ARTIFACT_TYPE,
     snackbarOpen: false,
     snackbarMessage: "",
     snackbarLambdaLink: "",
@@ -168,16 +93,6 @@ export default class ModelStoreTable extends React.Component {
     var localTs = new Date(utcTime);
     var utcTs = Date.UTC(localTs.getFullYear(), localTs.getMonth(), localTs.getDate(), localTs.getHours(), localTs.getMinutes(), localTs.getSeconds())
     return new Date((utcTime - utcTs) + utcTime)
-  }
-
-  _printDate(utcTime){
-    var dt = this._fromutc(utcTime)
-    var month = dt.getMonth() + 1 <= 9 ? ("0" + (dt.getMonth() + 1)) : (dt.getMonth() + 1)
-    var day = dt.getDate() <= 9 ? ("0" + (dt.getDate())) : (dt.getDate())
-    var hours = dt.getHours() <= 9 ? ("0" + (dt.getHours())) : (dt.getHours())
-    var minutes = dt.getMinutes() <= 9 ? ("0" + (dt.getMinutes())) : (dt.getMinutes())
-
-    return dt.getFullYear() + "/" + month + "/" + day + " " + hours + ":" + minutes
   }
 
   _dataWithFillers(hits){
@@ -258,9 +173,16 @@ export default class ModelStoreTable extends React.Component {
     var self = this;
 
     var queryToES = _createESQuery(input.pipeline || "", false, startVal, endVal, tags);
-    var from = startVal || Date.now() - (1000 * 60 * 60 * 24 * 7);
-    var to = endVal || Date.now();
-    var searchUrlQuery = "/modelstore/search?from=" + from + "+&to=" + to + "&sortDesc=created&size=50";
+    var from = startVal ? ("from=" + startVal) : "";
+    var to = endVal ? ("to=" + endVal) : "";
+    const timeRange = !from && !to ? "&" : (from + "&" + to + "&");
+
+    var searchUrlQuery = "/modelstore/search?" + timeRange + "sortDesc=created&size=50";
+    if(input.artifactType === "dataArtifact"){
+      searchUrlQuery = "/modelstore/search-data?" + timeRange + "sortDesc=created&size=50";
+    }else if(["evaluation", "evaluationRun"].includes(input.artifactType)){
+      searchUrlQuery = "/modelstore/search-validations?" + timeRange + "sortDesc=created&size=50";
+    }
 
     if(!accessToken){
       self.setState({snackbarOpen:true, snackbarMessage: "session not valid anymore" })
@@ -269,11 +191,21 @@ export default class ModelStoreTable extends React.Component {
 
     if(input.keyword){
       queryToES = {"query": input.keyword};
-      searchUrlQuery = "/modelstore/searchkeywords?from=" + from + "+&to=" + to + "&sortDesc=created&size=50";
+      searchUrlQuery = "/modelstore/searchkeywords?" + timeRange + "sortDesc=created&size=50";
+      if(input.artifactType === "dataArtifact"){
+        searchUrlQuery = "/modelstore/search-data-keywords?" + timeRange + "sortDesc=created&size=50";
+      }else if(["evaluation", "evaluationRun"].includes(input.artifactType)){
+        searchUrlQuery = "/modelstore/search-validations-keywords?" + timeRange + to + "sortDesc=created&size=50";
+      }
     }
 
     if(input.artifactType){
-      searchUrlQuery += "&artifactType=" + decodeURIComponent(input.artifactType)
+      self.setState({artifactType: input.artifactType});
+      if(["evaluation", "evaluationRun"].includes(input.artifactType)){
+        queryToES["artifactType"] = input.artifactType;
+      }else{
+        searchUrlQuery += "&artifactType=" + decodeURIComponent(input.artifactType);
+      }
     }
 
     _fetchData(queryToES, (err, hits) => {
@@ -289,47 +221,40 @@ export default class ModelStoreTable extends React.Component {
 
 
       DATA = hits.map(function(el){
-        var pipelineRunId = input.artifactType === "pipelineRun" ? el["id"] : (el["pipelineRunId"] || "");
-        var modelId = input.artifactType === "model" ? el["id"] : "";
-        var status = el["status"] || el["online"] || "no"
 
-        return [el["pipelineName"], el["pipelineStage"] || "", pipelineRunId,
-          modelId, status, el["versionName"] || "",
-          self._printDate(el["created"]),
-          {
-            "mid":el["id"],
-            "artifactType": el["artifactType"],
-            "canonicalName": el["canonicalName"],
-            "application": el["application"],
-            "pipelineName": el["pipelineName"],
-            "pipelineStage": el["pipelineStage"] || "",
-            "pipelineRunId": el["pipelineRunId"] || "",
-            "status": status,
-            "framework": el["framework"] || "",
-            "version": el["versionName"] || "",
-            "parameters": el["parameters"] || {},
-            "recipeRef": el["recipeRef"] || {},
-            "artifactBlob": el["artifactBlob"] || {},
-            "schedule": el["schedule"] || "",
-            "nextRun": el["nextRun"] || 0,
-            "featureImportance": el["featureImportance"] || [],
-            "inputModality": el["inputModality"] || "",
-            "start": self._printDate(el["created"]),
-            "end": self._printDate(el["created"]),
-            "updated": self._printDate(el["updated"]),
-            "created": self._printDate(el["created"]),
-            "duration": el["updated"] - el["created"],
-            "schema":el["schema"],
-            "schemaMeta":el["schemaMeta"],
-            "title":el["title"],
-            "description":el["description"],
-            "howtouse":el["howtouse"],
-            "path": el["path"],
-            "pills": el["pills"],
-            "tags":el["tags"],
-            "inputs": el["dataRefs"] || [],
-            "url":"#"
-          }]
+        //pipelineRun column
+        var pipelineRunId = input.artifactType === "pipelineRun" ? el["id"] : (el["pipelineRunId"] || "");
+
+        //artifactId column
+        var artifactId = input.artifactType === "modelArtifact" ? el["id"] : "";
+        artifactId = input.artifactType === "pipeline" ? el["id"] : artifactId;
+        artifactId = input.artifactType === "evaluation" ? el["id"] : artifactId;
+        artifactId = input.artifactType === "evaluationRun" ? el["id"] : artifactId;
+        artifactId = input.artifactType === "transform" ? el["id"] : artifactId;
+        artifactId = input.artifactType === "deployment" ? el["id"] : artifactId;
+        artifactId = input.artifactType === "dataArtifact" ? el["id"] : artifactId;
+
+        //version column
+        var versionSlot = el["versionName"] || ""
+        versionSlot = input.artifactType === "deployment" ? el["deploymentType"] : versionSlot;
+
+        //artifactName column
+        var artifactName = input.artifactType === "pipeline" ? el["canonicalName"] : el["pipelineName"];
+        artifactName = input.artifactType === "evaluation" ? el["canonicalName"] : artifactName;
+        artifactName = input.artifactType === "transform" ? el["canonicalName"] : artifactName;
+        artifactName = input.artifactType === "deployment" ? el["canonicalName"] : artifactName;
+
+        //status column
+        var status = el["status"] || el["online"] || "no";
+        status = input.artifactType === "evaluationRun" ? el["status"] : status;
+
+
+
+
+        return [el["application"] || "", artifactName, el["pipelineStage"] || "", pipelineRunId,
+          artifactId, versionSlot, status,
+          dateFormat(el["created"]), getDetailArtifact(el, input.artifactType)
+        ]
       });
 
       var chartWidth = 900
@@ -356,7 +281,7 @@ export default class ModelStoreTable extends React.Component {
                 <YAxis/>
                 <Tooltip/>
                 <Legend verticalAlign="top" height={36}/>
-                <Bar name="versions" dataKey="y" fill="#3f51b5" fillOpacity="0.85"/>
+                <Bar name="artifacts" dataKey="y" fill="#3f51b5" fillOpacity="0.85"/>
 
             </BarChart>,
             document.getElementById('chart-ctn'));
@@ -393,7 +318,7 @@ export default class ModelStoreTable extends React.Component {
             SELECTED_DATES["end"],
             null,
             accessToken);
-          window.history.replaceState( {} , "ModelStore UI", newLoc);
+          window.history.replaceState( {} , "Genome UI", newLoc);
 
 
           keywordSearch.value = "";
@@ -411,7 +336,7 @@ export default class ModelStoreTable extends React.Component {
             SELECTED_DATES["end"],
             null,
             accessToken);
-          window.history.replaceState( {} , "ModelStore UI", newLoc);
+          window.history.replaceState( {} , "Genome UI", newLoc);
 
           pipelineEl.value = "";
         }
@@ -459,7 +384,7 @@ export default class ModelStoreTable extends React.Component {
       <MUIDataTable
         title={"Search"}
         data={this.state.data}
-        columns={columns}
+        columns={getColumns(this.state.artifactType)}
         options={options}
       />
       </div>

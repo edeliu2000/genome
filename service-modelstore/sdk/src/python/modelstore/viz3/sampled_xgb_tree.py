@@ -2,6 +2,7 @@ import json
 import math
 from collections import defaultdict
 from typing import List, Mapping
+import logging
 
 import numpy as np
 import warnings
@@ -66,11 +67,19 @@ class SampledXGBDecisionTree(SampledModelTree):
 
 
         if feature_names == None:
-            # checks for n_features attribute in booster or sets n_features to 500
-            self.feature_names = ["f{" + str(f) + "}" for f in range(booster.attr("n_features_") or 500)]
+            if not self.booster.feature_names:
+                feature_column_values = self._get_column_value("Feature")
+                self.feature_names = [a for a in set([feature_column_values[i] for i in range(0, self.nnodes())])]
+                logging.info("initialized tree feature_names: " + str(self.feature_names))
+            else:
+                # checks for n_features attribute in booster or sets n_features to 500
+                # self.feature_names = ["f{" + str(f) + "}" for f in range(booster.attr("n_features_") or 500)]
+                self.feature_names = self.booster.feature_names
+
 
 
         self.leaf_s_counts_ = self.get_leaf_sample_counts()
+
 
 
     def model_type(self) -> str:
@@ -95,8 +104,9 @@ class SampledXGBDecisionTree(SampledModelTree):
 
     def get_node_feature(self, id) -> int:
         feature_name = self._get_column_value("Feature")[id]
+        feature_names = self.booster.feature_names or self.feature_names
         try:
-            return self.booster.feature_names.index(feature_name)
+            return feature_names.index(feature_name)
         except ValueError as error:
             return self.__class__.NO_FEATURE
 

@@ -28,16 +28,22 @@ const searchByKeywords = function(req, res, next){
     return next(createError(400, 'query field missing'));
   }
 
-  var artifactTypeProperty = req.body.artifactType || "testRun";
+  var artifactTypeProperty = req.body.artifactType || "dataArtifact";
   var sortPropertyDesc = req.query.sortDesc || "created";
   var sortProperty = {};
   var sortList = [];
-  var fieldsToSearch = ["canonicalName", "versionName", "framework" , "_id"];
+  var fieldsToSearch = ["canonicalName", "versionName", "format", "_id"];
+
+  var entityType = {
+    "dataset":"dataset",
+    "dataArtifact":"data",
+  }[artifactTypeProperty]
+
 
   sortProperty[sortPropertyDesc] = {"order":"desc"}
   sortList.push(sortProperty)
 
-  if(artifactTypeProperty === "testRun" || artifactTypeProperty === "evaluationRun" ){
+  if(artifactTypeProperty === "dataArtifact"){
     fieldsToSearch.push("pipelineStage")
     fieldsToSearch.push("pipelineName")
     fieldsToSearch.push("pipelineRunId")
@@ -49,13 +55,13 @@ const searchByKeywords = function(req, res, next){
   console.log("date range:", fromDate, toDate)
 
   var query = {
-    index: 'validation-artifacts',
+    index: 'data-artifacts',
     body: {
       from : 0,
       size: 10,
       sort: sortList,
       query: { bool: { must: [
-        {term: {"artifactType": artifactTypeProperty}},
+        {term: {"artifactType": entityType}},
         {range : {
           artifactTime : {
             gte : fromDate,
@@ -103,12 +109,8 @@ const search = function(req, res, next){
   sortProperty[sortPropertyDesc] = {"order":"desc"}
   sortList.push(sortProperty)
 
-  var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 30));
+  var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 7));
   var toDate = Number(req.query.to || Date.now());
-
-  var excludeTimeFilter = req.body.deployment;
-  excludeTimeFilter = req.query.to === undefined && req.query.from === undefined ? true : excludeTimeFilter;
-
 
   if(!req.body.application){
     return next(createError(400, 'application field missing'));
@@ -116,33 +118,27 @@ const search = function(req, res, next){
 
   console.log("query for search", req.body, fromDate, toDate);
 
-  var artifactTypeProperty = req.body.artifactType || "testRun";
+  var artifactTypeProperty = req.body.artifactType || "dataArtifact";
+  var entityType = {
+    "dataset":"dataset",
+    "dataArtifact":"data",
+  }[artifactTypeProperty]
+
 
   var query = {
-    index: 'validation-artifacts',
+    index: 'data-artifacts',
     body: {
       from : 0,
       size: 10,
       sort: sortList,
       query: { bool: {
         filter: [
-          {term: {"artifactType": artifactTypeProperty}},
+          {term: {"artifactType": entityType}},
           {term: {"application": req.body.application}}
         ]},
     }}
   };
 
-  if(req.body.validationTarget && req.body.validationTarget.ref){
-    query.body.query.bool.filter.push({
-      term: {"validationTarget.ref": req.body.validationTarget.ref}
-    });
-  }
-
-  if(req.body.pipelineName){
-    query.body.query.bool.filter.push({
-      term: {"pipelineName": req.body.pipelineName}
-    });
-  }
 
   if(req.body.canonicalName){
     query.body.query.bool.filter.push({
@@ -156,20 +152,33 @@ const search = function(req, res, next){
     });
   }
 
-  if(artifactTypeProperty.toLowerCase().indexOf("run") && req.body.pipelineStage){
+  if(artifactTypeProperty == "dataArtifact" && req.body.pipelineName){
+    query.body.query.bool.filter.push({
+      term: {"pipelineName": req.body.pipelineName}
+    });
+  }
+
+  if(artifactTypeProperty == "dataArtifact" && req.body.pipelineStage){
     query.body.query.bool.filter.push({
       term: {"pipelineStage": req.body.pipelineStage}
     });
   }
 
-  if(artifactTypeProperty.toLowerCase().indexOf("run") >= 0 && req.body.pipelineRunId){
+  if(artifactTypeProperty == "dataArtifact" && req.body.pipelineRunId){
     query.body.query.bool.filter.push({
       term: {"pipelineRunId": req.body.pipelineRunId}
     });
   }
 
+  if(artifactTypeProperty == "dataArtifact" && req.body.parameters && req.body.parameters.__type__){
+    query.body.query.bool.filter.push({
+      term: {"parameters.__type__": req.body.parameters.__type__}
+    });
+  }
+
+
   //add time range
-  !excludeTimeFilter && query.body.query.bool.filter.push({range : {
+  query.body.query.bool.filter.push({range : {
     artifactTime : {
       gte : fromDate,
       lte : toDate

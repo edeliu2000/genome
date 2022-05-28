@@ -28,6 +28,8 @@ const convertStep = (step, pipeline, templateName) => {
       "parameters":[{
         "name": "image", "value": step.image
       },{
+        "name": "commands", "value": (step.commands || []).join(";")
+      },{
         "name": "STEP_NAME", "value": step.stepName
       },{
         "name": "STEP_TYPE", "value": step.stepType
@@ -165,8 +167,12 @@ const runSequence = (req, res, next) => {
     return next(createError(400, 'pipelineName field missing'));
   }
 
-  if(!(req.body.steps || req.body.dag)){
-    return next(createError(400, 'pipeline run missing steps'));
+  if(!req.body.versionName){
+    return next(createError(400, 'versionName field missing'));
+  }
+
+  if(!req.body.pipelineRef || (req.body.pipelineRef && !req.body.pipelineRef.ref)){
+    return next(createError(400, 'missing pipeline spec reference'));
   }
 
   console.log("request to run sequence")
@@ -175,20 +181,50 @@ const runSequence = (req, res, next) => {
       "canonicalName": req.body.canonicalName,
       "application": req.body.application,
       "pipelineName": req.body.pipelineName,
-      "recipeRef": {"ref": JSON.stringify(req.body.steps), "refType": "inline-pipeline"},
-      "versionName": req.body.versionName || "0.0.1",
-      "deployment": req.body.deployment,
+      "versionName": req.body.versionName || "0.0.1"
   }
 
   if(req.body.parameters){
     pipelineRunMeta["parameters"] = req.body.parameters
   }
 
+  if(req.body.pipelineRef && req.body.pipelineRef.refType === "pipeline"){
+    pipelineRunMeta["id"] = req.body.pipelineRef.ref;
+  }
+
   // create a pipelineRun in ModelStore
   // then trigger it in the workflow engine
   var pipelineRunId = ""
-  var promise = axios.post( modelStoreLocation + "/v1.0/genome/pipelineRun", pipelineRunMeta)
+  var pipelineSpec = null;
+  var promise = axios.post( modelStoreLocation + "/v1.0/genome/search?artifactType=pipeline", pipelineRunMeta)
   .then(function(response){
+
+
+    console.log("fetched pipeline specs: ", response.data);
+    pipelineSpec = response.data.length && response.data[0];
+
+    if(!pipelineSpec){
+      throw {"status": 404, "message": "could not find a pipeline spec with: " + JSON.stringify(pipelineRunMeta)}
+    }
+
+    //remove id for pipeRun creation
+    delete pipelineRunMeta["id"];
+
+    if(req.body.pipelineRef && req.body.pipelineRef.refType === "pipeline"){
+      pipelineRunMeta["pipelineRef"] = {
+        "ref": req.body.pipelineRef.ref,
+        "refType": req.body.pipelineRef.refType
+      };
+    }
+
+    if(req.body.deployment){
+      pipelineRunMeta["deployment"] = req.body.deployment;
+    }
+
+
+    return axios.post( modelStoreLocation + "/v1.0/genome/pipelineRun", pipelineRunMeta)
+
+  }).then(function(response){
 
     console.log("created pipelineRun: ", response.data);
     pipelineRunId = response.data.id
@@ -196,7 +232,11 @@ const runSequence = (req, res, next) => {
 
   }).then(function(pipelineRunId){
 
-    const pipelineSteps = req.body.steps || []
+    const pipelineSteps = (pipelineSpec &&
+      pipelineSpec.recipeRef.ref &&
+      pipelineSpec.recipeRef.refType === "inline-pipeline" &&
+      JSON.parse(pipelineSpec.recipeRef.ref)) || [];
+
     const convertedSteps = [];
     const deploymentParams = req.body.deploymentParamters || null;
     const deployment = req.body.deployment || null;
@@ -204,6 +244,7 @@ const runSequence = (req, res, next) => {
     try{
 
       pipelineSteps.forEach((item) => {
+
         const pSteps = [];
         const parallelSteps = []
 
@@ -279,6 +320,7 @@ const runSequence = (req, res, next) => {
               {"name": "DATASETS", "value":"[]"},
               {"name": "PARAMETERS"},
               {"name": "image"},
+              {"name": "commands"},
               {"name": "timeout", "value": "600s"},
               {"name": "retry", "value": "3"}
           ]},
@@ -295,7 +337,13 @@ const runSequence = (req, res, next) => {
           "container": {
             "name": "ensemble",
             "image": "{{inputs.parameters.image}}",
-            "imagePullPolicy": "IfNotPresent",
+            "command": ["/bin/sh", "-c"],
+            "args": ["{{inputs.parameters.commands}}"],
+            "imagePullPolicy": "Always",
+            "volumeMounts":[{
+              "name": "tmp",
+              "mountPath": "/mnt/tmp-out"
+            }],
             "env":[{
               "name": "MODELSTORE",
               "value": modelStoreLocation
@@ -329,13 +377,20 @@ const runSequence = (req, res, next) => {
             },{
               "name": "CODE",
               "value": "{{inputs.parameters.image}}"
+            },{
+              "name": "TEMP",
+              "value": "/tmp"
             }]
-          }
+          },
+          "volumes":[{
+            "name": "tmp",
+            "emptyDir": {}
+          }],
         }]
       }
     };
 
-    console.log("created workflow: ", workflow);
+    console.log("created workflow: ", JSON.stringify(workflow, null, 2));
 
     return axios.post( "http://localhost:8001/" + "apis/argoproj.io/v1alpha1/namespaces/argo/workflows", workflow);
 

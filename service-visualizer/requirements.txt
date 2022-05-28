@@ -2,7 +2,7 @@ flask
 gunicorn
 numpy
 scikit-learn
-xgboost
+xgboost==1.6.1
 shap
 pyspark
 singledispatch >= 3.4.0.3

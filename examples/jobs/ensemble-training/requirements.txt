@@ -3,7 +3,7 @@ gunicorn
 numpy
 pandas
 scikit-learn
-xgboost
+xgboost==1.6.1
 shap
 pyspark
 

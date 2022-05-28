@@ -9,6 +9,9 @@ class BaseRef():
         self.ref = ref
         self.refType = refType
 
+    def __eq__(self, other):
+        return (self.refType, self.ref) == (other.refType, other.ref)
+
 
 """
 Data related base objects, Datasets and Segments

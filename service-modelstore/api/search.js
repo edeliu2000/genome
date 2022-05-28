@@ -84,7 +84,7 @@ const searchByKeywords = function(req, res, next){
     return next(createError(400, 'query field missing'));
   }
 
-  var artifactTypeProperty = req.query.artifactType || "model";
+  var artifactTypeProperty = req.query.artifactType || "modelArtifact";
   var sortPropertyDesc = req.query.sortDesc || "created";
   var sortProperty = {};
   var sortList = [];
@@ -100,7 +100,11 @@ const searchByKeywords = function(req, res, next){
   var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 7));
   var toDate = Number(req.query.to || Date.now());
 
-  console.log("date range:", fromDate, toDate)
+  var excludeTimeFilter = req.body.deployment && (artifactTypeProperty in {"pipeline":1, "deployment":1});
+  excludeTimeFilter = req.query.to === undefined && req.query.from === undefined ? true : excludeTimeFilter;
+
+
+  console.log("date range:", fromDate, toDate, req.query.from, req.query.to);
 
   var query = {
     index: 'model-artifacts',
@@ -110,12 +114,6 @@ const searchByKeywords = function(req, res, next){
       sort: sortList,
       query: { bool: { must: [
         {term: {"artifactType": artifactTypeProperty}},
-        {range : {
-          created : {
-            gte : fromDate,
-            lte : toDate
-          }
-        }},
         {multi_match : {
             query : req.body.query,
             fields : fieldsToSearch
@@ -123,6 +121,14 @@ const searchByKeywords = function(req, res, next){
         ]}
       }}
   };
+
+  //add time range
+  !excludeTimeFilter && query.body.query.bool.must.push({range : {
+    artifactTime : {
+      gte : fromDate,
+      lte : toDate
+    }
+  }});
 
 
   client.search(query, (err, result) => {
@@ -151,14 +157,23 @@ const searchByKeywords = function(req, res, next){
 const search = function(req, res, next){
 
 
-  var artifactTypeProperty = req.query.artifactType || "model";
+  var artifactTypeProperty = req.query.artifactType || "modelArtifact";
+  var entityType = {
+    "deployment":"pipelineDeployment",
+    "modelArtifact":"model",
+    "dataArtifact":"data",
+    "transform":"transform",
+    "pipeline":"pipeline",
+    "pipelineRun": "pipelineRun"
+  }[artifactTypeProperty]
+
   var sortPropertyDesc = req.query.sortDesc || "created";
   var sortProperty = {};
   var sortList = [];
   sortProperty[sortPropertyDesc] = {"order":"desc"}
   sortList.push(sortProperty)
 
-  var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 7));
+  var fromDate = Number(req.query.from || Date.now() - (1000 * 60 * 60 * 24 * 30));
   var toDate = Number(req.query.to || Date.now());
 
   if(!req.body.application){
@@ -167,9 +182,17 @@ const search = function(req, res, next){
 
   console.log("query for search", req.body, fromDate, toDate);
 
-  var indexName = artifactTypeProperty === "deployment" ? 'deployments' : 'model-artifacts';
-  var excludeTypeFilter = artifactTypeProperty === "deployment"
-  var excludeTimeFilter = req.body.deployment && (artifactTypeProperty in {"pipeline":1, "deployment":1})
+  var indexName = 'model-artifacts';
+
+  if(artifactTypeProperty === 'deployment'){
+    indexName = 'deployments';
+  }else if(artifactTypeProperty === 'dataArtifact'){
+    indexName = 'data-artifacts';
+  }
+
+  var excludeTypeFilter = artifactTypeProperty === "deployment";
+  var excludeTimeFilter = req.body.deployment && (artifactTypeProperty in {"pipeline":1, "deployment":1});
+  excludeTimeFilter = req.query.to === undefined && req.query.from === undefined ? true : excludeTimeFilter;
 
 
   var query = {
@@ -188,7 +211,13 @@ const search = function(req, res, next){
 
   if(!excludeTypeFilter){
     query.body.query.bool.filter.push({
-      term: {"artifactType": artifactTypeProperty}
+      term: {"artifactType": entityType}
+    });
+  }
+
+  if(req.body.id){
+    query.body.query.bool.filter.push({
+      term: {"_id": req.body.id}
     });
   }
 
@@ -223,13 +252,13 @@ const search = function(req, res, next){
     });
   }
 
-  if(artifactTypeProperty === "model" && req.body.pipelineStage){
+  if(entityType === "model" && req.body.pipelineStage){
     query.body.query.bool.filter.push({
       term: {"pipelineStage": req.body.pipelineStage}
     });
   }
 
-  if(artifactTypeProperty === "model" && req.body.pipelineRunId){
+  if(entityType === "model" && req.body.pipelineRunId){
     query.body.query.bool.filter.push({
       term: {"pipelineRunId": req.body.pipelineRunId}
     });
@@ -237,7 +266,7 @@ const search = function(req, res, next){
 
   //add time range
   !excludeTimeFilter && query.body.query.bool.filter.push({range : {
-    created : {
+    artifactTime : {
       gte : fromDate,
       lte : toDate
     }
